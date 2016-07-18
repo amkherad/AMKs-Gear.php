@@ -1,0 +1,9 @@
+<?php
+//$MVC_LICENSE$
+//$CODESECTION_BEGIN$
+Mvc::Modules(array(
+    'html',
+    'util\html\sections'
+));
+//$CODESECTION_END$
+?>

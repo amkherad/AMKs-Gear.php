@@ -1,0 +1,6 @@
+<?php
+//$SOURCE_LICENSE$
+
+/*<MODULE_EXTRACT>*/
+/*</MODULE_EXTRACT>*/
+?>
