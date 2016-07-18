@@ -4,6 +4,7 @@ define('Gear_IsPackaged', true);
 
 
 define("Gear_Default_ConfigPath",                   "config.ini");
+define("Gear_500InternalServerErrorPageName",       "500.php");
 
 
 
@@ -49,9 +50,10 @@ class AppContext implements IContext
 }
 
 
+
 class AppEngine
 {
-    const Mvc = "mvc";
+    const Mvc = 'mvc';
 
     private $context;
     private $configuration;
@@ -62,7 +64,19 @@ class AppEngine
         $this->configuration = $config;
     }
 
-    public function Start($engine)
+    public function Start($engine = null)
+    {
+        try {
+            if ($engine == static::Mvc || is_null($engine))
+                return self::_startMvc();
+
+            throw new AppEngineNotFoundException();
+        } catch (Exception $ex) {
+
+        }
+    }
+
+    private function _startMvc()
     {
 
     }
@@ -70,24 +84,36 @@ class AppEngine
 
     public static function Create($configPath = null, $type = 0)
     {
-        if(is_null($configPath))
-            $configPath = Gear_Default_ConfigPath;
-        $config = Configuration::FromFile($configPath, $type);
+        try {
+            if (is_null($configPath))
+                $configPath = Gear_Default_ConfigPath;
+            $config = Configuration::FromFile($configPath, $type);
 
-        $route = null;
-        $request = null;
-        $response = null;
+            $route = null;
+            $request = null;
+            $response = null;
 
-        return new self(
-            new AppContext(
-                $route,
-                $config,
-                $request,
-                $response
-            ),
-            $config);
+            return new self(
+                new AppContext(
+                    $route,
+                    $config,
+                    $request,
+                    $response
+                ),
+                $config);
+        } catch (Exception $ex) {
+            self::_render500Error($ex);
+        }
+    }
+
+    static function _render500Error($ex)
+    {
+        Bundle::Arch(Gear_500InternalServerErrorPageName);
+
+        InternalServerError::Render($ex);
     }
 }
+
 
 
 class Bundle
@@ -119,16 +145,16 @@ class Bundle
 }
 
 
+use gear\arch\pal\file\IniFile;
+use gear\arch\pal\file\IniFileHelper;
 
 class Configuration
 {
     private $c;
 
-    private function __construct($configFile, $type)
+    private function __construct($configArray, $type)
     {
-        $bundle = Bundle::Pal('file\IniFile');
-        print_r($bundle);
-        echo phpversion ();
+        $this->c = $configArray;
     }
 
     public function getSection($section)
@@ -147,12 +173,13 @@ class Configuration
 
     public static function FromIniFile($path)
     {
-        return new self($path, "ini");
+        Bundle::Pal('file\PALIniFileHelper');
+        return new self(PALIniFileHelper::ParseIniFile($path, true), "ini");
     }
 
     public static function FromXmlFile($path)
     {
-        return new self($path, "xml");
+        return new self('', "xml");
     }
 }
 
@@ -163,6 +190,19 @@ class Controller extends InspectableClass
 }
 
 
+class ControllerFactory implements IControllerFactory
+{
+
+    function CreateController($controllerName, $actionName, $context)
+    {
+        // TODO: Implement CreateController() method.
+    }
+
+    function Exists($controllerName, $actionName, $context)
+    {
+        // TODO: Implement Exists() method.
+    }
+}
 
 
 class FsModuleLocator implements IModuleLocator
@@ -180,6 +220,22 @@ class FsModuleLocator implements IModuleLocator
     function Add($module, $descriptor, $context)
     {
         // TODO: Implement Include() method.
+    }
+}
+
+
+class FxException extends \Exception implements IMessageException
+{
+    private $httpStatusCode;
+    public function __construct($message, $httpStatusCode = 500, $code = 0)
+    {
+        $this->httpStatusCode = $httpStatusCode;
+        parent::__construct($message, $code);
+    }
+
+    public function getHttpStatusCode()
+    {
+        return $this->httpStatusCode;
     }
 }
 
@@ -222,6 +278,17 @@ interface IContext
 }
 
 
+interface IControllerFactory
+{
+    function CreateController($controllerName, $actionName, $context);
+    function Exists($controllerName, $actionName, $context);
+}
+
+
+interface IMessageException
+{
+    function getHttpStatusCode();
+}
 
 
 interface IModuleLocator
@@ -232,18 +299,18 @@ interface IModuleLocator
 }
 
 
-interface IRouteService
+interface IMvcContext
 {
-
+    function ControllerName();
+    function ActionName();
+    function GetParams();
 }
 
 
-class IniFileHelper
+
+interface IRouteService
 {
-    public static function ParseIniFile($path, $processSections)
-    {
-        return parse_ini_file($path, $processSections);
-    }
+
 }
 
 
@@ -270,4 +337,47 @@ class InspectableClass
     }
 }
 
+
+class InternalServerError
+{
+    public static function Render($ex, $errorCode = 500)
+    {
+        if (defined('DEBUG')) {
+            self::_log($ex->getMessage() . ' trace:' . Utils::stringify($ex->getTrace()));
+        }
+        if ($ex instanceof MvcMessageException) {
+            echo "<h2>$ex->Title</h2><h3 style=\"color:red;\">{$ex->getMessage()}</h3>";
+        } else {
+            $errMessage = (defined('DEBUG') && $errorCode == 500) ? 'Internal Server Error!' : $ex->getMessage();
+            echo "<center><h1 style=\"color:red\">$errorCode - $errMessage</h1><br>" .
+                (defined('DEBUG') ?
+                    $ex->getMessage() . '<br>' .
+                    $ex->getFile() . ' at line: ' . $ex->getLine() . '<br><br>' .
+                    $ex->getTraceAsString()
+                    :
+                    "Sorry! An internal server error has been occured.<br>Please report to website admin.")
+                . '</center>';
+        }
+    }
+}
+
+
+
+class PALIniFileHelper
+{
+    public static function ParseIniFile($path, $processSections)
+    {
+        return parse_ini_file($path, $processSections);
+    }
+}
+
+
+
+class AppEngineNotFoundException extends FxException
+{
+    public function __construct()
+    {
+        parent::__construct("Specified app engine not found.", 500);
+    }
+}
 

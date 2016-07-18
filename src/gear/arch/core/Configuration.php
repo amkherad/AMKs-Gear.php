@@ -9,15 +9,16 @@ namespace gear\arch\core;
 /*</bundles>*/
 
 /*<module>*/
+use gear\arch\pal\file\IniFile;
+use gear\arch\pal\file\IniFileHelper;
+
 class Configuration
 {
     private $c;
 
-    private function __construct($configFile, $type)
+    private function __construct($configArray, $type)
     {
-        $bundle = Bundle::Pal('file\IniFile');
-        print_r($bundle);
-        echo phpversion ();
+        $this->c = $configArray;
     }
 
     public function getSection($section)
@@ -36,12 +37,13 @@ class Configuration
 
     public static function FromIniFile($path)
     {
-        return new self($path, "ini");
+        Bundle::Pal('file\PALIniFileHelper');
+        return new self(PALIniFileHelper::ParseIniFile($path, true), "ini");
     }
 
     public static function FromXmlFile($path)
     {
-        return new self($path, "xml");
+        return new self('', "xml");
     }
 }
 /*</module>*/

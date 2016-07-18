@@ -7,6 +7,9 @@
 /*<bundles>*/
 /*</bundles>*/
 
+/*<requires>*/
+/*</requires>*/
+
 /*<module>*/
 class InspectableClass
 {

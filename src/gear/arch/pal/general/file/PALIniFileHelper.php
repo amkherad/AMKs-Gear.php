@@ -9,7 +9,7 @@ namespace gear\arch\pal\file;
 /*</bundles>*/
 
 /*<module>*/
-class IniFileHelper
+class PALIniFileHelper
 {
     public static function ParseIniFile($path, $processSections)
     {
