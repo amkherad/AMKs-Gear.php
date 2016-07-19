@@ -1,9 +1,9 @@
 <?php
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch\core;
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 /*</bundles>*/
@@ -15,38 +15,49 @@ class AppContext implements IContext
         $route,
         $config,
         $request,
-        $response;
+        $response,
+        $binderFactory,
+        $binder;
 
     public function __construct(
         $route,
         $config,
         $request,
-        $response)
+        $response,
+        $binderFactory)
     {
         $this->route = $route;
         $this->config = $config;
         $this->request = $request;
         $this->response = $response;
+        $this->binderFactory = $binderFactory;
+
+        $this->binder = $binderFactory->createEngine($this);
     }
 
-    public function GetRoute()
+    public function getRoute()
     {
         return $this->route;
     }
 
-    function GetConfig()
+    function getConfig()
     {
         return $this->config;
     }
 
-    function GetRequest()
+    function getRequest()
     {
         return $this->request;
     }
 
-    function GetResponse()
+    function getResponse()
     {
         return $this->response;
+    }
+
+    function getBinder()
+    {
+        return $this->binder;
     }
 }
 /*</module>*/

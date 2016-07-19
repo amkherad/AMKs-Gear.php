@@ -1,8 +1,8 @@
 <?php
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
-/*</namespaces>*/
+/*<namespace.current>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 /*</bundles>*/

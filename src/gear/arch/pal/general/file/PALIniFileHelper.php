@@ -1,9 +1,9 @@
 <?php
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch\pal\file;
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 /*</bundles>*/

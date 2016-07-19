@@ -5,10 +5,10 @@
 //FxException
 /*</requires>*/
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch\app;
 use gear\arch\core\FxException;
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 Bundle::Arch('core\FxException');

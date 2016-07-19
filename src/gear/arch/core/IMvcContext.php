@@ -7,9 +7,9 @@
  */
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch\core;
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 /*</bundles>*/
@@ -17,9 +17,10 @@ namespace gear\arch\core;
 /*<module>*/
 interface IMvcContext
 {
-    function ControllerName();
-    function ActionName();
-    function GetParams();
+    function getAreaName();
+    function getControllerName();
+    function getActionName();
+    function getParams();
 }
 
 /*</module>*/

@@ -7,9 +7,9 @@
  */
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch\core;
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 /*</bundles>*/

@@ -1,9 +1,9 @@
 <?php
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch\core;
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 /*</bundles>*/
@@ -11,10 +11,11 @@ namespace gear\arch\core;
 /*<module>*/
 interface IContext
 {
-    function GetRoute();
-    function GetConfig();
-    function GetRequest();
-    function GetResponse();
+    function getRoute();
+    function getConfig();
+    function getRequest();
+    function getResponse();
+    function getBinder();
 }
 /*</module>*/
 ?>

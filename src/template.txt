@@ -1,6 +1,20 @@
 <?php
 //$SOURCE_LICENSE$
 
-/*<MODULE_EXTRACT>*/
-/*</MODULE_EXTRACT>*/
+/*<requires>*/
+/*</requires>*/
+
+/*<namespace.use>*/
+/*</namespace.use>*/
+/*<namespace.current>*/
+/*</namespace.current>*/
+
+/*<bundles>*/
+/*</bundles>*/
+
+/*<module>*/
+/*</module>*/
+
+/*<generals>*/
+/*</generals>*/
 ?>

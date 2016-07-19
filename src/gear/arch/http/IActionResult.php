@@ -1,9 +1,9 @@
 <?php
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 Bundle::Arch('core/IContext');
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 /*</bundles>*/
@@ -11,7 +11,8 @@ Bundle::Arch('core/IContext');
 /*<module>*/
 interface IActionResult
 {
-    function Execute(IContext $context);
+    function executeResult($context, $request, $response);
+    function getInnerResult();
 }
 /*</module>*/
 ?>

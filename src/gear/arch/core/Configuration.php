@@ -1,12 +1,12 @@
 <?php
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch\core;
-/*</namespaces>*/
+    /*</namespace.current>*/
 
-/*<bundles>*/
-/*</bundles>*/
+    /*<bundles>*/
+    /*</bundles>*/
 
 /*<module>*/
 use gear\arch\pal\file\IniFile;
@@ -28,6 +28,22 @@ class Configuration
             : null;
     }
 
+    public function getValue($value, $section = null, $defaultValue = null)
+    {
+        if (isset($section)) {
+            $result = isset($this->c[$section][$value])
+                ? $this->c[$section][$value]
+                : $defaultValue;
+        } else {
+            $result = isset($this->c[$value])
+                ? $this->c[$value]
+                : $defaultValue;
+        }
+        return $result == null
+            ? $defaultValue
+            : $result;
+    }
+
     public static function FromFile($path, $type = 0)
     {
         return $type == 0
@@ -46,5 +62,6 @@ class Configuration
         return new self('', "xml");
     }
 }
+
 /*</module>*/
 ?>

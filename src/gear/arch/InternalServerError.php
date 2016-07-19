@@ -7,9 +7,9 @@
  */
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch;
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 /*</bundles>*/
@@ -20,7 +20,7 @@ class InternalServerError
     public static function Render($ex, $errorCode = 500)
     {
         if (defined('DEBUG')) {
-            self::_log($ex->getMessage() . ' trace:' . Utils::stringify($ex->getTrace()));
+            Logger::write($ex->getMessage() . ' trace:' . Utils::stringify($ex->getTrace()));
         }
         if ($ex instanceof MvcMessageException) {
             echo "<h2>$ex->Title</h2><h3 style=\"color:red;\">{$ex->getMessage()}</h3>";

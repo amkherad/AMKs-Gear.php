@@ -7,10 +7,10 @@
  */
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch\core;
 use gear\arch\core\IMessageException;
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 Bundle::Arch('core\IMessageException');

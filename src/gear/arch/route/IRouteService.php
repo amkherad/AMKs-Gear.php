@@ -1,9 +1,9 @@
 <?php
 //$SOURCE_LICENSE$
 
-/*<namespaces>*/
+/*<namespace.current>*/
 namespace gear\arch\route;
-/*</namespaces>*/
+/*</namespace.current>*/
 
 /*<bundles>*/
 /*</bundles>*/
@@ -11,7 +11,7 @@ namespace gear\arch\route;
 /*<module>*/
 interface IRouteService
 {
-
+    function getMvcContext();
 }
 /*</module>*/
 ?>
