@@ -27,12 +27,17 @@ class DefaultModelBinder implements IModelBinder
         $instance = $modelDescriptor->newInstance();
         if ($instance == null) throw new InvalidOperationException('Argument $instance is null.');
 
-        _bind($instance);
+        self::_bind($context, $instance, null);
 
         return $instance;
     }
 
-    function _bind($context, $instance, $source)
+    function fillModelFromContext($instance, $context, $controller, $mvcContext)
+    {
+        self::_bind($context, $instance, null);
+    }
+
+    private static function _bind($context, $instance, $source)
     {
         if (!isset($source)) {
             $source =  $context->getRequest()->getCurrentMethodValues();

@@ -3,10 +3,10 @@
 
 /*<namespace.current>*/
 namespace gear\arch\core;
-/*</namespace.current>*/
+    /*</namespace.current>*/
 
-/*<bundles>*/
-/*</bundles>*/
+    /*<bundles>*/
+    /*</bundles>*/
 
 /*<module>*/
 class AppContext implements IContext
@@ -17,7 +17,8 @@ class AppContext implements IContext
         $request,
         $response,
         $binderFactory,
-        $binder;
+        $binder,
+        $services;
 
     public function __construct(
         $route,
@@ -31,6 +32,7 @@ class AppContext implements IContext
         $this->request = $request;
         $this->response = $response;
         $this->binderFactory = $binderFactory;
+        $this->services = [];
 
         $this->binder = $binderFactory->createEngine($this);
     }
@@ -59,6 +61,22 @@ class AppContext implements IContext
     {
         return $this->binder;
     }
+
+    function registerService($serviceName, $service)
+    {
+        $this->services[$serviceName] = $service;
+    }
+    function removeService($serviceName)
+    {
+        unset($this->services[$serviceName]);
+    }
+    function getService($serviceName)
+    {
+        return isset($this->services[$serviceName])
+            ? $this->services[$serviceName]
+            : null;
+    }
 }
+
 /*</module>*/
 ?>

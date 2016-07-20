@@ -19,7 +19,7 @@ class Bundle
         self::$locator = $locator;
     }
 
-    public static function fallback($module, $require = true, $once = true)
+    public static function prob($module, $require = true, $once = true)
     {
 
     }

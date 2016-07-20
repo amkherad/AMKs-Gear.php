@@ -1,5 +1,5 @@
 <?php
-
+//$SOURCE_LICENSE$
 define('Gear_IsPackaged', true);
 
 /* Modules: */
@@ -9,28 +9,43 @@ define('Gear_IsPackaged', true);
 define('Gear_Default_ConfigPath',                   'config.ini');
 define('Gear_500InternalServerErrorPageName',       '500.php');
 
-define('Gear_IniSection_AppEngine',                 'AppEngine');
-define('Gear_IniSection_Router',                    'Router');
-define('Gear_IniSection_Controller',                'Controller');
-define('Gear_IniSection_ActionResolver',            'ActionResolver');
-define('Gear_IniSection_View',                      'View');
-define('Gear_IniSection_Binder',                    'Binder');
+define('Gear_Section_AppEngine',                    'AppEngine');
+define('Gear_Section_Router',                       'Router');
+define('Gear_Section_Controller',                   'Controller');
+define('Gear_Section_ActionResolver',               'ActionResolver');
+define('Gear_Section_View',                         'View');
+define('Gear_Section_Binder',                       'Binder');
+define('Gear_Section_Defaults',                     'Defaults');
 
-define('Gear_IniKey_Loggers',                       'Loggers');
-define('Gear_IniKey_Factory',                       'Factory');
-define('Gear_IniKey_Dependencies',                  'Dependencies');
-define('Gear_IniKey_PreferredActionPattern',        'PreferredActionPattern');
-define('Gear_IniKey_JsonResultAllowGet',            'JsonResultAllowGet');
+define('Gear_Key_Engine',                           'Engine');
+define('Gear_Key_Loggers',                          'Loggers');
+define('Gear_Key_AutoLoading',                      'AutoLoading');
+define('Gear_Key_Factory',                          'Factory');
+define('Gear_Key_RootPath',                         'RootPath');
+define('Gear_Key_Dependencies',                     'Dependencies');
+define('Gear_Key_PreferredActionPattern',           'PreferredActionPattern');
+define('Gear_Key_JsonResultAllowGet',               'JsonResultAllowGet');
+define('Gear_Key_LayoutName',                       'Layout');
+define('Gear_Key_DebugMode',                        'DebugMode');
 
-define('Gear_IniPlaceHolder_Action',                '[action]');
-define('Gear_IniPlaceHolder_HttpMethod',            '[http_method]');
+define('Gear_PlaceHolder_Action',                   '[action]');
+define('Gear_PlaceHolder_HttpMethod',               '[http_method]');
 
 define('Gear_DefaultRouterFactory',                 'DefaultRouteFactory');
 define('Gear_DefaultControllerFactory',             'DefaultControllerFactory');
 define('Gear_DefaultActionResolverFactory',         'DefaultActionResolverFactory');
 define('Gear_DefaultModelBinderFactory',            'DefaultModelBinderFactory');
+define('Gear_DefaultViewEngineFactory',             'DefaultViewEngineFactory');
 
+define('Gear_DefaultControllersRootPath',           'controller');
+define('Gear_DefaultModelsRootPath',                'model');
+define('Gear_DefaultViewsRootPath',                 'views');
+
+define('Gear_DefaultLayoutName',                    '_layout');
 define('Gear_DefaultPreferredActionPattern',        '[action]__[http_method]');
+
+define('Gear_ServiceViewEngineFactory',             'ViewEngineFactoryService');
+define('Gear_ServiceViewOutputStream',              'ServiceViewOutputStream');
 
 
 
@@ -70,7 +85,8 @@ class AppContext implements IContext
         $request,
         $response,
         $binderFactory,
-        $binder;
+        $binder,
+        $services;
 
     public function __construct(
         $route,
@@ -84,6 +100,7 @@ class AppContext implements IContext
         $this->request = $request;
         $this->response = $response;
         $this->binderFactory = $binderFactory;
+        $this->services = [];
 
         $this->binder = $binderFactory->createEngine($this);
     }
@@ -112,7 +129,23 @@ class AppContext implements IContext
     {
         return $this->binder;
     }
+
+    function registerService($serviceName, $service)
+    {
+        $this->services[$serviceName] = $service;
+    }
+    function removeService($serviceName)
+    {
+        unset($this->services[$serviceName]);
+    }
+    function getService($serviceName)
+    {
+        return isset($this->services[$serviceName])
+            ? $this->services[$serviceName]
+            : null;
+    }
 }
+
 
 
 
@@ -124,6 +157,9 @@ class AppEngine
     private $configuration;
     private $controllerFactory;
     private $actionResolverFactory;
+
+    private $_startExecutionTime;
+    private $_createExecutionTime;
 
     private function __construct(
         $context,
@@ -138,13 +174,35 @@ class AppEngine
         $this->actionResolverFactory = $actionResolverFactory;
     }
 
+    public function getCreateExecutionTime()
+    {
+        return $this->_createExecutionTime;
+    }
+
+    public function getStartExecutionTime()
+    {
+        return $this->_startExecutionTime;
+    }
+
     public function start($engine = null)
     {
+        $result = null;
         try {
-            if ($engine == static::Mvc || is_null($engine))
-                return self::_startMvc();
+            $rStart = microtime(true);
 
-            throw new AppEngineNotFoundException();
+            if(!isset($engine)) {
+                $engine = $this->configuration->getValue(Gear_Key_Engine, Gear_Section_AppEngine, 'mvc');
+            }
+
+            if ($engine == static::Mvc || is_null($engine))
+                $result = self::_startMvc0();
+            $this->_startExecutionTime = (microtime(true) - $rStart);
+
+            if ($result == null) {
+                throw new AppEngineNotFoundException();
+            } else {
+                return $result;
+            }
         } catch (Exception $ex) {
             self::_render500Error($ex);
         }
@@ -152,7 +210,7 @@ class AppEngine
 
     public static function getFactory(Configuration $config, $engine, $defaultFactory)
     {
-        $factoryClass = $config->getValue(Gear_IniKey_Factory, $engine, $defaultFactory);
+        $factoryClass = $config->getValue(Gear_Key_Factory, $engine, $defaultFactory);
 
         $factory = new $factoryClass();
         if ($factory == null)
@@ -164,7 +222,7 @@ class AppEngine
     public static function resolveDependencies($context)
     {
         $config = $context->getConfig();
-        $dependencies = $config->getValue(Gear_IniKey_Dependencies, Gear_IniSection_AppEngine);
+        $dependencies = $config->getValue(Gear_Key_Dependencies, Gear_Section_AppEngine);
 
         if (isset($dependencies)) {
             $modules = [];
@@ -191,7 +249,7 @@ class AppEngine
         }
     }
 
-    private function _startMvc()
+    private function _startMvc0()
     {
         $controller = $this->controllerFactory->createEngine(
             $this->context
@@ -212,20 +270,33 @@ class AppEngine
             $mvcContext,
             $request,
             $actionName);
+
+        return 1;
     }
 
     public static function create($configPath = null, $type = 0)
     {
         try {
+            $rStart = microtime(true);
             if (is_null($configPath))
                 $configPath = Gear_Default_ConfigPath;
             $config = Configuration::FromFile($configPath, $type);
 
-            $routeFactory = self::getFactory($config, Gear_IniSection_Router, Gear_DefaultRouterFactory);
+            $debugMode = $config->getValue(Gear_Key_DebugMode, Gear_Section_AppEngine, false);
+            if (boolval($debugMode) == true && !defined('DEBUG')) {
+                define('DEBUG', 1);
+            }
+
+            $autoLoadMode = $config->getValue(Gear_Key_AutoLoading, Gear_Section_AppEngine, null);
+            if ($autoLoadMode != null) {
+                Autoload::register($autoLoadMode);
+            }
+
+            $routeFactory = self::getFactory($config, Gear_Section_Router, Gear_DefaultRouterFactory);
             $route = $routeFactory->createEngine(null);
             $request = new HttpRequest($route);
             $response = new HttpResponse();
-            $binderFactory = self::getFactory($config, Gear_IniSection_Binder, Gear_DefaultModelBinderFactory);
+            $binderFactory = self::getFactory($config, Gear_Section_Binder, Gear_DefaultModelBinderFactory);
 
             $context = new AppContext(
                 $route,
@@ -234,10 +305,11 @@ class AppEngine
                 $response,
                 $binderFactory
             );
+            HttpContext::setCurrent($context);
 
             self::resolveDependencies($context);
 
-            $loggers = $config->getValue(Gear_IniKey_Loggers, Gear_IniSection_AppEngine);
+            $loggers = $config->getValue(Gear_Key_Loggers, Gear_Section_AppEngine);
             if ($loggers != null) {
                 $lgs = explode(',', $loggers);
                 foreach ($lgs as $logger) {
@@ -247,8 +319,11 @@ class AppEngine
                 }
             }
 
-            $controllerFactory = self::getFactory($config, Gear_IniSection_Controller, Gear_DefaultControllerFactory);
-            $actionResolverFactory = self::getFactory($config, Gear_IniSection_ActionResolver, Gear_DefaultActionResolverFactory);
+            $controllerFactory = self::getFactory($config, Gear_Section_Controller, Gear_DefaultControllerFactory);
+            $actionResolverFactory = self::getFactory($config, Gear_Section_ActionResolver, Gear_DefaultActionResolverFactory);
+            $viewEngineFactory = self::getFactory($config, Gear_Section_View, Gear_DefaultViewEngineFactory);
+
+            $context->registerService(Gear_ServiceViewEngineFactory, $viewEngineFactory);
 
             $result = new self(
                 $context,
@@ -257,6 +332,7 @@ class AppEngine
                 $controllerFactory,
                 $actionResolverFactory);
 
+            $result->_createExecutionTime = (microtime(true) - $rStart);
             return $result;
         } catch (Exception $ex) {
             self::_render500Error($ex);
@@ -273,6 +349,60 @@ class AppEngine
 
 
 
+
+class Autoload
+{
+    public static function register($type)
+    {
+        $function = null;
+        switch (strtolower($type)) {
+            case 'prob':
+                spl_autoload_register(function ($className) {
+                    self::_probing($className);
+                });
+                break;
+            case 'userprobing':
+                spl_autoload_register(function ($className) {
+                    self::_userProbing($className);
+                });
+                break;
+            default:
+                throw new InvalidOperationException();
+        }
+    }
+
+    private static function _probing($className)
+    {
+        Bundle::prob($className);
+    }
+
+    private static function _userProbing($className)
+    {
+        Bundle::resolveUserModule($className, true, true);
+    }
+}
+
+
+
+class BatchActionResult extends ActionResultBase
+{
+    private
+        $actions;
+
+    public function __construct($actions)
+    {
+        $this->actions = $actions;
+    }
+
+    public function executeResult($context, $request, $response)
+    {
+        foreach ($this->actions as $action) {
+            $action->executeResult($context, $request, $response);
+        }
+    }
+}
+
+
 class Bundle
 {
     static $locator;
@@ -283,7 +413,7 @@ class Bundle
         self::$locator = $locator;
     }
 
-    public static function fallback($module, $require = true, $once = true)
+    public static function prob($module, $require = true, $once = true)
     {
 
     }
@@ -448,18 +578,114 @@ class ContentResult
 
 
 
-class Controller extends InspectableClass
+abstract class Controller// extends InspectableClass
 {
+    protected
+        $context,
+        $mvcContext,
+        $route,
+        $request,
+        $response,
+        $binder;
+
+    public
+        $layout,
+        $viewData,
+        $html,
+        $url,
+        $helper
+    ;
+
+    public function __construct($context)
+    {
+        $this->context = $context;
+        $route = $context->getRoute();
+        $config = $context->getConfig();
+        $this->route = $route;
+        $this->request = $context->getRequest();
+        $this->response = $context->getResponse();
+        $this->binder = $context->getBinder();
+        $this->mvcContext = $route->getMvcContext();
+
+        $this->layout = $config->getValue(Gear_Key_LayoutName, Gear_Section_View, Gear_DefaultLayoutName);
+
+        $this->viewData = new DynamicDictionary(array());
+    }
+
+    public function getRoute()
+    {
+        return $this->route;
+    }
+
+    public function getRequest()
+    {
+        return $this->request;
+    }
+
+    public function getResponse()
+    {
+        return $this->response;
+    }
+
+    public function getMvcContext()
+    {
+        return $this->mvcContext;
+    }
+
+    public function getBinder()
+    {
+        return $this->binder;
+    }
+
     public function beginExecute()
     {
     }
+
+    public function checkExecution()
+    {
+        $this->authorize();
+    }
+
+    public function endExecute()
+    {
+    }
+
+    public function onExceptionOccurred($exception)
+    {
+        echo 'sexy??';
+    }
+
+    public function authorize()
+    {
+
+    }
+
+    public function Bind($model)
+    {
+        if (!isset($model)) {
+            return null;
+        }
+
+        $this->binder->fillModelFromContext($model, $this->context, $this, $this->mvcContext);
+
+        return $model;
+    }
+
+    public function LayoutRendering($layout)
+    {
+    }
+
 
     public function Json($mixed, $allowGet = false)
     {
         return new JsonResult($mixed, $allowGet);
     }
-}
 
+    public function View($model = null, $viewName = null)
+    {
+        return new ViewResult($this, $viewName, $model);
+    }
+}
 
 
 class DefaultActionResolverFactory implements IEngineFactory
@@ -479,11 +705,18 @@ class DefaultControllerFactory implements IEngineFactory
         $mvcContext = $route->getMvcContext();
 
         $controllerName = $mvcContext->getControllerName();
+        $areaName = $mvcContext->getAreaName();
 
         if(substr($controllerName, strlen($controllerName) - 10) != 'Controller')
             $controllerName .= 'Controller';
-        Bundle::resolveUserModule("controllers\\".$controllerName.'.php');
-        return new $controllerName();
+
+        $controllerPath = "controllers\\".$controllerName.'.php';
+        if(isset($areaName)){
+            $controllerPath = "$areaName\\$controllerPath";
+        }
+
+        Bundle::resolveUserModule($controllerPath);
+        return new $controllerName($context);
     }
 }
 
@@ -497,12 +730,17 @@ class DefaultModelBinder implements IModelBinder
         $instance = $modelDescriptor->newInstance();
         if ($instance == null) throw new InvalidOperationException('Argument $instance is null.');
 
-        _bind($instance);
+        self::_bind($context, $instance, null);
 
         return $instance;
     }
 
-    function _bind($context, $instance, $source)
+    function fillModelFromContext($instance, $context, $controller, $mvcContext)
+    {
+        self::_bind($context, $instance, null);
+    }
+
+    private static function _bind($context, $instance, $source)
     {
         if (!isset($source)) {
             $source =  $context->getRequest()->getCurrentMethodValues();
@@ -546,26 +784,77 @@ class DefaultRouter implements IRouteService
 }
 
 
+class DefaultViewEngineFactory implements IEngineFactory
+{
+    function createEngine($context)
+    {
+        return new DefaultViewEngine();
+    }
+}
+
+
+class DynamicDictionary implements \ArrayAccess
+{
+    private $v, $a;//a:true all isset=true else if exists.
+
+    public function __construct($p, $a = false)
+    {
+        $this->v = $p;
+        $this->a = $a;
+    }
+
+    public function __set($k, $val)
+    {
+        $this->v[$k] = $val;
+    }
+
+    public function &__get($k)
+    {
+        return $this->v[$k];
+    }
+
+    public function __isset($k)
+    {
+        return $this->a || isset($this->v[$k]);
+    }
+
+    public function __unset($k)
+    {
+        unset($this->v[$k]);
+    }
+
+    public function offsetExists($o)
+    {
+        return $this->a || isset($this->v[$o]);
+    }
+
+    public function &offsetGet($o)
+    {
+        return $this->v[$o];
+    }
+
+    public function offsetSet($o, $val)
+    {
+        $this->v[$o] = $val;
+    }
+
+    public function offsetUnset($o)
+    {
+        unset($this->v[$o]);
+    }
+
+    public function setInnerBuffer(&$v)
+    {
+        $this->v = $v;
+    }
+}
+
+
 class EndResponseResult
 {
 
 }
 
-
-
-class ErrorResult extends ActionResultBase
-{
-    private $error;
-    public function __construct($error)
-    {
-        $this->error = $error;
-    }
-
-    public function executeResult($context, $request, $response)
-    {
-        throw new Exception($this->error);
-    }
-}
 
 
 class ExecuteActionResult
@@ -601,22 +890,6 @@ class FsModuleLocator implements IModuleLocator
 }
 
 
-class FxException extends \Exception implements IMessageException
-{
-    private $httpStatusCode;
-    public function __construct($message, $httpStatusCode = 500, $code = 0)
-    {
-        $this->httpStatusCode = $httpStatusCode;
-        parent::__construct($message, $code);
-    }
-
-    public function getHttpStatusCode()
-    {
-        return $this->httpStatusCode;
-    }
-}
-
-
 class HeaderResult
 {
 
@@ -640,26 +913,32 @@ class Helpers
 
 
 
-class HttpContext{
-    static$cc;
-    
-    public$Application,$Route,$Request,$Response,$Cookie,$Session,$Controller,$View;
-    
-    public$Ending;
-    
-    public function __construct(){
-        $this->Response=new HttpResponseDirectOut($this);
-        $this->Request =new HttpRequest($this,$_GET,$_POST,$_FILES,$_SERVER);
+class HttpContext
+{
+    static
+        $currentContext;
+
+    public $Ending;
+
+    public function End()
+    {
+        if (is_callable($this->Ending)) {
+            $c = $this->Ending;
+            $c();
+        }
+        exit;
     }
-    
-    public function End(){if(is_callable($this->Ending)){$c=$this->Ending;$c();}exit;}
-    
-    public static function Current(){return HttpContext::$cc;}
-    public static function Initialize(){
-        if(HttpContext::$cc!=null)throw new MvcInvalidOperationException('HttpContext already initialized.');
-        HttpContext::$cc=new HttpContext();
+
+    public static function current()
+    {
+        return self::$currentContext;
     }
-};
+
+    public static function setCurrent($context)
+    {
+        self::$currentContext = $context;
+    }
+}
 
 
 class HttpRequest implements IHttpRequest
@@ -706,21 +985,6 @@ class HttpRequest implements IHttpRequest
 
 
 
-
-class HttpResponse implements IHttpResponse
-{
-    public function write($mixed)
-    {
-        echo Serializer::stringify($mixed);
-    }
-    public function serializeWrite($object, $request)
-    {
-
-    }
-}
-
-
-
 interface IActionResolver
 {
     function invokeAction($controller,
@@ -745,6 +1009,10 @@ interface IContext
     function getRequest();
     function getResponse();
     function getBinder();
+
+    function registerService($serviceName, $service);
+    function removeService($serviceName);
+    function getService($serviceName);
 }
 
 
@@ -761,13 +1029,6 @@ interface IHttpRequest
     function accepts();
     function getAllValues();
     function &getCurrentMethodValues();
-}
-
-
-interface IHttpResponse
-{
-    function write($mixed);
-    function serializeWrite($object, $request);
 }
 
 
@@ -792,6 +1053,7 @@ interface IMessageException
 interface IModelBinder
 {
     function getModelFromContext($modelDescriptor, $context, $controller, $mvcContext);
+    function fillModelFromContext($instance, $context, $controller, $mvcContext);
 }
 
 
@@ -814,9 +1076,27 @@ interface IMvcContext
 
 
 
+interface IOutputStream
+{
+    function write($mixed);
+    function clear();
+}
+
+
 interface IRouteService
 {
     function getMvcContext();
+}
+
+
+interface IViewEngine
+{
+    function renderView(
+        $context,
+        $controller,
+        $viewName,
+        $model
+    );
 }
 
 
@@ -824,7 +1104,7 @@ class InspectableClass
 {
     public function GetProperty($n)
     {
-        throw new MvcInvalidOperationException("Property '$n' not found.");
+        throw new InvalidOperationException("Property '$n' not found.");
     }
     public final function __get($n)
     {
@@ -844,34 +1124,42 @@ class InspectableClass
 }
 
 
+
 class InternalServerError
 {
-    public static function Render($ex, $errorCode = 500)
+    public static function Render($ex, $eCode = null)
     {
-        if (defined('DEBUG')) {
-            Logger::write($ex->getMessage() . ' trace:' . Utils::stringify($ex->getTrace()));
-        }
-        if ($ex instanceof MvcMessageException) {
-            echo "<h2>$ex->Title</h2><h3 style=\"color:red;\">{$ex->getMessage()}</h3>";
+        if ($eCode == null) {
+            if ($ex instanceof IMessageException) {
+                $errorCode = $ex->getHttpStatusCode();
+            } else {
+                $errorCode = 500;
+            }
         } else {
-            $errMessage = (defined('DEBUG') && $errorCode == 500) ? 'Internal Server Error!' : $ex->getMessage();
-            echo "<center><h1 style=\"color:red\">$errorCode - $errMessage</h1><br>" .
-                (defined('DEBUG') ?
-                    $ex->getMessage() . '<br>' .
-                    $ex->getFile() . ' at line: ' . $ex->getLine() . '<br><br>' .
-                    $ex->getTraceAsString()
-                    :
-                    "Sorry! An internal server error has been occured.<br>Please report to website admin.")
-                . '</center>';
+            $errorCode = $eCode;
         }
+
+        if (defined('DEBUG')) {
+            Logger::write($ex->getMessage() . ' trace:' . Serializer::stringify($ex->getTrace()));
+        }
+
+        http_response_code($errorCode);
+        $errMessage = (defined('DEBUG') && $errorCode == 500) ? 'Internal Server Error!' : $ex->getMessage();
+        echo "<h1 style=\"color:red\">$errorCode - $errMessage</h1><br>" .
+            (defined('DEBUG') ?
+                $ex->getMessage() . '<br>' .
+                $ex->getFile() . ' at line: ' . $ex->getLine() . '<br><br>' .
+                $ex->getTraceAsString()
+                :
+                "Sorry! An internal server error has been occured.<br>Please report to website admin.")
+            ;
     }
 }
 
 
-
 class InvalidOperationException extends \Exception implements IMessageException
 {
-    public function __construct($message, $code, Exception $previous)
+    public function __construct($message = '', $code = 0, Exception $previous = null)
     {
         parent::__construct($message == null
             ? 'Invalid operation exception.'
@@ -883,32 +1171,6 @@ class InvalidOperationException extends \Exception implements IMessageException
         return 500;
     }
 }
-
-
-class JsonResult extends ActionResultBase
-{
-    private
-        $content,
-        $allowGet;
-
-    public function __construct($content, $allowGet)
-    {
-        $this->content = $content;
-        $this->allowGet = $allowGet;
-    }
-
-    public function executeResult($context, $request, $response)
-    {
-        $method = $request->getMethod();
-        $allowGet = $context->getConfig()->getValue(Gear_IniKey_JsonResultAllowGet, Gear_IniSection_ActionResolver, false);
-        if ($method == 'GET' && !($this->allowGet || $allowGet)) {
-            return new ErrorResult("Action is not configured to serve data as GET http method.");
-        }
-
-        $response->write(json_encode($this->content));
-    }
-}
-
 
 
 class Logger
@@ -952,9 +1214,236 @@ class PartialViewResult
 
 
 
+class Path
+{
+    private static function _combine($path1, $path2)
+    {
+        $path1 = strval($path1);
+        $path2 = strval($path2);
+        $sep = substr($path1, strlen($path1) - 1);
+        $retval = ($sep == '/' || $sep == '\\')
+            ? $path1 : $path1 . '/';
+        $sep = substr($path2, 0, 1);
+        $retval .= ($sep == '/' || $sep == '\\')
+            ? substr($path2, 1) : $path2;
+        return $retval;
+    }
+
+    public static function Combine($path1)
+    {
+        if (is_array($path1)) {
+            $retval = '';
+            $first = true;
+            foreach ($path1 as $path) {
+                if ($path == null) continue;
+                $retval = strval($first)
+                    ? $path : self::_combine($retval, $path);
+                $first = false;
+            }
+            return $retval;
+        } else {
+            $retval = strval($path1);
+            $fv = func_num_args();
+            for ($i = 1; $i < $fv; $i++) {
+                $retval = self::_combine($retval, func_get_arg($i));
+            }
+            return $retval;
+        }
+    }
+
+    public static function GetUseablePath($p)
+    {
+        $f = substr($p, 0, 1);
+        if ($f == '/' || $f == '\\') {
+            $p = substr($p, 1);
+        }
+        return $p;
+    }
+
+    public static function GetExtension($p)
+    {
+        $d = strrpos($p, '.');
+        if (!is_bool($d) && $d >= 0) {
+            return ($d < strlen($p) - 1 ? substr($p, $d + 1) : '');
+        }
+        return null;
+    }
+}
+
+
 class RedirectResult
 {
 
+}
+
+
+
+class Route
+{
+
+}
+
+
+class RouteCollection implements \ArrayAccess
+{
+    const
+        Optional = 'optional',
+        Params = 'params';
+
+    public $MapedRoutes = array();
+    public $IgnoredRoutes = array();
+
+    public function MapRoute($name, $url, $defaults = null, $constraints = null)
+    {
+        $p = explode('/', $url);
+        $size = sizeof($p);
+        $min = $size;
+        $max = $size;
+
+        $r = array('name' => $name, 'url' => $url);
+
+        $escaped = array();
+        foreach ($p as $s) {
+            if ($s == null) continue;
+            preg_match('/(?:{)(.+)(?:})/', $s, $match);
+            $escaped[] = $match[1];
+        }
+        $r['sections'] = $escaped;
+
+        $r['params'] = null;
+        $paramsFound = false;
+
+        $defaultsRemover = array();
+        if (is_array($defaults)) foreach ($defaults as $k => &$d) {
+            foreach ($escaped as $escapedEl) if ($escapedEl == $k) $min--;
+            if (is_array($d)) {
+                foreach ($d as $element) {
+                    $removeFromDefaults = false;
+                    if ($element == self::Optional) {
+                        $min--;
+                        $removeFromDefaults = true;
+                    } elseif ($element == self::Params) {
+                        if ($paramsFound) throw new InvalidOperationException();
+                        $min--;
+                        $max = 9999999;
+                        $d['name'] = $k;
+                        $r['params'] = $d;
+                        $paramsFound = true;
+                        $removeFromDefaults = true;
+                    }
+                    if ($removeFromDefaults && array_search($k, $escaped) === false) {
+                        $defaultsRemover[] = $k;
+                        continue;
+                    }
+                }
+            }
+        }
+        if ($min < 0) $min = 0;
+        //foreach($defaultsRemover as $dr)unset($defaults[$dr]);
+
+        $r['defaults'] = $defaults;
+        $r['constraints'] = $constraints;
+
+        $r['urlMinParts'] = $min;
+        $r['urlMaxParts'] = $max;
+
+        $this->MapedRoutes[$name] = $r;;
+    }
+
+    public function IgnoreRoute($url, $constraints = null)
+    {
+        array_push($this->IgnoredRoutes, array('url' => $url, 'constraints' => $constraints));
+    }
+
+    private function _doesMatch($arr, $p, $path)
+    {
+        $count = sizeof($p);
+        if ($count >= $arr['urlMinParts'] && $count <= $arr['urlMaxParts']) {
+            return true;
+        }
+        return false;
+    }
+
+    public function GetRoute($path)
+    {
+        $p = array();
+        foreach (explode('/', $path) as $e) if ($e != '') $p[] = $e;
+        $size = sizeof($p);
+        foreach ($this->MapedRoutes as $r) {
+            if ($this->_doesMatch($r, $p, $path)) {
+                $result = array();
+                $rSections = $r['sections'];
+                $rDefaults = $r['defaults'];
+                $rParams = $r['params'];
+                $removes = array();
+                for ($i = 0; $i < $size; $i++) {
+                    $name = isset($rSections[$i]) ? $rSections[$i] : $rParams['name'];
+                    if ($name != $rParams['name'])
+                        $result[$name] = isset($p[$i]) ? $p[$i] : $rDefaults[$i];
+                    else {
+                        $removes[$name] = true;
+                        $result/*[$name]*/
+                        [] = isset($p[$i]) ? $p[$i] : $rDefaults[$i];
+                    }
+                }
+                foreach ($rDefaults as $k => $def) {
+                    if (!isset($result[$k]) && !isset($removes[$k]))
+                        $result[$k] = $def;
+                }
+                return $result;
+            }
+        }
+        return null;
+    }
+
+    public function GetVirtualPath($context, $p)
+    {//  controller - action - arg1
+        $path = implode('/', $p);
+        //foreach($this->MapedRoutes as $r){
+        //    if($this->_doesMatch($r,$p,$path)){
+        //        return Path::Combine(Uri::GetRoot(),$path);
+        //    }
+        //}
+        return Path::Combine(Uri::GetRoot(), $path);
+    }
+
+    public function __set($k, $val)
+    {
+        throw new InvalidOperationException("");
+    }
+
+    public function __get($k)
+    {
+        return null;
+    }
+
+    public function __isset($k)
+    {
+        return false;
+    }
+
+    public function __unset($k)
+    {
+    }
+
+    public function offsetExists($o)
+    {
+        return false;
+    }
+
+    public function offsetGet($o)
+    {
+        return null;
+    }
+
+    public function offsetSet($o, $val)
+    {
+        throw new InvalidOperationException("");
+    }
+
+    public function offsetUnset($o)
+    {
+    }
 }
 
 
@@ -1017,27 +1506,38 @@ class StatusCodeResult
 
 class ViewResult extends ActionResultBase
 {
+    private
+        $controller,
+        $viewName,
+        $model;
+
+    public function __construct($controller, $viewName, $model)
+    {
+        $this->controller = $controller;
+        $this->viewName = $viewName;
+        $this->model = $model;
+    }
+
     public function executeResult($context, $request, $response)
     {
-        $execResult=$this->controller->View->RenderView($this->controllerName,$this->action,$this->model);
-        $result=array();
-        if(is_array($execResult))
-            foreach($execResult as $r)
-                if($r instanceof ActionResult)
-                    $result[]=$r;
-        if(sizeof($result)>0) return new BatchActionResult($result);
-        return true;
+        $viewEngineFactory = $context->getService(Gear_ServiceViewEngineFactory);
+
+        $viewEngine = $viewEngineFactory->createEngine($context);
+
+        $viewName = $this->viewName;
+        if(!isset($viewName)){
+            $viewName = $context->getRoute()->getMvcContext()->getActionName();
+        }
+
+        return $viewEngine->renderView(
+            $context,
+            $this->controller,
+            $viewName,
+            $this->model
+        );
     }
 }
 
-
-class AppEngineNotFoundException extends FxException
-{
-    public function __construct()
-    {
-        parent::__construct("Specified app engine not found.", 500);
-    }
-}
 
 
 class DefaultActionResolver implements IActionResolver
@@ -1052,9 +1552,9 @@ class DefaultActionResolver implements IActionResolver
         $config = $context->getConfig();
         $method = $request->getMethod();
 
-        $preferedAction = $config->getValue(Gear_IniKey_PreferredActionPattern, Gear_IniSection_Controller, Gear_DefaultPreferredActionPattern);
-        $preferedAction = str_replace(Gear_IniPlaceHolder_Action, $actionName, $preferedAction);
-        $preferedAction = str_replace(Gear_IniPlaceHolder_HttpMethod, $method, $preferedAction);
+        $preferedAction = $config->getValue(Gear_Key_PreferredActionPattern, Gear_Section_Controller, Gear_DefaultPreferredActionPattern);
+        $preferedAction = str_replace(Gear_PlaceHolder_Action, $actionName, $preferedAction);
+        $preferedAction = str_replace(Gear_PlaceHolder_HttpMethod, $method, $preferedAction);
 
         if (method_exists($controller, $preferedAction)) {
             $actionName = $preferedAction;
@@ -1062,27 +1562,37 @@ class DefaultActionResolver implements IActionResolver
 
         $suppliedArgumentss = array();
 
-        $controllerReflection = new ReflectionClass($controller);
+        $controllerReflection = new \ReflectionClass($controller);
         $actionReflection = $controllerReflection->getMethod($actionName);
         $actionParameters = $actionReflection->getParameters();
 
         $controller->beginExecute();
 
-        $result = self::_execAction(
-            $context,
-            $mvcContext,
-            $controller,
-            $controllerReflection,
-            $actionReflection,
-            $actionName,
-            $suppliedArgumentss,
-            $actionParameters);
+        $controller->checkExecution();
 
-        self::_executeActionResult(
-            $context,
-            $request,
-            $context->getResponse(),
-            $result);
+        try {
+            $result = self::_execAction(
+                $context,
+                $mvcContext,
+                $controller,
+                $controllerReflection,
+                $actionReflection,
+                $actionName,
+                $suppliedArgumentss,
+                $actionParameters);
+
+            self::_executeActionResult(
+                $context,
+                $request,
+                $context->getResponse(),
+                $result);
+
+        } catch (\Exception $ex) {
+            $controller->onExceptionOccurred($ex);
+            throw $ex;
+        }
+
+        $controller->endExecute();
     }
 
     public static function _execAction(
@@ -1121,7 +1631,7 @@ class DefaultActionResolver implements IActionResolver
                             $mvcContext
                         );
                     } else {
-                        throw new MvcInvalidOperationException("Action '$actionName' argument uses an undefined class type.");
+                        throw new InvalidOperationException("Action '$actionName' argument uses an undefined class type.");
                     }
                 }
             }
@@ -1133,16 +1643,182 @@ class DefaultActionResolver implements IActionResolver
 
     private static function _executeActionResult($context, $request, $response, $result)
     {
-        while ($result instanceof IActionResult) {
-            $inner = $result->getInnerResult();
-            $result = $result->executeResult($context, $request, $response);
+        if (!isset($result)) return;
+        do {
+            if ($result instanceof IActionResult) {
+                $inner = $result->getInnerResult();
+                $result = $result->executeResult($context, $request, $response);
+            } else {
+                $inner = null;
+                $response->write($result);
+            }
             if ($inner instanceof IActionResult) {
                 if (!($inner instanceof IInnerActionResult)) {
                     throw new InvalidOperationException('InnerResult must be an instance of IInnerActionResult.');
                 }
-                self::_executeActionResult($context, $inner);
+                self::_executeActionResult($context, $request, $response, $inner);
+            }
+        } while ($result instanceof IActionResult);
+    }
+}
+
+
+
+
+class DefaultViewEngine implements IViewEngine
+{
+    public function renderView(
+        $context,
+        $controller,
+        $viewName,
+        $model
+    )
+    {
+        $route = $context->getRoute();
+        $mvcContext = $route->getMvcContext();
+        $controllerName = $mvcContext->getControllerName();
+
+        $execResult = self::_renderView(
+            0,
+            $context,
+            $mvcContext,
+            $controllerName,
+            $controller,
+            $viewName,
+            $model,
+            true);
+
+        $result = array();
+        if (is_array($execResult)) {
+            foreach ($execResult as $r) {
+                if ($r instanceof IActionResult) {
+                    $result[] = $r;
+                }
             }
         }
+        if (sizeof($result) > 0) {
+            return new BatchActionResult($result);
+        }
+
+        return $execResult;
+    }
+
+    private static function _renderView(
+        $indent,
+        $context,
+        $mvcContext,
+        $controllerName,
+        $controller,
+        $viewName,
+        $model,
+        $useLayout)
+    {
+        $config = $context->getConfig();
+        $viewRoot = $config->getValue(Gear_Key_RootPath, Gear_Section_View, Gear_DefaultViewsRootPath);
+
+        $viewPath = strtolower($viewName);
+        $ext = Path::GetExtension($viewPath);
+        if ($ext != 'phtml' && $ext != 'php') $viewPath .= '.phtml';
+        $viewPath = Path::GetUseablePath(Path::Combine($viewRoot, $controllerName, $viewPath));
+
+        $layout = $useLayout == true ? $controller->layout : null;
+        $viewContent = self::_executeView(
+            $viewPath,
+            $viewName,
+            $controller->viewData,
+            $controller->html,
+            $controller->url,
+            $controller->helper,
+            $layout,
+            $model,
+            $result);
+        //ActionResult::ExecuteActionResult($context, $result);
+
+        if (isset($layout)) {
+            $controller->layout = null;
+
+            $output = $context->getService(Gear_ServiceViewOutputStream);
+            if($output == null) {
+                $output = new HtmlStream();
+            }
+            $output->write($viewContent);
+            $context->registerService(Gear_ServiceViewOutputStream, $output);
+
+            self::_renderView(
+                $indent + 1,
+                $context,
+                $mvcContext,
+                null,
+                $controller,
+                $layout,
+                $model,
+                false);
+
+            $output->clear();
+
+        } else {
+            $context->getResponse()->write($viewContent);
+        }
+        return $result;
+    }
+
+    private static function _checkFileExists(&$path)
+    {
+        if (file_exists($path)) {
+            return true;
+        }
+
+        if (file_exists("$path.phtml")) {
+            $path = "$path.phtml";
+            return true;
+        }
+        if (file_exists("$path.php")) {
+            $path = "$path.php";
+            return true;
+        }
+
+        return false;
+    }
+
+    private static function _executeView(
+        $path,
+        $viewName,
+        $viewData,
+        $html,
+        $url,
+        $helper,
+        &$layout,
+        &$model,
+        &$result)
+    {
+        $viewPath = dirname($path) . '/' . $viewName;
+        if (!self::_checkFileExists($viewPath)) {
+            if (!self::_checkFileExists($viewPath)) {
+                $dblCheck = getcwd() . '/' . $viewPath;
+                if (!self::_checkFileExists($dblCheck)) {
+                    throw new ViewFileNotFoundException($path);
+                }
+                //$path = $dblCheck;
+            }
+        }
+
+        global $Layout, $ViewData, $Model, $Html, $Url, $Helper;
+        $Model = $model;
+        $Layout = $layout;
+        $ViewData = $viewData;
+        $Html = $html;
+        $Url = $url;
+        $Helper = $helper;
+
+        $level = ob_get_level();
+        ob_start();
+        $result = require($viewPath);
+        $buffer = '';
+        while (ob_get_level() > $level)
+            $buffer = ob_get_clean() . $buffer;
+        //global $Layout;
+        $layout = $Layout;
+        return $buffer;
     }
 }
 
@@ -1156,11 +1832,207 @@ class EmptyResult extends ActionResultBase implements IInnerActionResult
 }
 
 
+class ErrorResult extends ActionResultBase
+{
+    private $error;
+    public function __construct($error)
+    {
+        $this->error = $error;
+    }
+
+    public function executeResult($context, $request, $response)
+    {
+        throw new Exception($this->error);
+    }
+}
+
+
+class FxException extends \Exception implements IMessageException
+{
+    private $httpStatusCode;
+    public function __construct($message, $httpStatusCode = 500, $code = 0)
+    {
+        $this->httpStatusCode = $httpStatusCode;
+        parent::__construct($message, $code);
+    }
+
+    public function getHttpStatusCode()
+    {
+        return $this->httpStatusCode;
+    }
+}
+
+
+class HttpStatusCodeException extends FxException
+{
+    public function __construct($message, $httpStatusCode, $code = 0)
+    {
+        parent::__construct($message, $httpStatusCode, $code);
+    }
+}
+
+
+class HttpUnauthorizedException extends HttpStatusCodeException
+{
+    public function __construct($message = null)
+    {
+        parent::__construct($message == null
+            ? 'Unauthorized'
+            : $message, 403, 0);
+    }
+}
+
+
+interface IHttpResponse extends IOutputStream
+{
+    function write($mixed);
+    function serializeWrite($object, $request);
+
+    function writeInnerStream();
+}
+
+
+class InMemoryStream implements IOutputStream
+{
+    private
+        $buffer;
+
+    public function write($mixed)
+    {
+        if (is_string($mixed)) {
+            $this->buffer = $this->buffer . $mixed;
+        } else {
+            $this->buffer = $this->buffer . Serializer::stringify($mixed);
+        }
+    }
+
+    public function clear(){
+        $this->buffer = '';
+    }
+
+    public function &getBuffer(){
+        return $this->buffer;
+    }
+}
+
+
+class JsonResult extends ActionResultBase
+{
+    private
+        $content,
+        $allowGet;
+
+    public function __construct($content, $allowGet)
+    {
+        $this->content = $content;
+        $this->allowGet = $allowGet;
+    }
+
+    public function executeResult($context, $request, $response)
+    {
+        $method = $request->getMethod();
+        $allowGet = $context->getConfig()->getValue(Gear_IniKey_JsonResultAllowGet, Gear_IniSection_ActionResolver, false);
+        if ($method == 'GET' && !($this->allowGet || $allowGet)) {
+            return new ErrorResult("Action is not configured to serve data as GET http method.");
+        }
+
+        $response->write(json_encode($this->content));
+    }
+}
+
+
+class AppEngineNotFoundException extends FxException
+{
+    public function __construct()
+    {
+        parent::__construct("Specified app engine not found.", 500);
+    }
+}
+
+
+class HtmlStream extends InMemoryStream
+{
+
+}
+
+
+class HttpNotFoundException extends HttpStatusCodeException
+{
+    public function __construct($message = null)
+    {
+        parent::__construct($message == null
+            ? 'Not found'
+            : $message, 404, 0);
+    }
+}
+
+
+
+class HttpResponse implements IHttpResponse
+{
+    private
+        $innerStream;
+
+    public function __construct()
+    {
+        $this->innerStream = new HtmlStream();
+    }
+
+    public function getInnerStream()
+    {
+        return $this->innerStream;
+    }
+
+    public function write($mixed)
+    {
+        if (is_string($mixed)) {
+            echo $mixed;
+        } else {
+            echo Serializer::stringify($mixed);
+        }
+    }
+    public function clear()
+    {
+
+    }
+
+    public function serializeWrite($object, $request)
+    {
+        echo Serializer::stringify($object);
+    }
+
+    public function writeInnerStream()
+    {
+        $this->write($this->innerStream->getBuffer());
+    }
+}
+
+
+class ViewFileNotFoundException extends HttpNotFoundException
+{
+    public function __construct($action)
+    {
+        parent::__construct($action == null
+            ? "404 - View file not found."
+            : "404 - View file '$action' not found.");
+    }
+}
+
+
 
 /* Generals: */
 
 
 Bundle::setRootDirectory(getcwd());
+
+function RenderBody()
+{
+    $context = HttpContext::current();
+    $output = $context->getService(Gear_ServiceViewOutputStream);
+    if($output != null) {
+        $context->getResponse()->write($output->getBuffer());
+    }
+}
 
 
 

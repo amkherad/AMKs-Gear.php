@@ -3,14 +3,19 @@ require_once('../../build.php');
 $rstart=microtime(true);
 //--------------Required Stages--------------
 require_once('../../bin/gear.php');
-define('DEBUG',1);
+$engineTime=(microtime(true)-$rstart);
 //echo Mvc::GetModule('debug');
 $MvcPathUseFullPath=true;
-AppEngine::create()->start(AppEngine::Mvc);
+$engine = AppEngine::create();
+$engine->start();
 //-------------------------------------------
 $duration=(microtime(true)-$rstart);
 ?>
 <hr>
 <p style="color:red;">
-    Total Time: <?=$duration;?>
+    Create Time: <?=$engine->getCreateExecutionTime();?> <br>
+    Start Time: <?=$engine->getStartExecutionTime();?> <br>
+    Root Time: <?=$duration;?> <br>
+    Engine Time: <?=$engineTime;?> <br>
+    Total Time: <?=$duration-$engineTime;?> / <?=$engine->getCreateExecutionTime()+$engine->getStartExecutionTime();?> <br>
 </p>

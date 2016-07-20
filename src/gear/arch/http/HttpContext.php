@@ -2,31 +2,38 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-/*</namespace.current>*/
+namespace gear\arch\http;
+    /*</namespace.current>*/
 
-/*<bundles>*/
-/*</bundles>*/
+    /*<bundles>*/
+    /*</bundles>*/
 
 /*<module>*/
-class HttpContext{
-    static$cc;
-    
-    public$Application,$Route,$Request,$Response,$Cookie,$Session,$Controller,$View;
-    
-    public$Ending;
-    
-    public function __construct(){
-        $this->Response=new HttpResponseDirectOut($this);
-        $this->Request =new HttpRequest($this,$_GET,$_POST,$_FILES,$_SERVER);
+class HttpContext
+{
+    static
+        $currentContext;
+
+    public $Ending;
+
+    public function End()
+    {
+        if (is_callable($this->Ending)) {
+            $c = $this->Ending;
+            $c();
+        }
+        exit;
     }
-    
-    public function End(){if(is_callable($this->Ending)){$c=$this->Ending;$c();}exit;}
-    
-    public static function Current(){return HttpContext::$cc;}
-    public static function Initialize(){
-        if(HttpContext::$cc!=null)throw new MvcInvalidOperationException('HttpContext already initialized.');
-        HttpContext::$cc=new HttpContext();
+
+    public static function current()
+    {
+        return self::$currentContext;
     }
-};
+
+    public static function setCurrent($context)
+    {
+        self::$currentContext = $context;
+    }
+}
 /*</module>*/
 ?>

@@ -10,33 +10,46 @@
 /*<namespace.current>*/
 namespace gear\arch;
 /*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\core\IMessageException;
+use gear\arch\core\Serializer;
+
+/*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
+
 class InternalServerError
 {
-    public static function Render($ex, $errorCode = 500)
+    public static function Render($ex, $eCode = null)
     {
-        if (defined('DEBUG')) {
-            Logger::write($ex->getMessage() . ' trace:' . Utils::stringify($ex->getTrace()));
-        }
-        if ($ex instanceof MvcMessageException) {
-            echo "<h2>$ex->Title</h2><h3 style=\"color:red;\">{$ex->getMessage()}</h3>";
+        if ($eCode == null) {
+            if ($ex instanceof IMessageException) {
+                $errorCode = $ex->getHttpStatusCode();
+            } else {
+                $errorCode = 500;
+            }
         } else {
-            $errMessage = (defined('DEBUG') && $errorCode == 500) ? 'Internal Server Error!' : $ex->getMessage();
-            echo "<center><h1 style=\"color:red\">$errorCode - $errMessage</h1><br>" .
-                (defined('DEBUG') ?
-                    $ex->getMessage() . '<br>' .
-                    $ex->getFile() . ' at line: ' . $ex->getLine() . '<br><br>' .
-                    $ex->getTraceAsString()
-                    :
-                    "Sorry! An internal server error has been occured.<br>Please report to website admin.")
-                . '</center>';
+            $errorCode = $eCode;
         }
+
+        if (defined('DEBUG')) {
+            Logger::write($ex->getMessage() . ' trace:' . Serializer::stringify($ex->getTrace()));
+        }
+
+        http_response_code($errorCode);
+        $errMessage = (defined('DEBUG') && $errorCode == 500) ? 'Internal Server Error!' : $ex->getMessage();
+        echo "<h1 style=\"color:red\">$errorCode - $errMessage</h1><br>" .
+            (defined('DEBUG') ?
+                $ex->getMessage() . '<br>' .
+                $ex->getFile() . ' at line: ' . $ex->getLine() . '<br><br>' .
+                $ex->getTraceAsString()
+                :
+                "Sorry! An internal server error has been occured.<br>Please report to website admin.")
+            ;
     }
 }
-
 /*</module>*/
 ?>

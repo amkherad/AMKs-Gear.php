@@ -1,9 +1,11 @@
 <?php
 class homeController extends Controller
 {
-    use RichController;
+    use RichPattern;
+
     public function index()
     {
-        return $this->Json($this->getAll());
+        $this->viewData->Name = 'hello';
+        return $this->View($this->getAll());
     }
 }

@@ -3,10 +3,11 @@
 
 /*<namespace.current>*/
 namespace gear\arch\controller;
+/*</namespace.current>*/
+/*<namespace.use>*/
 use gear\arch\Bundle;
 use gear\arch\core\IEngineFactory;
-
-/*</namespace.current>*/
+/*</namespace.use>*/
 
 /*<bundles>*/
 Bundle::Arch('core\IEngineFactory');
@@ -21,11 +22,18 @@ class DefaultControllerFactory implements IEngineFactory
         $mvcContext = $route->getMvcContext();
 
         $controllerName = $mvcContext->getControllerName();
+        $areaName = $mvcContext->getAreaName();
 
         if(substr($controllerName, strlen($controllerName) - 10) != 'Controller')
             $controllerName .= 'Controller';
-        Bundle::resolveUserModule("controllers\\".$controllerName.'.php');
-        return new $controllerName();
+
+        $controllerPath = "controllers\\".$controllerName.'.php';
+        if(isset($areaName)){
+            $controllerPath = "$areaName\\$controllerPath";
+        }
+
+        Bundle::resolveUserModule($controllerPath);
+        return new $controllerName($context);
     }
 }
 /*</module>*/

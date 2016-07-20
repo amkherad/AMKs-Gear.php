@@ -2,7 +2,10 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-Bundle::Arch('core/IContext');
+namespace gear\arch\http;
+/*</namespace.current>*/
+
+/*<namespace.current>*/
 /*</namespace.current>*/
 
 /*<bundles>*/

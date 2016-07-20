@@ -9,10 +9,13 @@
 
 /*<namespace.current>*/
 namespace gear\arch\http;
-    /*</namespace.current>*/
+/*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\http\IHttpRequest;
+/*</namespace.use>*/
 
-    /*<bundles>*/
-    /*</bundles>*/
+/*<bundles>*/
+/*</bundles>*/
 
 /*<module>*/
 class HttpRequest implements IHttpRequest

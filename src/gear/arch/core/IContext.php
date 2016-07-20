@@ -16,6 +16,10 @@ interface IContext
     function getRequest();
     function getResponse();
     function getBinder();
+
+    function registerService($serviceName, $service);
+    function removeService($serviceName);
+    function getService($serviceName);
 }
 /*</module>*/
 ?>

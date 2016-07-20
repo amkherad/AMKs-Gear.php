@@ -6,10 +6,16 @@ namespace gear\arch\app;
 
 use gear\arch\Bundle;
 use gear\arch\core\AppContext;
+use gear\arch\core\Configuration;
+use gear\arch\core\InvalidOperationException;
 use gear\arch\app\AppEngineNotFoundException;
 use \Exception;
 use gear\arch\http\HttpRequest;
+use gear\arch\http\HttpResponse;
 use gear\arch\Logger;
+use gear\arch\Autoload;
+use gear\arch\http\HttpContext;
+use gear\arch\InternalServerError;
 
 /*</namespace.current>*/
 
@@ -29,6 +35,9 @@ class AppEngine
     private $controllerFactory;
     private $actionResolverFactory;
 
+    private $_startExecutionTime;
+    private $_createExecutionTime;
+
     private function __construct(
         $context,
         $config,
@@ -42,13 +51,35 @@ class AppEngine
         $this->actionResolverFactory = $actionResolverFactory;
     }
 
+    public function getCreateExecutionTime()
+    {
+        return $this->_createExecutionTime;
+    }
+
+    public function getStartExecutionTime()
+    {
+        return $this->_startExecutionTime;
+    }
+
     public function start($engine = null)
     {
+        $result = null;
         try {
-            if ($engine == static::Mvc || is_null($engine))
-                return self::_startMvc();
+            $rStart = microtime(true);
 
-            throw new AppEngineNotFoundException();
+            if(!isset($engine)) {
+                $engine = $this->configuration->getValue(Gear_Key_Engine, Gear_Section_AppEngine, 'mvc');
+            }
+
+            if ($engine == static::Mvc || is_null($engine))
+                $result = self::_startMvc0();
+            $this->_startExecutionTime = (microtime(true) - $rStart);
+
+            if ($result == null) {
+                throw new AppEngineNotFoundException();
+            } else {
+                return $result;
+            }
         } catch (Exception $ex) {
             self::_render500Error($ex);
         }
@@ -56,7 +87,7 @@ class AppEngine
 
     public static function getFactory(Configuration $config, $engine, $defaultFactory)
     {
-        $factoryClass = $config->getValue(Gear_IniKey_Factory, $engine, $defaultFactory);
+        $factoryClass = $config->getValue(Gear_Key_Factory, $engine, $defaultFactory);
 
         $factory = new $factoryClass();
         if ($factory == null)
@@ -68,7 +99,7 @@ class AppEngine
     public static function resolveDependencies($context)
     {
         $config = $context->getConfig();
-        $dependencies = $config->getValue(Gear_IniKey_Dependencies, Gear_IniSection_AppEngine);
+        $dependencies = $config->getValue(Gear_Key_Dependencies, Gear_Section_AppEngine);
 
         if (isset($dependencies)) {
             $modules = [];
@@ -95,7 +126,7 @@ class AppEngine
         }
     }
 
-    private function _startMvc()
+    private function _startMvc0()
     {
         $controller = $this->controllerFactory->createEngine(
             $this->context
@@ -116,20 +147,33 @@ class AppEngine
             $mvcContext,
             $request,
             $actionName);
+
+        return 1;
     }
 
     public static function create($configPath = null, $type = 0)
     {
         try {
+            $rStart = microtime(true);
             if (is_null($configPath))
                 $configPath = Gear_Default_ConfigPath;
             $config = Configuration::FromFile($configPath, $type);
 
-            $routeFactory = self::getFactory($config, Gear_IniSection_Router, Gear_DefaultRouterFactory);
+            $debugMode = $config->getValue(Gear_Key_DebugMode, Gear_Section_AppEngine, false);
+            if (boolval($debugMode) == true && !defined('DEBUG')) {
+                define('DEBUG', 1);
+            }
+
+            $autoLoadMode = $config->getValue(Gear_Key_AutoLoading, Gear_Section_AppEngine, null);
+            if ($autoLoadMode != null) {
+                Autoload::register($autoLoadMode);
+            }
+
+            $routeFactory = self::getFactory($config, Gear_Section_Router, Gear_DefaultRouterFactory);
             $route = $routeFactory->createEngine(null);
             $request = new HttpRequest($route);
             $response = new HttpResponse();
-            $binderFactory = self::getFactory($config, Gear_IniSection_Binder, Gear_DefaultModelBinderFactory);
+            $binderFactory = self::getFactory($config, Gear_Section_Binder, Gear_DefaultModelBinderFactory);
 
             $context = new AppContext(
                 $route,
@@ -138,10 +182,11 @@ class AppEngine
                 $response,
                 $binderFactory
             );
+            HttpContext::setCurrent($context);
 
             self::resolveDependencies($context);
 
-            $loggers = $config->getValue(Gear_IniKey_Loggers, Gear_IniSection_AppEngine);
+            $loggers = $config->getValue(Gear_Key_Loggers, Gear_Section_AppEngine);
             if ($loggers != null) {
                 $lgs = explode(',', $loggers);
                 foreach ($lgs as $logger) {
@@ -151,8 +196,11 @@ class AppEngine
                 }
             }
 
-            $controllerFactory = self::getFactory($config, Gear_IniSection_Controller, Gear_DefaultControllerFactory);
-            $actionResolverFactory = self::getFactory($config, Gear_IniSection_ActionResolver, Gear_DefaultActionResolverFactory);
+            $controllerFactory = self::getFactory($config, Gear_Section_Controller, Gear_DefaultControllerFactory);
+            $actionResolverFactory = self::getFactory($config, Gear_Section_ActionResolver, Gear_DefaultActionResolverFactory);
+            $viewEngineFactory = self::getFactory($config, Gear_Section_View, Gear_DefaultViewEngineFactory);
+
+            $context->registerService(Gear_ServiceViewEngineFactory, $viewEngineFactory);
 
             $result = new self(
                 $context,
@@ -161,6 +209,7 @@ class AppEngine
                 $controllerFactory,
                 $actionResolverFactory);
 
+            $result->_createExecutionTime = (microtime(true) - $rStart);
             return $result;
         } catch (Exception $ex) {
             self::_render500Error($ex);

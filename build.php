@@ -167,7 +167,8 @@ foreach ($BUILD_exportedModules as $dir) {
     if(trim($moduleBundles) != '') $BUILD_totalBundles .= "$moduleBundles\n";
 }
 
-$BUILD_totalContentNormal = "<?php\n
+$BUILD_totalContentNormal = "<?php
+//\$SOURCE_LICENSE\$
 define('Gear_IsPackaged', true);
 
 /* Modules: */
@@ -177,7 +178,8 @@ $BUILD_totalModule
 $BUILD_totalGenerals
 ";
 
-$BUILD_totalContentCompressed = "<?php\n
+$BUILD_totalContentCompressed = "<?php
+//\$SOURCE_LICENSE\$
 define('Gear_IsPackaged', true);
 define('Gear_IsCompressedBundle', true);
 

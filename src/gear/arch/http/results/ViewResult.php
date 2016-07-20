@@ -3,24 +3,46 @@
 
 /*<namespace.current>*/
 namespace gear\arch\http\results;
-    /*</namespace.current>*/
+/*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\view\IViewEngine;
+/*</namespace.use>*/
 
-    /*<bundles>*/
-    /*</bundles>*/
+/*<bundles>*/
+/*</bundles>*/
 
 /*<module>*/
 class ViewResult extends ActionResultBase
 {
+    private
+        $controller,
+        $viewName,
+        $model;
+
+    public function __construct($controller, $viewName, $model)
+    {
+        $this->controller = $controller;
+        $this->viewName = $viewName;
+        $this->model = $model;
+    }
+
     public function executeResult($context, $request, $response)
     {
-        $execResult = $this->controller->View->RenderView($this->controllerName, $this->action, $this->model);
-        $result = array();
-        if (is_array($execResult))
-            foreach ($execResult as $r)
-                if ($r instanceof ActionResult)
-                    $result[] = $r;
-        if (sizeof($result) > 0) return new BatchActionResult($result);
-        return true;
+        $viewEngineFactory = $context->getService(Gear_ServiceViewEngineFactory);
+
+        $viewEngine = $viewEngineFactory->createEngine($context);
+
+        $viewName = $this->viewName;
+        if(!isset($viewName)){
+            $viewName = $context->getRoute()->getMvcContext()->getActionName();
+        }
+
+        return $viewEngine->renderView(
+            $context,
+            $this->controller,
+            $viewName,
+            $this->model
+        );
     }
 }
 /*</module>*/

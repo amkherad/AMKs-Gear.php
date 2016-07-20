@@ -1,24 +1,27 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Ali Mousavi Kherad
- * Date: 7/19/2016
- * Time: 1:37 AM
- */
 //$SOURCE_LICENSE$
+
+/*<requires>*/
+//IOutputStream
+/*</requires>*/
 
 /*<namespace.current>*/
 namespace gear\arch\http;
 /*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\io\IOutputStream;
+/*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-interface IHttpResponse
+interface IHttpResponse extends IOutputStream
 {
     function write($mixed);
     function serializeWrite($object, $request);
+
+    function writeInnerStream();
 }
 /*</module>*/
 ?>

@@ -7,12 +7,19 @@
  */
 //$SOURCE_LICENSE$
 
+/*<requires>*/
+//ActionResultBase
+/*</requires>*/
+
 /*<namespace.current>*/
 namespace gear\arch\http\results;
-    /*</namespace.current>*/
+/*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\http\results\ActionResultBase;
+/*</namespace.use>*/
 
-    /*<bundles>*/
-    /*</bundles>*/
+/*<bundles>*/
+/*</bundles>*/
 
 /*<module>*/
 class ErrorResult extends ActionResultBase

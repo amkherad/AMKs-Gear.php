@@ -18,6 +18,7 @@ namespace gear\arch\model;
 interface IModelBinder
 {
     function getModelFromContext($modelDescriptor, $context, $controller, $mvcContext);
+    function fillModelFromContext($instance, $context, $controller, $mvcContext);
 }
 
 /*</module>*/

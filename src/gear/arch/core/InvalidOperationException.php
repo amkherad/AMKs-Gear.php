@@ -17,7 +17,7 @@ namespace gear\arch\core;
 /*<module>*/
 class InvalidOperationException extends \Exception implements IMessageException
 {
-    public function __construct($message, $code, Exception $previous)
+    public function __construct($message = '', $code = 0, Exception $previous = null)
     {
         parent::__construct($message == null
             ? 'Invalid operation exception.'

@@ -1,11 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Ali Mousavi Kherad
- * Date: 7/18/2016
- * Time: 4:04 AM
- */
 //$SOURCE_LICENSE$
+
+/*<requires>*/
+//IMessageException
+/*</requires>*/
 
 /*<namespace.current>*/
 namespace gear\arch\core;

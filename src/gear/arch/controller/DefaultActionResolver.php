@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Ali Mousavi Kherad
- * Date: 7/19/2016
- * Time: 2:16 AM
- */
 //$SOURCE_LICENSE$
 
 /*<requires>*/
@@ -13,17 +7,19 @@
 
 /*<namespace.current>*/
 namespace gear\arch\controller;
-/*</namespace.current>*/
+    /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\helpers\Helpers;
 use gear\arch\http\IActionResult;
 use gear\arch\http\IInnerActionResult;
+use gear\arch\core\InvalidOperationException;
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
+
 class DefaultActionResolver implements IActionResolver
 {
     public function invokeAction(
@@ -36,9 +32,9 @@ class DefaultActionResolver implements IActionResolver
         $config = $context->getConfig();
         $method = $request->getMethod();
 
-        $preferedAction = $config->getValue(Gear_IniKey_PreferredActionPattern, Gear_IniSection_Controller, Gear_DefaultPreferredActionPattern);
-        $preferedAction = str_replace(Gear_IniPlaceHolder_Action, $actionName, $preferedAction);
-        $preferedAction = str_replace(Gear_IniPlaceHolder_HttpMethod, $method, $preferedAction);
+        $preferedAction = $config->getValue(Gear_Key_PreferredActionPattern, Gear_Section_Controller, Gear_DefaultPreferredActionPattern);
+        $preferedAction = str_replace(Gear_PlaceHolder_Action, $actionName, $preferedAction);
+        $preferedAction = str_replace(Gear_PlaceHolder_HttpMethod, $method, $preferedAction);
 
         if (method_exists($controller, $preferedAction)) {
             $actionName = $preferedAction;
@@ -46,27 +42,37 @@ class DefaultActionResolver implements IActionResolver
 
         $suppliedArgumentss = array();
 
-        $controllerReflection = new ReflectionClass($controller);
+        $controllerReflection = new \ReflectionClass($controller);
         $actionReflection = $controllerReflection->getMethod($actionName);
         $actionParameters = $actionReflection->getParameters();
 
         $controller->beginExecute();
 
-        $result = self::_execAction(
-            $context,
-            $mvcContext,
-            $controller,
-            $controllerReflection,
-            $actionReflection,
-            $actionName,
-            $suppliedArgumentss,
-            $actionParameters);
+        $controller->checkExecution();
 
-        self::_executeActionResult(
-            $context,
-            $request,
-            $context->getResponse(),
-            $result);
+        try {
+            $result = self::_execAction(
+                $context,
+                $mvcContext,
+                $controller,
+                $controllerReflection,
+                $actionReflection,
+                $actionName,
+                $suppliedArgumentss,
+                $actionParameters);
+
+            self::_executeActionResult(
+                $context,
+                $request,
+                $context->getResponse(),
+                $result);
+
+        } catch (\Exception $ex) {
+            $controller->onExceptionOccurred($ex);
+            throw $ex;
+        }
+
+        $controller->endExecute();
     }
 
     public static function _execAction(
@@ -105,7 +111,7 @@ class DefaultActionResolver implements IActionResolver
                             $mvcContext
                         );
                     } else {
-                        throw new MvcInvalidOperationException("Action '$actionName' argument uses an undefined class type.");
+                        throw new InvalidOperationException("Action '$actionName' argument uses an undefined class type.");
                     }
                 }
             }
@@ -117,17 +123,24 @@ class DefaultActionResolver implements IActionResolver
 
     private static function _executeActionResult($context, $request, $response, $result)
     {
-        while ($result instanceof IActionResult) {
-            $inner = $result->getInnerResult();
-            $result = $result->executeResult($context, $request, $response);
+        if (!isset($result)) return;
+        do {
+            if ($result instanceof IActionResult) {
+                $inner = $result->getInnerResult();
+                $result = $result->executeResult($context, $request, $response);
+            } else {
+                $inner = null;
+                $response->write($result);
+            }
             if ($inner instanceof IActionResult) {
                 if (!($inner instanceof IInnerActionResult)) {
                     throw new InvalidOperationException('InnerResult must be an instance of IInnerActionResult.');
                 }
-                self::_executeActionResult($context, $inner);
+                self::_executeActionResult($context, $request, $response, $inner);
             }
-        }
+        } while ($result instanceof IActionResult);
     }
 }
+
 /*</module>*/
 ?>

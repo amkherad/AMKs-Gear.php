@@ -1,9 +1,16 @@
 <?php
 //$SOURCE_LICENSE$
 
+/*<requires>*/
+//ActionResultBase
+/*</requires>*/
+
 /*<namespace.current>*/
 namespace gear\arch\http\results;
 /*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\http\ActionResultBase;
+/*</namespace.use>*/
 
 /*<module>*/
 class JsonResult extends ActionResultBase
@@ -29,6 +36,5 @@ class JsonResult extends ActionResultBase
         $response->write(json_encode($this->content));
     }
 }
-
 /*</module>*/
 ?>

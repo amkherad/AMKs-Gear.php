@@ -1,0 +1,29 @@
+{
+	"name" : "amk/gear.php",
+	"description" : "AMK's Gear.php is a lightweighted php mvc framework.",
+	"license" : [ "MIT" ],
+	"authors" : [
+		{
+			"name": "Ali Mousavi Kherad",
+			"email" : "contact@amkdp.ir",
+			"role": "Author"
+		}
+	],
+
+	"keywords" : [ "framework", "mvc", "fullstack" ],
+
+	"homepage": "http://amkdp.ir/amksgearphp",
+	"support" : {
+		"issues" : "http://amkdp.ir/gear-society/amksgearphp/issues",
+		"source" : "http://amkdp.ir/gear-society/amksgearphp"
+	},
+
+	"require" : {
+		"php" : ">=4.0.0"
+	},
+
+	"autoload" : {
+		"files" : ["_autoload.php"]
+	}
+
+}

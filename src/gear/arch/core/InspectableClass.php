@@ -2,6 +2,7 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
+namespace gear\arch\core\InspectableClass;
 /*</namespace.current>*/
 
 /*<bundles>*/
@@ -15,7 +16,7 @@ class InspectableClass
 {
     public function GetProperty($n)
     {
-        throw new MvcInvalidOperationException("Property '$n' not found.");
+        throw new InvalidOperationException("Property '$n' not found.");
     }
     public final function __get($n)
     {
