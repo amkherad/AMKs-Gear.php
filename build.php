@@ -17,23 +17,18 @@ define('BUILD_Requires_Content_End', '/*</requires>*/');
 define('BUILD_Generals_Content_Begin', '/*<generals>*/');
 define('BUILD_Generals_Content_End', '/*</generals>*/');
 
-$BUILD_rootDirectory = dirname(__FILE__);
+define('BUILD_Includes_Content_Begin', '/*<includes>*/');
+define('BUILD_Includes_Content_End', '/*</includes>*/');
 
-$BUILD_root = dirname(__FILE__) . "\\src";
-$BUILD_archRoute = "$BUILD_root\\gear\\arch";
+$BUILD_filesLog = false;
 
-$BUILD_output = "$BUILD_rootDirectory\\bin";
-$BUILD_outputName = 'gear.php';
-$BUILD_outputCompressedName = 'gear.c.php';
-
-$BUILD_outputPharName = 'gear.phar';
-$BUILD_outputPharCompressedName = 'gear.c.phar';
-
-function BUILD_getAllModulesIn($path)
+function BUILD_getAllModulesIn($path, $fileFormats)
 {
+    global $BUILD_filesLog;
     $dI = new RecursiveDirectoryIterator($path);
     $files = array();
     foreach (new RecursiveIteratorIterator($dI) as $dir) {
+        if (strtolower($dir->getExtension()) != 'php') continue;
         $fName = $dir->getFilename();
         $path = $dir->getPath();
         $dir = $dir->getPathname();
@@ -41,6 +36,9 @@ function BUILD_getAllModulesIn($path)
         if ($fName == '.' || $fName == '..') continue;
         //if($dir==$zipFile)continue;
         //$files[]=$dir;
+        if ($BUILD_filesLog) {
+            echo "$dir<br>";
+        }
         $files[] = $dir;
     }
     return $files;
@@ -75,6 +73,7 @@ function GetFileName($p)
     if (!is_bool($d) && $d >= 0) return ($d < strlen($p) - 1 ? substr($p, 0, $d) : '');
     return null;
 }
+
 function BUILD_expandFiles($files, $requireStart, $requireEnd)
 {
     $result = [];
@@ -114,7 +113,8 @@ function BUILD_satisfiedAllRequires($includedModules, $module)
     return true;
 }
 
-function BUILD_resolveDependencies($modules) {
+function BUILD_resolveDependencies($bundleId, $modules)
+{
     $BUILD_exportedModules = [];
     $totalModulesCount = count($modules);
     for ($i = 0; $i < $totalModulesCount; $i++) {
@@ -126,69 +126,128 @@ function BUILD_resolveDependencies($modules) {
     }
     $totalModulesCount = count($modules);
     while ($totalModulesCount > 0) {
-        foreach($modules as $index => $module) {
+        $isAdded = false;
+        foreach ($modules as $index => $module) {
             if (BUILD_satisfiedAllRequires($BUILD_exportedModules, $module)) {
                 unset($modules[$index]);
                 array_push($BUILD_exportedModules, $module);
+                $isAdded = true;
             }
         }
         $totalModulesCount = count($modules);
+        if (!$isAdded) {
+            echo "<div style=\"color:red;\"><h4>BUILD ERRORS ($bundleId)<br>==========================</h4><br><p>";
+            foreach ($modules as $module) {
+                echo $module['name'] . '<br>';
+            }
+            echo '</p><hr></div>';
+            break;
+        }
         //break;
     }
     return $BUILD_exportedModules;
 }
 
-$BUILD_modules = BUILD_getAllModulesIn($BUILD_archRoute);
-$BUILD_modules = BUILD_expandFiles($BUILD_modules, BUILD_Requires_Content_Begin, BUILD_Requires_Content_End);
+function BUILD_makeBundle(
+    $bundleId,
+    $outputName,
+    $compressedOutputName,
+    $rootPath,
+    $outputPath,
+    $fileFormats,
+    $additionalFiles
+)
+{
+    $BUILD_modules = BUILD_getAllModulesIn($rootPath, $fileFormats);
+    foreach ($additionalFiles as $addFile) {
+        $BUILD_modules[] = $addFile;
+    }
+    $BUILD_modules = BUILD_expandFiles($BUILD_modules, BUILD_Requires_Content_Begin, BUILD_Requires_Content_End);
 
-usort($BUILD_modules,
-    function ($a, $b) {
-        return basename($a['path']) > basename($b['path'])
-            ? 1 : -1;
-    });
+    usort($BUILD_modules,
+        function ($a, $b) {
+            return basename($a['path']) > basename($b['path'])
+                ? 1 : -1;
+        });
 
-$BUILD_exportedModules = BUILD_resolveDependencies($BUILD_modules);
+    $BUILD_exportedModules = BUILD_resolveDependencies($bundleId, $BUILD_modules);
 
+    $BUILD_totalModule = '';
+    $BUILD_totalGenerals = '';
+    $BUILD_totalBundles = '';
+    foreach ($BUILD_exportedModules as $dir) {
+        $moduleContent = $dir['content'];
 
-$BUILD_totalModule = '';
-$BUILD_totalGenerals = '';
-$BUILD_totalBundles = '';
-foreach ($BUILD_exportedModules as $dir) {
-    $moduleContent = $dir['content'];
+        $moduleBody = BUILD_getSection($moduleContent, BUILD_Module_Content_Begin, BUILD_Module_Content_End);
+        $moduleGenerals = BUILD_getSection($moduleContent, BUILD_Generals_Content_Begin, BUILD_Generals_Content_End);
+        $moduleNamespaceCurrent = BUILD_getSection($moduleContent, BUILD_NamespaceCurrent_Content_Begin, BUILD_NamespaceCurrent_Content_End);
+        $moduleNamespaceUse = BUILD_getSection($moduleContent, BUILD_NamespaceUse_Content_Begin, BUILD_NamespaceUse_Content_End);
+        $moduleBundles = BUILD_getSection($moduleContent, BUILD_Bundles_Content_Begin, BUILD_Bundles_Content_End);
 
-    $moduleBody = BUILD_getSection($moduleContent, BUILD_Module_Content_Begin, BUILD_Module_Content_End);
-    $moduleGenerals = BUILD_getSection($moduleContent, BUILD_Generals_Content_Begin, BUILD_Generals_Content_End);
-    $moduleNamespaceCurrent = BUILD_getSection($moduleContent, BUILD_NamespaceCurrent_Content_Begin, BUILD_NamespaceCurrent_Content_End);
-    $moduleNamespaceUse = BUILD_getSection($moduleContent, BUILD_NamespaceUse_Content_Begin, BUILD_NamespaceUse_Content_End);
-    $moduleBundles = BUILD_getSection($moduleContent, BUILD_Bundles_Content_Begin, BUILD_Bundles_Content_End);
+        if (trim($moduleBody) != '') $BUILD_totalModule .= "$moduleBody\n";
+        if (trim($moduleGenerals) != '') $BUILD_totalGenerals .= "$moduleGenerals\n";
+        if (trim($moduleBundles) != '') $BUILD_totalBundles .= "$moduleBundles\n";
+    }
 
-    if(trim($moduleBody) != '') $BUILD_totalModule .= "$moduleBody\n";
-    if(trim($moduleGenerals) != '') $BUILD_totalGenerals .= "$moduleGenerals\n";
-    if(trim($moduleBundles) != '') $BUILD_totalBundles .= "$moduleBundles\n";
+    $BUILD_totalContentNormal = "<?php
+//Bundle: $bundleId
+define('${bundleId}_IsPackaged', true);
+
+/* Modules: */
+$BUILD_totalModule
+
+/* Generals: */
+$BUILD_totalGenerals
+";
+
+    $BUILD_totalContentCompressed = "<?php
+//Bundle: $bundleId
+define('${bundleId}_IsPackaged', true);
+define('${bundleId}_IsCompressedBundle', true);
+
+/* Modules: */
+$BUILD_totalModule
+
+/* Generals: */
+$BUILD_totalGenerals
+";
+
+    file_put_contents("$outputPath\\$outputName", $BUILD_totalContentNormal);
+//file_put_contents("$outputPath\\$compressedOutputName", $BUILD_totalContentCompressed);
 }
 
-$BUILD_totalContentNormal = "<?php
-//\$SOURCE_LICENSE\$
-define('Gear_IsPackaged', true);
 
-/* Modules: */
-$BUILD_totalModule
+/****************************************************************
+ *****************************************************************
+ *****************************************************************
+ *****************************************************************
+ *****************************************************************/
 
-/* Generals: */
-$BUILD_totalGenerals
-";
+$BUILD_rootDirectory = dirname(__FILE__);
 
-$BUILD_totalContentCompressed = "<?php
-//\$SOURCE_LICENSE\$
-define('Gear_IsPackaged', true);
-define('Gear_IsCompressedBundle', true);
 
-/* Modules: */
-$BUILD_totalModule
-
-/* Generals: */
-$BUILD_totalGenerals
-";
-
-file_put_contents("$BUILD_output\\$BUILD_outputName", $BUILD_totalContentNormal);
-//file_put_contents("$BUILD_output\\$BUILD_outputCompressedName", $BUILD_totalContentCompressed);
+BUILD_makeBundle(
+    'Gear',
+    'gear.arch.php',
+    'gear.arch.c.php',
+    "$BUILD_rootDirectory/src/gear/arch",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    [
+        "$BUILD_rootDirectory/src/gear/gearinclude.php"
+    ]
+);
+//$BUILD_filesLog = true;
+BUILD_makeBundle(
+    'Kunststube',
+    'gear.kunststube.php',
+    'gear.kunststube.c.php',
+    "$BUILD_rootDirectory/src/gear/_3rdparty/kunststube",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);

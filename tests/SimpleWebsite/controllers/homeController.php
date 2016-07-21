@@ -1,5 +1,5 @@
 <?php
-class homeController extends Controller
+class homeController extends GearController
 {
     use RichPattern;
 

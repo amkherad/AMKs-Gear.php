@@ -9,6 +9,9 @@
 /*<namespace.current>*/
 /*</namespace.current>*/
 
+/*<includes>*/
+/*</includes>*/
+
 /*<bundles>*/
 /*</bundles>*/
 

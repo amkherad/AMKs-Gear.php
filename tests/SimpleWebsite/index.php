@@ -2,11 +2,11 @@
 require_once('../../build.php');
 $rstart=microtime(true);
 //--------------Required Stages--------------
-require_once('../../bin/gear.php');
+require_once('../../bin/gear.arch.php');
 $engineTime=(microtime(true)-$rstart);
 //echo Mvc::GetModule('debug');
 $MvcPathUseFullPath=true;
-$engine = AppEngine::create();
+$engine = GearAppEngine::create();
 $engine->start();
 //-------------------------------------------
 $duration=(microtime(true)-$rstart);
