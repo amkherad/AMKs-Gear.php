@@ -28,7 +28,7 @@ class GearJsonResult extends GearActionResultBase
     public function executeResult($context, $request, $response)
     {
         $method = $request->getMethod();
-        $allowGet = $context->getConfig()->getValue(Gear_IniKey_JsonResultAllowGet, Gear_IniSection_ActionResolver, false);
+        $allowGet = $context->getConfig()->getValue(Gear_Key_JsonResultAllowGet, Gear_Section_ActionResolver, false);
         if ($method == 'GET' && !($this->allowGet || $allowGet)) {
             return new GearErrorResult("Action is not configured to serve data as GET http method.");
         }

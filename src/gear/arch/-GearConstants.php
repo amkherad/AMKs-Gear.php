@@ -28,6 +28,7 @@ define('Gear_Key_DefaultParams',                    'params');
 define('Gear_Key_Engine',                           'Engine');
 define('Gear_Key_Loggers',                          'Loggers');
 define('Gear_Key_AutoLoading',                      'AutoLoading');
+define('Gear_Key_AreaRoot',                         'AreaRoot');
 define('Gear_Key_Factory',                          'Factory');
 define('Gear_Key_RootPath',                         'RootPath');
 define('Gear_Key_Dependencies',                     'Dependencies');
@@ -38,6 +39,7 @@ define('Gear_Key_LayoutName',                       'Layout');
 define('Gear_Key_DebugMode',                        'DebugMode');
 define('Gear_Key_ApplicationEntry',                 'ApplicationEntry');
 define('Gear_Key_RouterUrl',                        'RouterUrl');
+define('Gear_Key_ControllerSuffix',                 'ControllerSuffix');
 
 define('Gear_PlaceHolder_Action',                   '[action]');
 define('Gear_PlaceHolder_HttpMethod',               '[http_method]');
@@ -48,6 +50,9 @@ define('Gear_DefaultActionResolverFactory',         'GearDefaultActionResolverFa
 define('Gear_DefaultModelBinderFactory',            'GearDefaultModelBinderFactory');
 define('Gear_DefaultViewEngineFactory',             'GearDefaultViewEngineFactory');
 
+define('Gear_DefaultControllerSuffix',              'Controller');
+
+define('Gear_DefaultAreasRootPath',                 'areas');
 define('Gear_DefaultControllersRootPath',           'controller');
 define('Gear_DefaultModelsRootPath',                'model');
 define('Gear_DefaultViewsRootPath',                 'views');

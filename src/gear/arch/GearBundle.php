@@ -1,9 +1,16 @@
 <?php
 //$MVC_LICENSE$
 
+/*<requires>*/
+//GearInvalidOperationException
+/*</requires>*/
+
 /*<namespace.current>*/
 namespace gear\arch;
-    /*</namespace.current>*/
+/*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\core\GearInvalidOperationException;
+/*</namespace.use>*/
 
     /*<bundles>*/
     /*</bundles>*/
@@ -61,6 +68,9 @@ class GearBundle
         $path = "$root\\$module";
 
         if ($require) {
+            if (!file_exists($path)) {
+                throw new GearInvalidOperationException('File not exists.');
+            }
             return $once
                 ? require_once($path)
                 : require($path);
@@ -147,6 +157,7 @@ class GearBundle
     {
         self::$userRootDirectory = $userRootDirectory;
     }
+
     public static function setEngineDirectory($engineRootDirectory)
     {
         self::$engineRootDirectory = $engineRootDirectory;

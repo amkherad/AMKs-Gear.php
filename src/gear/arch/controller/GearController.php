@@ -90,7 +90,6 @@ abstract class GearController// extends InspectableClass
 
     public function onExceptionOccurred($exception)
     {
-        echo 'sexy??';
     }
 
     public function authorize()

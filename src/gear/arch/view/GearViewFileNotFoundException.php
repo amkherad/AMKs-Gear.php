@@ -21,8 +21,8 @@ class GearViewFileNotFoundException extends GearHttpNotFoundException
     public function __construct($action)
     {
         parent::__construct($action == null
-            ? "404 - View file not found."
-            : "404 - View file '$action' not found.");
+            ? "View file not found."
+            : "View file '$action' not found.");
     }
 }
 /*</module>*/

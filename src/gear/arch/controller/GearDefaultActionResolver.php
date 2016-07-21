@@ -43,7 +43,11 @@ class GearDefaultActionResolver implements IGearActionResolver
         $suppliedArgumentss = array();
 
         $controllerReflection = new \ReflectionClass($controller);
-        $actionReflection = $controllerReflection->getMethod($actionName);
+        try {
+            $actionReflection = $controllerReflection->getMethod($actionName);
+        } catch(\Exception $ex) {
+            throw new \GearHttpNotFoundException("Action '$actionName' not found.");
+        }
         $actionParameters = $actionReflection->getParameters();
 
         $controller->beginExecute();

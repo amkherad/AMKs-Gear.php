@@ -34,6 +34,8 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
         $urlProvider,
         $enableCache;
 
+    private $routeCache;
+
     public function __construct($context)
     {
         $config = $context->getConfig();
@@ -41,7 +43,7 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
         $this->config = $config;
         $router = new Router();
         $this->route = $router;
-        //$router->defaultCallback([$this, '_callback']);
+        $router->defaultCallback([$this, '_callback']);
     }
 
     public function getMvcContext()
@@ -50,24 +52,7 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
             return $this->mvcContextCache;
         }
 
-        $area = '';
-        $controller = '';
-        $action = '';
-        $params = '';
-
         $config = $this->config;
-        if (!isset($area) || $area == '') {
-            $area = $config->getValue(Gear_Key_DefaultArea, Gear_Section_Defaults, '');
-        }
-        if (!isset($controller) || $controller == '') {
-            $controller = $config->getValue(Gear_Key_DefaultController, Gear_Section_Defaults, 'home');
-        }
-        if (!isset($action) || $action == '') {
-            $action = $config->getValue(Gear_Key_DefaultAction, Gear_Section_Defaults, 'index');
-        }
-        if (!isset($params) || $params == '') {
-            $params = $config->getValue(Gear_Key_DefaultParams, Gear_Section_Defaults, '');
-        }
 
         $urlProvider = $this->urlProvider;
         if (is_callable($urlProvider)) {
@@ -82,9 +67,26 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
         }
 
         $route = $this->route;
-        echo $url . '<br>';
-        $result = $route->route($url);
-        print_r($result);
+        $route->route($url);
+        $result = $this->routeCache;
+
+        $area = $result->area;
+        $controller = $result->controller;
+        $action = $result->action;
+        $area = $result->area;
+
+        if (!isset($area) || $area == '') {
+            $area = $config->getValue(Gear_Key_DefaultArea, Gear_Section_Defaults, '');
+        }
+        if (!isset($controller) || $controller == '') {
+            $controller = $config->getValue(Gear_Key_DefaultController, Gear_Section_Defaults, 'home');
+        }
+        if (!isset($action) || $action == '') {
+            $action = $config->getValue(Gear_Key_DefaultAction, Gear_Section_Defaults, 'index');
+        }
+        if (!isset($params) || $params == '') {
+            $params = $config->getValue(Gear_Key_DefaultParams, Gear_Section_Defaults, '');
+        }
 
         $context = new GearRouteMvcContext($area, $controller, $action, $params);
         if ($this->enableCache) {
@@ -98,12 +100,9 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
 
     }
 
-    private function _callback(Route $route)
+    public function _callback(Route $route)
     {
-        //require_once 'MyDispatcher.php';
-        //$dispatcher = new Dispatcher;
-        //$dispatcher->dispatch($route);
-        echo 'Router::_callback';
+        $this->routeCache = $route;
     }
 
     function getConfigurator()

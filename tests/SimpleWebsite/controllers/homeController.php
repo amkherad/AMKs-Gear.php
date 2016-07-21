@@ -1,6 +1,7 @@
 <?php
 class homeController extends GearController
 {
+    use Authentication;
     use RichPattern;
 
     public function index()
