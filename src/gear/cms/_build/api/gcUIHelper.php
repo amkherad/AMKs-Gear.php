@@ -2,7 +2,7 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-namespace gear\data\http\results;
+namespace gear\cms\_build\api;
 /*</namespace.current>*/
 /*<namespace.use>*/
 /*</namespace.use>*/
@@ -11,7 +11,7 @@ namespace gear\data\http\results;
 /*</bundles>*/
 
 /*<module>*/
-class GearJsonPResult
+class gcUIHelpers
 {
 
 }

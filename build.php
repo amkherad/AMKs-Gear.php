@@ -225,7 +225,7 @@ $BUILD_totalGenerals
 
 $BUILD_rootDirectory = dirname(__FILE__);
 
-
+$BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear',
     'gear.arch.php',
@@ -239,12 +239,72 @@ BUILD_makeBundle(
         "$BUILD_rootDirectory/src/gear/gearinclude.php"
     ]
 );
-//$BUILD_filesLog = true;
+$BUILD_filesLog = false;
+BUILD_makeBundle(
+    'Gear.Data',
+    'gear.data.php',
+    'gear.data.c.php',
+    "$BUILD_rootDirectory/src/gear/data",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
+    'Gear.Cms',
+    'gear.cms.php',
+    'gear.cms.c.php',
+    "$BUILD_rootDirectory/src/gear/cms",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
+    'Gear.Appfix',
+    'gear.appfix.php',
+    'gear.appfix.c.php',
+    "$BUILD_rootDirectory/src/gear/appfix",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
 BUILD_makeBundle(
     'Kunststube',
     'gear.kunststube.php',
     'gear.kunststube.c.php',
     "$BUILD_rootDirectory/src/gear/_3rdparty/kunststube",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
+    'jQueryDataTables',
+    'gear.jdt.php',
+    'gear.jdt.c.php',
+    "$BUILD_rootDirectory/src/gear/fancypack/jdt",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
+    'jQueryTableSorter',
+    'gear.jts.php',
+    'gear.jts.c.php',
+    "$BUILD_rootDirectory/src/gear/fancypack/jts",
     "$BUILD_rootDirectory/bin",
     [
         'php'

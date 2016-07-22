@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Ali Mousavi Kherad
- * Date: 7/19/2016
- * Time: 3:47 AM
- */
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
@@ -15,10 +9,12 @@ namespace gear\arch\http\results;
     /*</bundles>*/
 
 /*<module>*/
-class GearStatusCodeResult
+class GearStatusCodeResult extends GearActionResultBase
 {
-
+    public function executeResult($context, $request, $response)
+    {
+        // TODO: Implement executeResult() method.
+    }
 }
-
 /*</module>*/
 ?>

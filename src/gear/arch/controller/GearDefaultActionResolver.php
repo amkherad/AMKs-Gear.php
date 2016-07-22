@@ -50,9 +50,9 @@ class GearDefaultActionResolver implements IGearActionResolver
         }
         $actionParameters = $actionReflection->getParameters();
 
-        $controller->beginExecute();
+        $controller->beginExecute($context);
 
-        $controller->checkExecution();
+        $controller->checkExecution($context);
 
         try {
             $result = self::_execAction(
@@ -72,11 +72,11 @@ class GearDefaultActionResolver implements IGearActionResolver
                 $result);
 
         } catch (\Exception $ex) {
-            $controller->onExceptionOccurred($ex);
+            $controller->onExceptionOccurred($context, $ex);
             throw $ex;
         }
 
-        $controller->endExecute();
+        $controller->endExecute($context);
     }
 
     public static function _execAction(

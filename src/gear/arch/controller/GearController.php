@@ -75,29 +75,29 @@ abstract class GearController// extends InspectableClass
         return $this->binder;
     }
 
-    public function beginExecute()
+    public function beginExecute($context)
     {
     }
 
-    public function checkExecution()
+    public function checkExecution($context)
     {
-        $this->authorize();
+        $this->authorize($context);
     }
 
-    public function endExecute()
-    {
-    }
-
-    public function onExceptionOccurred($exception)
+    public function endExecute($context)
     {
     }
 
-    public function authorize()
+    public function onExceptionOccurred($context, $exception)
+    {
+    }
+
+    public function authorize($context)
     {
 
     }
 
-    public function Bind($model)
+    public function bind($model)
     {
         if (!isset($model)) {
             return null;
@@ -108,17 +108,17 @@ abstract class GearController// extends InspectableClass
         return $model;
     }
 
-    public function LayoutRendering($layout)
-    {
-    }
+    //public function LayoutRendering($layout)
+    //{
+    //}
 
 
-    public function Json($mixed, $allowGet = false)
+    public function json($mixed, $allowGet = false)
     {
         return new GearJsonResult($mixed, $allowGet);
     }
 
-    public function View($model = null, $viewName = null)
+    public function view($model = null, $viewName = null)
     {
         return new GearViewResult($this, $viewName, $model);
     }

@@ -7,15 +7,16 @@
 
 /*<namespace.current>*/
 namespace gear\arch;
-/*</namespace.current>*/
+    /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\GearInvalidOperationException;
 /*</namespace.use>*/
 
-    /*<bundles>*/
-    /*</bundles>*/
+/*<bundles>*/
+/*</bundles>*/
 
 /*<module>*/
+
 class GearBundle
 {
     static $locator;
@@ -30,13 +31,50 @@ class GearBundle
     public static function prob($module, $require = true, $once = true)
     {
 
+        //$bundles = Mvc::Bundles();
+        //$cFile = str_replace('\\', '/', strtolower($name)) . '.php';
+        //$f = Path::Combine($bundles, $cFile);
+        //if (file_exists($f)) {
+        //    require_once $f;
+        //    return true;
+        //}
+//
+        //$files = glob(Path::Combine($bundles, '*.phar'));
+        //foreach ($files as $file) {
+        //    $file = 'phar://' . Path::Combine(Uri::GetFullRoot(), $file, $cFile);
+        //    if (file_exists($file)) {
+        //        require_once $file;
+        //        return true;
+        //    }
+        //}
+//
+        //return false;
+    }
+
+    public static function resolvePhar($phar)
+    {
+
     }
 
     public static function resolvePackage($module)
     {
-        $root = self::$engineRootDirectory;
+        $root = self::$userRootDirectory;
         $path = "$root\\$module";
-        require_once($path);
+        if (file_exists("$path.php")) {
+            require_once("$path.php");
+        } elseif (file_exists("$path.phar")) {
+            self::resolvePhar("$path.phar");
+        } else {
+            $root = self::$engineRootDirectory;
+            $path = "$root\\$module";
+            if (file_exists("$path.php")) {
+                require_once("$path.php");
+            } elseif (file_exists("$path.phar")) {
+                self::resolvePhar("$path.phar");
+            } else {
+                throw new GearInvalidOperationException("File '$module' not found.");
+            }
+        }
     }
 
     public static function resolveAllPackages($modules)
@@ -45,8 +83,7 @@ class GearBundle
         $root = self::$engineRootDirectory;
 
         foreach ($modules as $module) {
-            $path = "$root\\$module.php";
-            require_once($path);
+            self::resolvePackage($module);
         }
     }
 
@@ -58,7 +95,7 @@ class GearBundle
         foreach (new \RecursiveIteratorIterator($dI) as $file) {
             $fileName = $file->getFilename();
             if ($fileName == '.' || $fileName == '..') continue;
-            require_once($file->getPathname());
+            self::resolvePackage($file->getPathname());
         }
     }
 
@@ -69,7 +106,7 @@ class GearBundle
 
         if ($require) {
             if (!file_exists($path)) {
-                throw new GearInvalidOperationException('File not exists.');
+                throw new GearInvalidOperationException("File '$module' not found. path: '$path''");
             }
             return $once
                 ? require_once($path)

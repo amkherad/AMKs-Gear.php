@@ -36,6 +36,7 @@ define('Gear_Key_Bundles',                          'Bundles');
 define('Gear_Key_PreferredActionPattern',           'PreferredActionPattern');
 define('Gear_Key_JsonResultAllowGet',               'JsonResultAllowGet');
 define('Gear_Key_LayoutName',                       'Layout');
+define('Gear_Key_SharedView',                       'SharedView');
 define('Gear_Key_DebugMode',                        'DebugMode');
 define('Gear_Key_ApplicationEntry',                 'ApplicationEntry');
 define('Gear_Key_RouterUrl',                        'RouterUrl');
@@ -53,6 +54,7 @@ define('Gear_DefaultViewEngineFactory',             'GearDefaultViewEngineFactor
 define('Gear_DefaultControllerSuffix',              'Controller');
 
 define('Gear_DefaultAreasRootPath',                 'areas');
+define('Gear_DefaultSharedRootPath',                '_shared');
 define('Gear_DefaultControllersRootPath',           'controller');
 define('Gear_DefaultModelsRootPath',                'model');
 define('Gear_DefaultViewsRootPath',                 'views');

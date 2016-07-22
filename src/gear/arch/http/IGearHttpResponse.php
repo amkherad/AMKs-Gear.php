@@ -22,6 +22,8 @@ interface IGearHttpResponse extends IGearOutputStream
     function serializeWrite($object, $request);
 
     function writeInnerStream();
+
+    function contentType($contentType);
 }
 /*</module>*/
 ?>

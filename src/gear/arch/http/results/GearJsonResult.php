@@ -33,6 +33,7 @@ class GearJsonResult extends GearActionResultBase
             return new GearErrorResult("Action is not configured to serve data as GET http method.");
         }
 
+        $response->contentType('application/json');
         $response->write(json_encode($this->content));
     }
 }

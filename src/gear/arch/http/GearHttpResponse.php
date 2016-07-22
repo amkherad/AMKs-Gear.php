@@ -57,6 +57,13 @@ class GearHttpResponse implements IGearHttpResponse
     {
         $this->write($this->innerStream->getBuffer());
     }
+
+
+
+    public function contentType($contentType)
+    {
+        header("Content-Type: $contentType", true);
+    }
 }
 /*</module>*/
 ?>

@@ -14,6 +14,7 @@ use gear\arch\helpers\GearPath;
 use gear\arch\http\IGearActionResult;
 use gear\arch\http\results\GearBatchActionResult;
 use gear\arch\io\GearHtmlStream;
+
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -23,6 +24,16 @@ use gear\arch\io\GearHtmlStream;
 
 class GearDefaultViewEngine implements IGearViewEngine
 {
+    protected
+        $probLocations = [
+        '/views',
+        '/views/:controller',
+        '/views/:shared',
+        '/:rootarea/:area/views',
+        '/:rootarea/:area/views/:controller',
+        '/:rootarea/:area/views/:shared',
+    ];
+
     public function renderView(
         $context,
         $controller,
@@ -81,6 +92,9 @@ class GearDefaultViewEngine implements IGearViewEngine
 
         $layout = $useLayout == true ? $controller->layout : null;
         $viewContent = self::_executeView(
+            $config,
+            $context,
+            $mvcContext,
             $viewEngine,
             $viewPath,
             $viewName,
@@ -97,7 +111,7 @@ class GearDefaultViewEngine implements IGearViewEngine
             $controller->layout = null;
 
             $output = $context->getService(Gear_ServiceViewOutputStream);
-            if($output == null) {
+            if ($output == null) {
                 $output = new GearHtmlStream();
             }
             $output->write($viewContent);
@@ -122,7 +136,7 @@ class GearDefaultViewEngine implements IGearViewEngine
         return $result;
     }
 
-    protected function CheckFileExists(&$path)
+    protected static function checkFileExists(&$path)
     {
         if (file_exists($path)) {
             return true;
@@ -140,7 +154,55 @@ class GearDefaultViewEngine implements IGearViewEngine
         return false;
     }
 
+    protected static function probView(
+        $config,
+        $context,
+        $mvcContext,
+        $viewEngine,
+        $rootPath,
+        $viewName)
+    {
+        $areaRoot = $config->getValue(Gear_Key_AreaRoot, Gear_Section_View, Gear_DefaultAreasRootPath);
+        $area = $mvcContext->getAreaName();
+        $controller = $mvcContext->getControllerName();
+        $action = $mvcContext->getActionName();
+        $shared = $config->getValue(Gear_Key_SharedView, Gear_Section_View, Gear_DefaultSharedRootPath);
+
+        $found = false;
+        $viewPath = null;
+        foreach ($viewEngine->probLocations as $location) {
+            $location = str_replace(':area', $area, $location);
+            $location = str_replace(':rootarea', $areaRoot, $location);
+            $location = str_replace(':controller', $controller, $location);
+            $location = str_replace(':action', $action, $location);
+            $location = str_replace(':shared', $shared, $location);
+
+            $viewPath = "$location/$viewName";
+            if (!self::checkFileExists($viewPath)) {
+                $dblCheck = getcwd() . '/' . $viewPath;
+                if (self::checkFileExists($dblCheck)) {
+                    $found = true;
+                    $viewPath = $dblCheck;
+                    break;
+                }
+            } else {
+                $found = true;
+                break;
+            }
+        }
+        if(!$found) {
+            throw new GearViewFileNotFoundException(
+                "View file '$rootPath' not found. searched locations were:<br>" .
+                implode('<br>', $viewEngine->probLocations));
+        }
+
+        return $viewPath;
+    }
+
     private static function _executeView(
+        $config,
+        $context,
+        $mvcContext,
         $viewEngine,
         $path,
         $viewName,
@@ -152,16 +214,7 @@ class GearDefaultViewEngine implements IGearViewEngine
         &$model,
         &$result)
     {
-        $viewPath = dirname($path) . '/' . $viewName;
-        if (!$viewEngine->CheckFileExists($viewPath)) {
-            if (!$viewEngine->CheckFileExists($viewPath)) {
-                $dblCheck = getcwd() . '/' . $viewPath;
-                if (!$viewEngine->CheckFileExists($dblCheck)) {
-                    throw new GearViewFileNotFoundException($path);
-                }
-                //$path = $dblCheck;
-            }
-        }
+        $viewPath = self::probView($config, $context, $mvcContext, $viewEngine, $path, $viewName);
 
         global $Layout, $ViewData, $Model, $Html, $Url, $Helper;
         $Model = $model;
@@ -182,5 +235,6 @@ class GearDefaultViewEngine implements IGearViewEngine
         return $buffer;
     }
 }
+
 /*</module>*/
 ?>
