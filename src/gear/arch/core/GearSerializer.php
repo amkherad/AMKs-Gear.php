@@ -22,7 +22,7 @@ class GearSerializer
 
     public static function json($mixed, $config = null)
     {
-
+        return json_encode($mixed);
     }
 
     public static function xml($mixed, $config = null)

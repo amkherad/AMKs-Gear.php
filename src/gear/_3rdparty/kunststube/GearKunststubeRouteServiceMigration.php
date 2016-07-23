@@ -73,7 +73,7 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
         $area = $result->area;
         $controller = $result->controller;
         $action = $result->action;
-        $area = $result->area;
+        $params = $result->dispatchValues();
 
         if (!isset($area) || $area == '') {
             $area = $config->getValue(Gear_Key_DefaultArea, Gear_Section_Defaults, '');

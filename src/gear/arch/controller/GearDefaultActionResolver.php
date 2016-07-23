@@ -13,6 +13,7 @@ use gear\arch\helpers\GearHelpers;
 use gear\arch\http\IGearActionResult;
 use gear\arch\http\IGearInnerActionResult;
 use gear\arch\core\GearInvalidOperationException;
+use gear\arch\core\GearSerializer;
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -135,7 +136,12 @@ class GearDefaultActionResolver implements IGearActionResolver
                 $result = $result->executeResult($context, $request, $response);
             } else {
                 $inner = null;
-                $response->write($result);
+                if(is_object($result)) {
+                    $response->contentType('application/json');
+                    $response->write(GearSerializer::json($result));
+                } else {
+                    $response->write($result);
+                }
             }
             if ($inner instanceof IGearActionResult) {
                 if (!($inner instanceof IGearInnerActionResult)) {

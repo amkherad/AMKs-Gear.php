@@ -7,7 +7,7 @@
 
 /*<namespace.current>*/
 namespace gear\arch\core;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\IGearContext;
 

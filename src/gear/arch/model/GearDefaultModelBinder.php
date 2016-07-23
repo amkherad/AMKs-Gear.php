@@ -9,17 +9,24 @@
 
 /*<namespace.current>*/
 namespace gear\arch\model;
-/*</namespace.current>*/
+    /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\GearInvalidOperationException;
+use gear\arch\helpers\GearHelpers;
+
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
+
 class GearDefaultModelBinder implements IGearModelBinder
 {
+    protected
+        $useRequestParams = true
+    ;
+
     public function getModelFromContext($modelDescriptor, $context, $controller, $mvcContext)
     {
         $constructor = $modelDescriptor->getConstructor();
@@ -31,28 +38,37 @@ class GearDefaultModelBinder implements IGearModelBinder
             throw new GearInvalidOperationException('Argument $instance is null.');
         }
 
-        self::_bind($context, $instance, null);
+        $sources[] = $mvcContext->getParams();
+        if($this->useRequestParams) {
+            $sources[] = $context->getRequest()->getCurrentMethodValues();
+        }
+        self::_bind($context, $instance, $sources);
 
         return $instance;
     }
 
     function fillModelFromContext($instance, $context, $controller, $mvcContext)
     {
-        self::_bind($context, $instance, null);
+        $sources[] = $mvcContext->getParams();
+        if($this->useRequestParams) {
+            $sources[] = $context->getRequest()->getCurrentMethodValues();
+        }
+        self::_bind($context, $instance, $sources);
     }
 
-    private static function _bind($context, $instance, $source)
+    private static function _bind($context, $instance, $sources)
     {
-        if (!isset($source)) {
-            $source =  $context->getRequest()->getCurrentMethodValues();
-        }
         $vars = get_class_vars(get_class($instance));
         foreach ($vars as $k => $v) {
             $result = null;
-            if (GearHelpers::TryGetArrayElementByNameCaseInSensetive($source, $k, $result))
-                $instance->$k = $result;
+            foreach ($sources as $source) {
+                if (!$source || !isset($source)) continue;
+                if (GearHelpers::TryGetArrayElementByNameCaseInSensetive($source, $k, $result))
+                    $instance->$k = $result;
+            }
         }
     }
 }
+
 /*</module>*/
 ?>

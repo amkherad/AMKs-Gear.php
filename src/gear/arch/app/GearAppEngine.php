@@ -243,7 +243,7 @@ class GearAppEngine
             $request = new GearHttpRequest($route);
             $response = new GearHttpResponse();
             $context->setRoute($route);
-            $context->setBinder($binderFactory);
+            $context->setBinder($binder);
             $context->setRequest($request);
             $context->setResponse($response);
 

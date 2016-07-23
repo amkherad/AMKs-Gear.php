@@ -10,6 +10,7 @@ namespace gear\arch\http\results;
 /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\http\GearActionResultBase;
+use gear\arch\core\GearSerializer;
 /*</namespace.use>*/
 
 /*<module>*/
@@ -34,7 +35,7 @@ class GearJsonResult extends GearActionResultBase
         }
 
         $response->contentType('application/json');
-        $response->write(json_encode($this->content));
+        $response->write(GearSerializer::json($this->content));
     }
 }
 /*</module>*/
