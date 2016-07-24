@@ -13,6 +13,5 @@ class GearActionViewResult
 {
 
 }
-
 /*</module>*/
 ?>

@@ -10,6 +10,8 @@ namespace gear\arch;
     /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\GearInvalidOperationException;
+use gear\arch\core\IGearBundleLocator;
+
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -19,36 +21,71 @@ use gear\arch\core\GearInvalidOperationException;
 
 class GearBundle
 {
-    static $locator;
+    static $locators = array();
     static $userRootDirectory;
     static $engineRootDirectory;
 
-    public static function setLocator($locator)
+    public static function registerLocator($locator)
     {
-        self::$locator = $locator;
+        if (!($locator instanceof IGearBundleLocator)) {
+            throw new GearInvalidOperationException();
+        }
+        self::$locators[] = $locator;
     }
 
     public static function prob($module, $require = true, $once = true)
     {
+        $userRoot = self::$userRootDirectory;
+        $engineRoot = self::$userRootDirectory;
 
-        //$bundles = Mvc::Bundles();
-        //$cFile = str_replace('\\', '/', strtolower($name)) . '.php';
-        //$f = Path::Combine($bundles, $cFile);
-        //if (file_exists($f)) {
-        //    require_once $f;
-        //    return true;
-        //}
-//
-        //$files = glob(Path::Combine($bundles, '*.phar'));
-        //foreach ($files as $file) {
-        //    $file = 'phar://' . Path::Combine(Uri::GetFullRoot(), $file, $cFile);
-        //    if (file_exists($file)) {
-        //        require_once $file;
-        //        return true;
-        //    }
-        //}
-//
-        //return false;
+        $firstBkSlash = stripos($module, '\\');
+        if ($firstBkSlash > 0) {
+            $noRoot = substr($module, $firstBkSlash);
+
+            $path = "$userRoot\\$noRoot.php";
+            if (!file_exists($path)) {
+                $path = "$engineRoot\\$noRoot.php";
+                if (!file_exists($path)) {
+                    $path = null;
+                }
+            }
+            if ($path != null) {
+                if ($require) {
+                    return $once
+                        ? require_once($path)
+                        : require($path);
+                } else {
+                    return $once
+                        ? include_once($path)
+                        : include($path);
+                }
+            }
+        }
+
+        $path = "$userRoot\\$module.php";
+        if (!file_exists($path)) {
+            $path = "$engineRoot\\$module.php";
+            if (!file_exists($path)) {
+                $path = null;
+            }
+        }
+        if ($path != null) {
+            if ($require) {
+                return $once
+                    ? require_once($path)
+                    : require($path);
+            } else {
+                return $once
+                    ? include_once($path)
+                    : include($path);
+            }
+        }
+
+        foreach (self::$locators as $locator) {
+            if ($locator->tryLocate($module, $require, $once)) {
+                break;
+            }
+        }
     }
 
     public static function resolvePhar($phar)

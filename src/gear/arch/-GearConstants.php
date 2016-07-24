@@ -10,6 +10,8 @@
 /*<module>*/
 
 /* Gear default values. */
+define('Gear_Version',                              '0.0.1');
+
 define('Gear_Default_ConfigPath',                   'config.ini');
 define('Gear_500InternalServerErrorPageName',       '500.php');
 

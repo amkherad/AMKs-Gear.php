@@ -23,6 +23,7 @@ interface IGearHttpResponse extends IGearOutputStream
 
     function writeInnerStream();
 
+    function statusCode($statusCode);
     function contentType($contentType);
 }
 /*</module>*/

@@ -16,13 +16,13 @@ use gear\arch\http\exceptions\GearHttpStatusCodeException;
 /*</bundles>*/
 
 /*<module>*/
-class GearHttpUnauthorizedException extends GearHttpStatusCodeException
+class GearHttpForbiddenException extends GearHttpStatusCodeException
 {
     public function __construct($message = null)
     {
         parent::__construct($message == null
             ? 'Unauthorized'
-            : $message, 401, 0);
+            : $message, 403, 0);
     }
 }
 /*</module>*/

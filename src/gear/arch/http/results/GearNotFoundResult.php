@@ -7,7 +7,7 @@
 
 /*<namespace.current>*/
 namespace gear\arch\http\results;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\http\results\GearStatusCodeResult;
 /*</namespace.use>*/
@@ -16,11 +16,11 @@ use gear\arch\http\results\GearStatusCodeResult;
 /*</bundles>*/
 
 /*<module>*/
-class GearEmptyResult extends GearStatusCodeResult
+class GearNotFoundResult extends GearStatusCodeResult
 {
-    public function __construct($message)
+    public function __construct($message = null)
     {
-        parent::__construct(204, $message);
+        parent::__construct(404, $message);
     }
 }
 /*</module>*/

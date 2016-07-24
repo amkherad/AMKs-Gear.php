@@ -9,6 +9,7 @@
 namespace gear\arch\http;
     /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\core\GearInvalidOperationException;
 use gear\arch\http\IGearHttpResponse;
 use gear\arch\core\GearSerializer;
 use gear\arch\io\GearHtmlStream;
@@ -22,6 +23,8 @@ use gear\arch\io\GearHtmlStream;
 
 class GearHttpResponse implements IGearHttpResponse
 {
+    const GearPoweredResponseHeader = 'X-Powered-Fx: AMK\'s Gear.php/' . Gear_Version;
+
     private
         $innerStream;
 
@@ -43,6 +46,7 @@ class GearHttpResponse implements IGearHttpResponse
             echo GearSerializer::stringify($mixed);
         }
     }
+
     public function clear()
     {
 
@@ -58,12 +62,30 @@ class GearHttpResponse implements IGearHttpResponse
         $this->write($this->innerStream->getBuffer());
     }
 
-
+    public function statusCode($statusCode)
+    {
+        if (headers_sent()) {
+            throw new GearInvalidOperationException();
+        }
+        header(self::GearPoweredResponseHeader, true, $statusCode);
+    }
 
     public function contentType($contentType)
     {
+        if (headers_sent()) {
+            throw new GearInvalidOperationException();
+        }
         header("Content-Type: $contentType", true);
     }
+
+    public function addHeader($name, $value)
+    {
+        if (headers_sent()) {
+            throw new GearInvalidOperationException();
+        }
+        header("$name: $value", true);
+    }
 }
+
 /*</module>*/
 ?>

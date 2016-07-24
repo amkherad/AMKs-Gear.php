@@ -26,12 +26,12 @@ class GearDefaultViewEngine implements IGearViewEngine
 {
     protected
         $probLocations = [
-        '/views',
-        '/views/:controller',
-        '/views/:shared',
-        '/:rootarea/:area/views',
         '/:rootarea/:area/views/:controller',
         '/:rootarea/:area/views/:shared',
+        '/:rootarea/:area/views',
+        '/views/:controller',
+        '/views/:shared',
+        '/views',
     ];
 
     public function renderView(
@@ -170,7 +170,13 @@ class GearDefaultViewEngine implements IGearViewEngine
 
         $found = false;
         $viewPath = null;
+        $searchedLocs = array();
         foreach ($viewEngine->probLocations as $location) {
+            if(!$area) {
+                if(stripos($location, ':area')) {
+                    continue;
+                }
+            }
             $location = str_replace(':area', $area, $location);
             $location = str_replace(':rootarea', $areaRoot, $location);
             $location = str_replace(':controller', $controller, $location);
@@ -189,11 +195,12 @@ class GearDefaultViewEngine implements IGearViewEngine
                 $found = true;
                 break;
             }
+            $searchedLocs[] = $viewPath;
         }
         if(!$found) {
             throw new GearViewFileNotFoundException(
                 "View file '$rootPath' not found. searched locations were:<br>" .
-                implode('<br>', $viewEngine->probLocations));
+                implode('<br>', $searchedLocs));
         }
 
         return $viewPath;
