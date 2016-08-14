@@ -9,7 +9,7 @@
 namespace gear\arch\http\results;
 /*</namespace.current>*/
 /*<namespace.use>*/
-use gear\arch\http\GearActionResultBase;
+use gear\arch\http\results\GearActionResultBase;
 use gear\arch\core\GearSerializer;
 /*</namespace.use>*/
 

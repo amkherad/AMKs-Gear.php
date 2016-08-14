@@ -9,6 +9,14 @@
 namespace gear\arch\view;
     /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\controller\GearController;
+use gear\arch\core\GearConfiguration;
+use gear\arch\core\IGearContext;
+use gear\arch\core\IGearMvcContext;
+use gear\arch\helpers\GearDynamicDictionary;
+use gear\arch\helpers\GearGeneralHelper;
+use gear\arch\helpers\GearHtmlHelper;
+use gear\arch\helpers\GearUrlHelper;
 use gear\arch\view\IGearViewEngine;
 use gear\arch\helpers\GearPath;
 use gear\arch\http\IGearActionResult;
@@ -24,6 +32,9 @@ use gear\arch\io\GearHtmlStream;
 
 class GearDefaultViewEngine implements IGearViewEngine
 {
+    /**
+     * @var array Provides probing locations
+     */
     protected
         $probLocations = [
         '/:rootarea/:area/views/:controller',
@@ -71,6 +82,19 @@ class GearDefaultViewEngine implements IGearViewEngine
         return $execResult;
     }
 
+    /**
+     * @param $viewEngine IGearViewEngine
+     * @param $indent int
+     * @param $context IGearContext
+     * @param $mvcContext IGearMvcContext
+     * @param $controllerName string
+     * @param $controller GearController
+     * @param $viewName string
+     * @param $model mixed
+     * @param $useLayout bool
+     *
+     * @return mixed
+     */
     private static function _renderView(
         $viewEngine,
         $indent,
@@ -98,7 +122,7 @@ class GearDefaultViewEngine implements IGearViewEngine
             $viewEngine,
             $viewPath,
             $viewName,
-            $controller->viewData,
+            $controller->dataBag,
             $controller->html,
             $controller->url,
             $controller->helper,
@@ -154,6 +178,18 @@ class GearDefaultViewEngine implements IGearViewEngine
         return false;
     }
 
+    /**
+     * @param $config GearConfiguration
+     * @param $context IGearContext
+     * @param $mvcContext IGearMvcContext
+     * @param $viewEngine IGearViewEngine
+     * @param $rootPath string
+     * @param $viewName string
+     *
+     * @return null|string
+     *
+     * @throws GearViewFileNotFoundException
+     */
     protected static function probView(
         $config,
         $context,
@@ -206,6 +242,25 @@ class GearDefaultViewEngine implements IGearViewEngine
         return $viewPath;
     }
 
+    /**
+     * @param $config GearConfiguration
+     * @param $context IGearContext
+     * @param $mvcContext IGearMvcContext
+     * @param $viewEngine IGearViewEngine
+     * @param $path string
+     * @param $viewName string
+     * @param $dataBag GearDynamicDictionary
+     * @param $html GearHtmlHelper
+     * @param $url GearUrlHelper
+     * @param $helper GearGeneralHelper
+     * @param $layout string
+     * @param $model mixed
+     * @param $result mixed
+     *
+     * @return string
+     *
+     * @throws GearViewFileNotFoundException
+     */
     private static function _executeView(
         $config,
         $context,
@@ -213,7 +268,7 @@ class GearDefaultViewEngine implements IGearViewEngine
         $viewEngine,
         $path,
         $viewName,
-        $viewData,
+        $dataBag,
         $html,
         $url,
         $helper,
@@ -223,10 +278,10 @@ class GearDefaultViewEngine implements IGearViewEngine
     {
         $viewPath = self::probView($config, $context, $mvcContext, $viewEngine, $path, $viewName);
 
-        global $Layout, $ViewData, $Model, $Html, $Url, $Helper;
+        global $Layout, $DataBag, $Model, $Html, $Url, $Helper;
         $Model = $model;
         $Layout = $layout;
-        $ViewData = $viewData;
+        $DataBag = $dataBag;
         $Html = $html;
         $Url = $url;
         $Helper = $helper;

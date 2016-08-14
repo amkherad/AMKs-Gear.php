@@ -13,6 +13,13 @@ namespace gear\arch\core;
 /*<module>*/
 interface IGearBundleLocator
 {
+    /**
+     * @param $path string
+     * @param $require bool
+     * @param $once bool
+     *
+     * @return bool
+     */
     function tryLocate($path, $require, $once);
 }
 

@@ -91,6 +91,8 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
         $context = new GearRouteMvcContext($area, $controller, $action, $params);
         if ($this->enableCache) {
             $this->mvcContextCache = $context;
+        } else {
+            $this->mvcContextCache = null;
         }
         return $context;
     }

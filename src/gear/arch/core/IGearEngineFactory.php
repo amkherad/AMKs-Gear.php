@@ -11,6 +11,11 @@ namespace gear\arch\core;
 /*<module>*/
 interface IGearEngineFactory
 {
+    /**
+     * @param $context IGearContext
+     *
+     * @return mixed Target engine.
+     */
     function createEngine($context);
 }
 /*</module>*/

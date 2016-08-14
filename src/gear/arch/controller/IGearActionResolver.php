@@ -1,15 +1,16 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Ali Mousavi Kherad
- * Date: 7/19/2016
- * Time: 2:15 AM
- */
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
 namespace gear\arch\controller;
 /*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\controller\GearController;
+use gear\arch\core\IGearContext;
+use gear\arch\core\IGearMvcContext;
+use gear\arch\http\IGearHttpRequest;
+
+/*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
@@ -17,6 +18,15 @@ namespace gear\arch\controller;
 /*<module>*/
 interface IGearActionResolver
 {
+    /**
+     * @param $controller GearController
+     * @param $context IGearContext
+     * @param $mvcContext IGearMvcContext
+     * @param $request IGearHttpRequest
+     * @param $actionName string
+     *
+     * @return bool Always returns true.
+     */
     function invokeAction($controller,
                           $context,
                           $mvcContext,

@@ -31,7 +31,7 @@ class GearStatusCodeResult extends GearActionResultBase
     public function executeResult($context, $request, $response)
     {
         $response->statusCode($this->statusCode);
-        if (!$this->message) {
+        if (isset($this->message)) {
             $response->write($this->message);
         }
     }

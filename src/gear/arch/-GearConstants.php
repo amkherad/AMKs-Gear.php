@@ -14,6 +14,7 @@ define('Gear_Version',                              '0.0.1');
 
 define('Gear_Default_ConfigPath',                   'config.ini');
 define('Gear_500InternalServerErrorPageName',       '500.php');
+define('Gear_PoweredResponseHeader',                'X-Powered-Fx: AMK\'s Gear.php/'.Gear_Version);
 
 define('Gear_Section_AppEngine',                    'AppEngine');
 define('Gear_Section_Router',                       'Router');
@@ -67,5 +68,6 @@ define('Gear_DefaultPreferredActionPattern',        '[action]__[http_method]');
 define('Gear_ServiceRouterEngine',                  'RouterEngineService');
 define('Gear_ServiceViewEngineFactory',             'ViewEngineFactoryService');
 define('Gear_ServiceViewOutputStream',              'ViewOutputStreamService');
+define('Gear_ValidationMessages',                   'ValidationMessages');
 
 /*</module>*/

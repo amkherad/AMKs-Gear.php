@@ -11,6 +11,9 @@ namespace gear\arch\core;
 /*<module>*/
 interface IGearMessageException
 {
+    /**
+     * @return int
+     */
     function getHttpStatusCode();
 }
 /*</module>*/

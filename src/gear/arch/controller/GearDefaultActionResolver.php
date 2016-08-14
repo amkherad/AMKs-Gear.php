@@ -78,6 +78,8 @@ class GearDefaultActionResolver implements IGearActionResolver
         }
 
         $controller->endExecute($context);
+
+        return true;
     }
 
     public static function _execAction(

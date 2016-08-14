@@ -23,8 +23,6 @@ use gear\arch\io\GearHtmlStream;
 
 class GearHttpResponse implements IGearHttpResponse
 {
-    const GearPoweredResponseHeader = 'X-Powered-Fx: AMK\'s Gear.php/' . Gear_Version;
-
     private
         $innerStream;
 
@@ -42,6 +40,9 @@ class GearHttpResponse implements IGearHttpResponse
     {
         if (is_string($mixed)) {
             echo $mixed;
+        } elseif (is_object($mixed) || is_array($mixed)) {
+            $this->contentType('application/json');
+            echo GearSerializer::json($mixed);
         } else {
             echo GearSerializer::stringify($mixed);
         }
@@ -67,7 +68,7 @@ class GearHttpResponse implements IGearHttpResponse
         if (headers_sent()) {
             throw new GearInvalidOperationException();
         }
-        header(self::GearPoweredResponseHeader, true, $statusCode);
+        header(Gear_PoweredResponseHeader, true, $statusCode);
     }
 
     public function contentType($contentType)
@@ -78,7 +79,7 @@ class GearHttpResponse implements IGearHttpResponse
         header("Content-Type: $contentType", true);
     }
 
-    public function addHeader($name, $value)
+    public function setHeader($name, $value)
     {
         if (headers_sent()) {
             throw new GearInvalidOperationException();

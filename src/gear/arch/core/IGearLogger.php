@@ -11,6 +11,11 @@ namespace gear\arch\core;
 /*<module>*/
 interface IGearLogger
 {
+    /**
+     * @param $mixed mixed
+     * @param null $category
+     * @return mixed
+     */
     function write($mixed, $category = null);
 }
 /*</module>*/

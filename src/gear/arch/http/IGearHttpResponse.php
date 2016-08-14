@@ -25,6 +25,7 @@ interface IGearHttpResponse extends IGearOutputStream
 
     function statusCode($statusCode);
     function contentType($contentType);
+    function setHeader($name, $value);
 }
 /*</module>*/
 ?>

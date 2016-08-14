@@ -270,7 +270,7 @@ class GearAppEngine
                 $controllerFactory,
                 $actionResolverFactory);
 
-            header(GearHttpResponse::GearPoweredResponseHeader);
+            header(Gear_PoweredResponseHeader);
 
             $applicationEntry = $config->getValue(Gear_Key_ApplicationEntry, Gear_Section_AppEngine);
             if (isset($applicationEntry)) {

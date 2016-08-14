@@ -7,7 +7,7 @@ class Application extends GearApplication
 {
     public function appCreate($context, $engine)
     {
-        $context->getResponse()->addHeader('X-Powered-CMS', 'AMK\'s CMS.php');
+        $context->getResponse()->setHeader('X-Powered-CMS', 'AMK\'s CMS.php');
 
         set_include_path(__DIR__.'/includes/redbean/');
         GearBundle::registerLocator(new BundleLocator());

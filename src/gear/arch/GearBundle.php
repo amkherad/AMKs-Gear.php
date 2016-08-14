@@ -25,6 +25,11 @@ class GearBundle
     static $userRootDirectory;
     static $engineRootDirectory;
 
+    /**
+     * @param $locator IGearBundleLocator
+     *
+     * @throws GearInvalidOperationException
+     */
     public static function registerLocator($locator)
     {
         if (!($locator instanceof IGearBundleLocator)) {
@@ -33,6 +38,12 @@ class GearBundle
         self::$locators[] = $locator;
     }
 
+    /**
+     * @param $module string
+     * @param bool|true $require
+     * @param bool|true $once
+     * @return mixed
+     */
     public static function prob($module, $require = true, $once = true)
     {
         $userRoot = self::$userRootDirectory;
@@ -40,11 +51,11 @@ class GearBundle
 
         $firstBkSlash = stripos($module, '\\');
         if ($firstBkSlash > 0) {
-            $noRoot = substr($module, $firstBkSlash);
+            $noRoot = str_replace('\\', '/', substr($module, $firstBkSlash));
 
-            $path = "$userRoot\\$noRoot.php";
+            $path = "$userRoot/$noRoot.php";
             if (!file_exists($path)) {
-                $path = "$engineRoot\\$noRoot.php";
+                $path = "$engineRoot/$noRoot.php";
                 if (!file_exists($path)) {
                     $path = null;
                 }
@@ -62,9 +73,9 @@ class GearBundle
             }
         }
 
-        $path = "$userRoot\\$module.php";
+        $path = "$userRoot/$module.php";
         if (!file_exists($path)) {
-            $path = "$engineRoot\\$module.php";
+            $path = "$engineRoot/$module.php";
             if (!file_exists($path)) {
                 $path = null;
             }
@@ -96,14 +107,15 @@ class GearBundle
     public static function resolvePackage($module)
     {
         $root = self::$userRootDirectory;
-        $path = "$root\\$module";
+        $path = "$root/$module";
         if (file_exists("$path.php")) {
             require_once("$path.php");
         } elseif (file_exists("$path.phar")) {
             self::resolvePhar("$path.phar");
         } else {
             $root = self::$engineRootDirectory;
-            $path = "$root\\$module";
+            $path = "$root/$module";
+
             if (file_exists("$path.php")) {
                 require_once("$path.php");
             } elseif (file_exists("$path.phar")) {
@@ -127,7 +139,7 @@ class GearBundle
     public static function resolveAllPackageFromDirectory($path)
     {
         $root = self::$engineRootDirectory;
-        $dI = new \RecursiveDirectoryIterator("$root\\$path");
+        $dI = new \RecursiveDirectoryIterator("$root/$path");
 
         foreach (new \RecursiveIteratorIterator($dI) as $file) {
             $fileName = $file->getFilename();
@@ -139,7 +151,7 @@ class GearBundle
     public static function resolveUserModule($module, $require = true, $once = true)
     {
         $root = self::$userRootDirectory;
-        $path = "$root\\$module";
+        $path = "$root/$module";
 
         if ($require) {
             if (!file_exists($path)) {
@@ -161,7 +173,7 @@ class GearBundle
         $root = self::$userRootDirectory;
 
         foreach ($modules as $module) {
-            $path = "$root\\$module.php";
+            $path = "$root/$module.php";
             if ($require) {
                 $result = $once
                     ? require_once($path)
@@ -177,7 +189,7 @@ class GearBundle
     public static function resolveAllUserModuleFromDirectory($path, $require = true, $once = true)
     {
         $root = self::$userRootDirectory;
-        $dI = new \RecursiveDirectoryIterator("$root\\$path");
+        $dI = new \RecursiveDirectoryIterator("$root/$path");
         if ($require) {
             if ($once) {
                 foreach (new \RecursiveIteratorIterator($dI) as $file) {
@@ -217,7 +229,7 @@ class GearBundle
 
         $phpVersion = phpversion();
 
-        return require_once(__DIR__ . "\\gear\\arch\\pal\\general\\$module.php");
+        return require_once(__DIR__ . "/gear/arch/pal/general/$module.php");
     }
 
     public static function Arch($module)

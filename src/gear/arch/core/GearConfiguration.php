@@ -4,13 +4,15 @@
 /*<namespace.current>*/
 namespace gear\arch\core;
     /*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\GearBundle;
+use gear\arch\pal\file\GearPALIniFileHelper;
+/*</namespace.use>*/
 
     /*<bundles>*/
     /*</bundles>*/
 
 /*<module>*/
-use gear\arch\pal\file\GearIniFile;
-use gear\arch\pal\file\GearIniFileHelper;
 
 class GearConfiguration
 {
@@ -28,16 +30,23 @@ class GearConfiguration
             : null;
     }
 
+    /**
+     * @param $value string
+     * @param null $section string
+     * @param null $defaultValue string
+     *
+     * @return string
+     */
     public function getValue($value, $section = null, $defaultValue = null)
     {
         if (isset($section)) {
             $result = isset($this->c[$section][$value])
                 ? $this->c[$section][$value]
-                : $defaultValue;
+                : null;
         } else {
             $result = isset($this->c[$value])
                 ? $this->c[$value]
-                : $defaultValue;
+                : null;
         }
         return $result == null
             ? $defaultValue
@@ -53,7 +62,6 @@ class GearConfiguration
 
     public static function FromIniFile($path)
     {
-        GearBundle::Pal('file\PALIniFileHelper');
         return new self(GearPALIniFileHelper::ParseIniFile($path, true), "ini");
     }
 

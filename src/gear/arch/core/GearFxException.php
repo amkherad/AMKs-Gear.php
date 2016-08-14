@@ -7,8 +7,11 @@
 
 /*<namespace.current>*/
 namespace gear\arch\core;
-use gear\arch\core\IGearMessageException;
 /*</namespace.current>*/
+/*<namespace.use>*/
+use gear\arch\core\IGearMessageException;
+use gear\arch\GearBundle;
+/*</namespace.use>*/
 
 /*<bundles>*/
 GearBundle::Arch('core\IGearMessageException');

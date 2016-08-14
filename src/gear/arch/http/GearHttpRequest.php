@@ -49,7 +49,7 @@ class GearHttpRequest implements IGearHttpRequest
 
     public function &getCurrentMethodValues()
     {
-        $requestMethod = $_SERVER['REQUEST_METHOD'];
+        $requestMethod = $this->getMethod();// $_SERVER['REQUEST_METHOD'];
         switch ($requestMethod) {
             case'GET':
                 return $_GET;

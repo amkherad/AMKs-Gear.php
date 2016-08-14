@@ -7,6 +7,8 @@ define('BUILD_NamespaceCurrent_Content_Begin', '/*<namespace.current>*/');
 define('BUILD_NamespaceCurrent_Content_End', '/*</namespace.current>*/');
 define('BUILD_NamespaceUse_Content_Begin', '/*<namespace.use>*/');
 define('BUILD_NamespaceUse_Content_End', '/*</namespace.use>*/');
+define('BUILD_NamespaceUse3rdParty_Content_Begin', '/*<namespace.use-3rdparty>*/');
+define('BUILD_NamespaceUse3rdParty_Content_End', '/*</namespace.use-3rdparty>*/');
 
 define('BUILD_Bundles_Content_Begin', '/*<bundles>*/');
 define('BUILD_Bundles_Content_End', '/*</bundles>*/');
@@ -155,7 +157,8 @@ function BUILD_makeBundle(
     $rootPath,
     $outputPath,
     $fileFormats,
-    $additionalFiles
+    $additionalFiles,
+    $generateHeaders = true
 )
 {
     $BUILD_modules = BUILD_getAllModulesIn($rootPath, $fileFormats);
@@ -175,6 +178,7 @@ function BUILD_makeBundle(
     $BUILD_totalModule = '';
     $BUILD_totalGenerals = '';
     $BUILD_totalBundles = '';
+    $BUILD_3rdpartyUse = [];
     foreach ($BUILD_exportedModules as $dir) {
         $moduleContent = $dir['content'];
 
@@ -184,14 +188,46 @@ function BUILD_makeBundle(
         $moduleNamespaceUse = BUILD_getSection($moduleContent, BUILD_NamespaceUse_Content_Begin, BUILD_NamespaceUse_Content_End);
         $moduleBundles = BUILD_getSection($moduleContent, BUILD_Bundles_Content_Begin, BUILD_Bundles_Content_End);
 
-        if (trim($moduleBody) != '') $BUILD_totalModule .= "$moduleBody\n";
-        if (trim($moduleGenerals) != '') $BUILD_totalGenerals .= "$moduleGenerals\n";
-        if (trim($moduleBundles) != '') $BUILD_totalBundles .= "$moduleBundles\n";
+        $moduleNamespaceUse3rdParty = '';
+        $moduleNamespaceUse3rdParty_Source = BUILD_getSection($moduleContent, BUILD_NamespaceUse3rdParty_Content_Begin, BUILD_NamespaceUse3rdParty_Content_End);
+        $moduleNamespaceUse3rdParty_Lines = explode("\n", $moduleNamespaceUse3rdParty_Source);
+        foreach($moduleNamespaceUse3rdParty_Lines as $line) {
+            if (!isset($BUILD_3rdpartyUse[$line])) {
+                $BUILD_3rdpartyUse[$line] = true;
+                $moduleNamespaceUse3rdParty = "$line\n";
+            }
+        }
+
+        $moduleBody = trim($moduleBody);
+        $moduleGenerals = trim($moduleGenerals);
+        $moduleBundles = trim($moduleBundles);
+        $moduleNamespaceUse3rdParty = trim($moduleNamespaceUse3rdParty);
+        if ($moduleNamespaceUse3rdParty != '') {
+            if ($moduleBody != '') $BUILD_totalModule .= "$moduleNamespaceUse3rdParty
+$moduleBody\n";
+        } else {
+            if ($moduleBody != '') $BUILD_totalModule .= "$moduleBody\n";
+        }
+        if ($moduleGenerals != '') $BUILD_totalGenerals .= "$moduleGenerals\n";
+        if ($moduleBundles != '') $BUILD_totalBundles .= "$moduleBundles\n";
+    }
+
+    $bundleIdUnderlined = str_replace('.', '', $bundleId);
+
+    $header = '';
+    $headerCompressed = '';
+    if ($generateHeaders) {
+        $header = "
+define('{$bundleIdUnderlined}_IsPackaged', true);
+";
+        $headerCompressed = "
+define('{$bundleIdUnderlined}_IsPackaged', true);
+define('{$bundleIdUnderlined}_IsCompressedBundle', true);
+";
     }
 
     $BUILD_totalContentNormal = "<?php
 //Bundle: $bundleId
-define('${bundleId}_IsPackaged', true);
 
 /* Modules: */
 $BUILD_totalModule
@@ -202,8 +238,6 @@ $BUILD_totalGenerals
 
     $BUILD_totalContentCompressed = "<?php
 //Bundle: $bundleId
-define('${bundleId}_IsPackaged', true);
-define('${bundleId}_IsCompressedBundle', true);
 
 /* Modules: */
 $BUILD_totalModule
@@ -213,7 +247,7 @@ $BUILD_totalGenerals
 ";
 
     file_put_contents("$outputPath\\$outputName", $BUILD_totalContentNormal);
-//file_put_contents("$outputPath\\$compressedOutputName", $BUILD_totalContentCompressed);
+    //file_put_contents("$outputPath\\$compressedOutputName", $BUILD_totalContentCompressed);
 }
 
 
@@ -244,7 +278,56 @@ BUILD_makeBundle(
     'Gear.Data',
     'gear.data.php',
     'gear.data.c.php',
-    "$BUILD_rootDirectory/src/gear/data",
+    "$BUILD_rootDirectory/src/gear/data/core",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
+    'Gear.Orm.RedBeanPhp',
+    'gear.rb-lib.php',
+    'gear.rb-lib.c.php',
+    "$BUILD_rootDirectory/src/gear/plugins/orm/redbeanphp/lib/redbean",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    [],
+    false
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
+    'Gear.Orm.RedBeanPhp',
+    'gear.orm-rb.php',
+    'gear.orm-rb.c.php',
+    "$BUILD_rootDirectory/src/gear/plugins/orm/redbeanphp/core",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
+    'Gear.Authentication',
+    'gear.auth.php',
+    'gear.auth.c.php',
+    "$BUILD_rootDirectory/src/gear/auth",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
+    'Gear.Authentication.RedBeanPhp',
+    'gear.auth-rb.php',
+    'gear.auth-rb.c.php',
+    "$BUILD_rootDirectory/src/gear/plugins/orm/redbeanphp/auth",
     "$BUILD_rootDirectory/bin",
     [
         'php'

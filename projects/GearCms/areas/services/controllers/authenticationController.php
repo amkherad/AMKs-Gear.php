@@ -7,9 +7,9 @@ class authenticationController extends GearController
 {
     function login()
     {
-        $user = UserEntity::create();
-        $user->username = 'sexy';
-        UserEntity::save($user);
+        //$user = UserEntity::create();
+        //$user->username = 'sexy';
+        //UserEntity::save($user);
     }
 
     function login_POST(AuthenticationModel $authenticationModel)

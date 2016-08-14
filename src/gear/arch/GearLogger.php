@@ -10,11 +10,15 @@
 /*<namespace.current>*/
 namespace gear\arch;
     /*</namespace.current>*/
+    /*<namespace.use>*/
+use gear\arch\core\IGearLogger;
+    /*</namespace.use>*/
 
     /*<bundles>*/
     /*</bundles>*/
 
 /*<module>*/
+
 class GearLogger
 {
     private static $loggers = [];
@@ -22,6 +26,7 @@ class GearLogger
     public static function write($mixed, $category = null)
     {
         foreach (self::$loggers as $logger) {
+            /** @var $logger IGearLogger */
             $logger->write($mixed, $category);
         }
     }

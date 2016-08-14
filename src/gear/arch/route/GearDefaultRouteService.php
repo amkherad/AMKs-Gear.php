@@ -5,6 +5,7 @@
 namespace gear\arch\route;
 /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\core\GearConfiguration;
 use gear\arch\core\GearNotSupportedException;
 use gear\arch\route\IGearRouteService;
 /*</namespace.use>*/
@@ -23,6 +24,11 @@ class GearDefaultRouteService implements IGearRouteService
 
         $mvcContext;
 
+    /**
+     * GearDefaultRouteService constructor.
+     *
+     * @param $config GearConfiguration
+     */
     public function __construct($config)
     {
         $area = $config->getValue(Gear_Key_DefaultArea, Gear_Section_Defaults, '');

@@ -11,9 +11,21 @@ namespace gear\arch\core;
 /*<module>*/
 interface IGearMvcContext
 {
+    /**
+     * @return string
+     */
     function getAreaName();
+    /**
+     * @return string
+     */
     function getControllerName();
+    /**
+     * @return string
+     */
     function getActionName();
+    /**
+     * @return array
+     */
     function getParams();
 }
 
