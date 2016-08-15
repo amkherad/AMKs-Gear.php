@@ -202,7 +202,6 @@ class Router {
                 return $this->callback($route['callback'], $match);
             }
         }
-        echo 'test' . $url;
 
         if ($noMatch) {
             return call_user_func($noMatch, $url);

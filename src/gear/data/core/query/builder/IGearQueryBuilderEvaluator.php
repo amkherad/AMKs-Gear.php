@@ -5,6 +5,7 @@
 namespace gear\data\core\query\builder;
 /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\data\core\datainterface\IGearQueryBuilder;
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -13,10 +14,30 @@ namespace gear\data\core\query\builder;
 /*<module>*/
 interface IGearQueryBuilderEvaluator
 {
-    function getNonResult($query);
-    function getOneResult($query);
-    function getManyResult($query);
-    function getScalarResult($query);
+    /**
+     * @param $queryBuilder IGearQueryBuilder
+     * @param $queryString string
+     * @return mixed
+     */
+    function getNonResult($queryBuilder, $queryString);
+    /**
+     * @param $queryBuilder IGearQueryBuilder
+     * @param $queryString string
+     * @return mixed
+     */
+    function getOneResult($queryBuilder, $queryString);
+    /**
+     * @param $queryBuilder IGearQueryBuilder
+     * @param $queryString string
+     * @return mixed
+     */
+    function getManyResult($queryBuilder, $queryString);
+    /**
+     * @param $queryBuilder IGearQueryBuilder
+     * @param $queryString string
+     * @return mixed
+     */
+    function getScalarResult($queryBuilder, $queryString);
 }
 /*</module>*/
 ?>

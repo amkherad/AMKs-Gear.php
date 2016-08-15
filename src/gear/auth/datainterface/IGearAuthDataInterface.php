@@ -5,8 +5,8 @@
 namespace gear\auth\datainterface;
 /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\auth\IGearAuthUser;
 use gear\data\core\datainterface\IGearCrudService;
-use gear\auth\GearUserBase;
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -17,11 +17,11 @@ interface IGearAuthDataInterface
 {
     /**
      * Creates a user.
-     * @param $userModel GearUserBase
-     * @param $password
-     * @return mixed
+     * @param $userModel IGearAuthUser
+     * @param $reason
+     * @return IGearAuthUser
      */
-    function createUser($userModel, $password);
+    function createUser($userModel, &$reason);
 
     /**
      * Finds a user with given username and password.
@@ -35,9 +35,10 @@ interface IGearAuthDataInterface
     /**
      * Finds a user with given username.
      * @param $username
+     * @param $reason
      * @return mixed
      */
-    function findUsername($username);
+    function findUsername($username, &$reason);
 }
 /*</module>*/
 ?>

@@ -38,14 +38,11 @@ class GearRedBeanAuthDataInterface implements IGearAuthDataInterface
 
     /**
      * @param GearRedBeanAuthUser $userModel
-     * @param $password
      *
      * @return mixed|void
      */
-    public function createUser($userModel, $password)
+    public function createUser($userModel, &$reason)
     {
-        $userModel->setPasswordHash($password);
-
         $service = new GearRedBeanDataInterface($this->entityName);
         try {
             $service->insert($userModel);
@@ -53,6 +50,7 @@ class GearRedBeanAuthDataInterface implements IGearAuthDataInterface
             $service->dispose();
         }
 
+        $reason = GearAuthenticationManager::AuthUserSuccessful;
         return $userModel;
     }
 
@@ -72,7 +70,7 @@ class GearRedBeanAuthDataInterface implements IGearAuthDataInterface
             $reason = GearAuthenticationManager::AuthUserNotFound;
             return null;
         } else {
-            $pass = $user->getPassword();
+            $pass = $user->getPasswordHash();
 
             if ($pass == $password) {
                 $reason = GearAuthenticationManager::AuthUserSuccessful;
@@ -84,7 +82,7 @@ class GearRedBeanAuthDataInterface implements IGearAuthDataInterface
         }
     }
 
-    public function findUsername($username)
+    public function findUsername($username, &$reason)
     {
         $service = new GearRedBeanDataInterface($this->entityName);
         try {

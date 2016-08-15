@@ -53,15 +53,20 @@ class GearRedBeanDataInterface implements IGearCrudService
         $this->entityName = $entityName;
     }
 
-    function getUnderlyingContext()
+    public function getUnderlyingContext()
     {
         return $this->entityName;
+    }
+
+    public function createModelInstance()
+    {
+        return RedBean::dispense($this->entityName);
     }
 
     /**
      * @return GearQueryBuilder
      */
-    function query()
+    public function query()
     {
         return new GearQueryBuilder(
             $this->entityName,
@@ -80,49 +85,50 @@ class GearRedBeanDataInterface implements IGearCrudService
         $result = call_user_func($this->getRedBeanMethod(''));
     }
 
-    function findAll($predicate)
+    public function findAll($predicate)
     {
         // TODO: Implement FindAll() method.
     }
 
-    function findById($id)
+    public function findById($id)
     {
         // TODO: Implement FindById() method.
     }
 
-    function insert($entity)
+    public function insert($entity)
     {
-        // TODO: Implement Insert() method.
+        return RedBean::store($entity);
     }
 
-    function update($entity)
+    public function update($entity)
     {
-        // TODO: Implement Update() method.
+        return RedBean::store($entity);
     }
 
-    function updateById($id, $entity)
+    public function updateById($id, $entity)
     {
         // TODO: Implement UpdateById() method.
     }
 
-    function delete($entity)
+    public function delete($entity)
     {
-        // TODO: Implement Delete() method.
+        RedBean::trash($entity);
+        return true;
     }
 
-    function deleteById($id)
+    public function deleteById($id)
     {
-        // TODO: Implement DeleteById() method.
+        RedBean::trash($this->entityName, $id);
     }
 
-    function countAll()
+    public function countAll()
     {
-        // TODO: Implement CountAll() method.
+        return RedBean::count($this->entityName);
     }
 
-    function count($predicate)
+    public function count($predicate)
     {
-        // TODO: Implement Count() method.
+        return RedBean::count($this->entityName, $predicate);
     }
 
     public function dispose()

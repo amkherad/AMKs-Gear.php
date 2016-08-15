@@ -21,6 +21,8 @@ interface IGearCrudService
      */
     function query();
 
+    function createModelInstance();
+
     function getAll();
     function findAll($predicate);
     function findById($id);

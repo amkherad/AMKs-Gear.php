@@ -15,9 +15,9 @@ use gear\auth\GearAuthenticationManager;
 /*<module>*/
 class GearRedBeanAuthManager extends GearAuthenticationManager
 {
-    public function __construct($dataInterface, $passHashProvider, $successfulHandler)
+    public function __construct($userEntityClassLoader, $dataInterface, $passHashProvider, $successfulHandler)
     {
-        parent::__construct($dataInterface, $passHashProvider, $successfulHandler);
+        parent::__construct($userEntityClassLoader, $dataInterface, $passHashProvider, $successfulHandler);
     }
 }
 /*</module>*/

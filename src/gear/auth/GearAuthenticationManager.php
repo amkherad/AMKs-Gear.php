@@ -102,22 +102,9 @@ class GearAuthenticationManager
 
         $reason = '';
         $user = $this->dataInterface->findUsernameAndPassword($username, $passwordHash, $reason);
-        if ($user == null) {
-            return new GearAuthenticationResult(
-                false,
-                "User with specified username and password has not found.",
-                $reason,
-                null
-        );
-        } else {
-            $result = $this->successfulHandler->onAuthSuccessful($user, $username, $password, $params);
-            return new GearAuthenticationResult(
-                true,
-                "Authentication is successful.",
-                self::AuthUserSuccessful,
-                $result
-            );
-        }
+
+        $result = $this->_login($user, $reason, $username, $password, $params);
+        return $result;
     }
 
     /**
@@ -132,12 +119,42 @@ class GearAuthenticationManager
     {
         $passwordHash = $this->passwordHashProvider->getPasswordUsernameHash($password, $username);
 
-        $user = $this->userEntityLoader->createInstance($params);
+        $user = $this->userEntityLoader->createInstance([
+            'username' => $username,
+            'password' => $password,
+            'params' => $params
+        ]);
 
-        /** @var $result GearAuthenticationResult */
-        $result = $this->dataInterface->createUser($user, $password);
+        $user->username = $username;
+        $user->passwordHash = $passwordHash;
 
+        $reason = '';
+        $user = $this->dataInterface->createUser($user, $reason);
+
+        $result = $this->_login($user, $reason, $username, $password, $params);
         return $result;
+    }
+
+    private function _login($user, $reason, $username, $password, $params)
+    {
+        if ($user == null) {
+            return new GearAuthenticationResult(
+                false,
+                "User with specified username and password has not found.",
+                $reason,
+                null,
+                $user
+            );
+        } else {
+            $result = $this->successfulHandler->onAuthSuccessful($user, $username, $password, $params);
+            return new GearAuthenticationResult(
+                true,
+                "Authentication is successful.",
+                self::AuthUserSuccessful,
+                $result,
+                $user
+            );
+        }
     }
 }
 /*</module>*/

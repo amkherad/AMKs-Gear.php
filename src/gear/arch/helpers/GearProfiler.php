@@ -5,13 +5,13 @@
 namespace gear\arch\helpers;
     /*</namespace.current>*/
     /*<namespace.use>*/
+use gear\arch\core\GearInvalidOperationException;
     /*</namespace.use>*/
 
     /*<bundles>*/
     /*</bundles>*/
 
 /*<module>*/
-use gear\arch\core\GearInvalidOperationException;
 
 class GearProfiler
 {

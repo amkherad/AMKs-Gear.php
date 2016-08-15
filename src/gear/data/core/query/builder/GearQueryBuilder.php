@@ -1,15 +1,19 @@
 <?php
 //$SOURCE_LICENSE$
 
+/*<requires>*/
+//IGearQueryBuilder
+/*</requires>*/
+
 /*<namespace.current>*/
 namespace gear\data\core\query\builder;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\GearArgumentNullException;
 use gear\arch\core\GearExtensibleClass;
 use gear\arch\core\GearInvalidOperationException;
+use gear\data\core\datainterface\IGearQueryBuilder;
 use gear\data\core\query\builder\sqlgenerator\IGearQueryBuilderSqlGenerator;
-
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -17,12 +21,20 @@ use gear\data\core\query\builder\sqlgenerator\IGearQueryBuilderSqlGenerator;
 
 /*<module>*/
 
-class GearQueryBuilder extends GearExtensibleClass
+class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 {
     const ConditionJoinAndBehavior = 'and';
     const ConditionJoinOrBehavior = 'or';
 
-    const GearQueryBuilderLimitOne = 'one';
+    const SqlFieldEscapeSymbol = '@';
+
+    const GearQueryBuilderLimitNRecordSig = 'limit';
+    const GearQueryBuilderLimitRangeSig = 'range';
+    const GearQueryBuilderLimitOffsetNRecordSig = 'offset';
+    const GearQueryBuilderLimitOne = 'limit:one';
+    const GearQueryBuilderLimitNRecord = 'limit:{N}';
+    const GearQueryBuilderLimitRange = 'range:{A}-{B}';
+    const GearQueryBuilderLimitOffsetNRecord = 'offset:{A}-{B}';
     const GearQueryBuilderLimitNoLimit = null;
 
     public static $DefaultConditionJoinBehavior = 'and';
@@ -159,10 +171,14 @@ class GearQueryBuilder extends GearExtensibleClass
 
     public function formatValue($value)
     {
+        $value = trim($value);
         if (is_numeric($value) && !is_string($value)) {
             return "$value";
         }
-        if (substr(trim($value), 0, 1) != "'") {
+        if ($value[0] == self::SqlFieldEscapeSymbol) {
+            return substr($value, 1);
+        }
+        if (substr($value, 0, 1) != "'") {
             if ($this->unicode) {
                 return "N'$value'";
             } else {
@@ -191,7 +207,7 @@ class GearQueryBuilder extends GearExtensibleClass
      * @param $condition
      * @return $this
      */
-    public function OrCondition($condition)
+    public function orCondition($condition)
     {
         $this->orConditions[] = $condition;
 
@@ -202,7 +218,7 @@ class GearQueryBuilder extends GearExtensibleClass
      * @param $condition
      * @return $this
      */
-    public function AndCondition($condition)
+    public function andCondition($condition)
     {
         $this->andConditions[] = $condition;
 
@@ -234,10 +250,10 @@ class GearQueryBuilder extends GearExtensibleClass
      */
     public function isEqual($var1, $var2)
     {
-        $val1 = $this->formatValue($var1);
+        //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$val1 = $val2");
+        $this->where("$var1 = $val2");
 
         return $this;
     }
@@ -249,10 +265,10 @@ class GearQueryBuilder extends GearExtensibleClass
      */
     public function isGreater($var1, $var2)
     {
-        $val1 = $this->formatValue($var1);
+        //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$val1 > $val2");
+        $this->where("$var1 > $val2");
 
         return $this;
     }
@@ -264,10 +280,10 @@ class GearQueryBuilder extends GearExtensibleClass
      */
     public function isGreaterEqual($var1, $var2)
     {
-        $val1 = $this->formatValue($var1);
+        //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$val1 >= $val2");
+        $this->where("$var1 >= $val2");
 
         return $this;
     }
@@ -279,10 +295,10 @@ class GearQueryBuilder extends GearExtensibleClass
      */
     public function isLesser($var1, $var2)
     {
-        $val1 = $this->formatValue($var1);
+        //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$val1 < $val2");
+        $this->where("$var1 < $val2");
 
         return $this;
     }
@@ -294,17 +310,31 @@ class GearQueryBuilder extends GearExtensibleClass
      */
     public function isLesserEqual($var1, $var2)
     {
-        $val1 = $this->formatValue($var1);
+        //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$val1 <= $val2");
+        $this->where("$var1 <= $val2");
 
         return $this;
     }
 
+    public function orderBy($col, $order = 'asc'){}
+    public function orderByDescending($col){}
+    public function thenBy($col, $order = 'asc'){}
+    public function thenByDescending($col){}
+
+    public function includeJoin(){}
+    public function innerJoin(){}
+    public function outerJoin(){}
+    public function join(){}
+    public function on(){}
+
+    public function groupBy(){}
+    public function having(){}
+
     public function select()
     {
-        return $this->queryEvaluator->getManyResult(
+        return $this->queryEvaluator->getManyResult($this,
             $this->queryBuilderSqlGenerator->createSelect(
                 $this->tableName,
                 $this->createColumns(),
@@ -318,7 +348,7 @@ class GearQueryBuilder extends GearExtensibleClass
 
     public function selectOne()
     {
-        return $this->queryEvaluator->getOneResult(
+        return $this->queryEvaluator->getOneResult($this,
             $this->queryBuilderSqlGenerator->createSelect(
                 $this->tableName,
                 $this->createColumns(),
@@ -335,6 +365,5 @@ class GearQueryBuilder extends GearExtensibleClass
         return (string)$this->createConditions();
     }
 }
-
 /*</module>*/
 ?>

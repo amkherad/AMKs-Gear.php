@@ -70,9 +70,43 @@ class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
 
     public function formatLimit($limit)
     {
-        switch ($limit) {
-            case GearQueryBuilder::GearQueryBuilderLimitOne:
-                return 'LIMIT 1';
+        if ($limit == null) {
+            return null;
+        } else if($limit == GearQueryBuilder::GearQueryBuilderLimitOne) {
+            return 'LIMIT 1';
+        }
+
+        $col = strpos($limit, ':');
+        if ($col === false) {
+            return null;
+        }
+        $limitType = substr($limit, 0, $col);
+        $limitValue = substr($limit, $col);
+
+        switch ($limitType) {
+            case GearQueryBuilder::GearQueryBuilderLimitNRecordSig:
+                return "LIMIT $limitValue";
+            case GearQueryBuilder::GearQueryBuilderLimitRangeSig:
+                $parts = explode('-', $limitValue);
+                if (count($parts) != 2) {
+                    return null;
+                }
+                $offset = intval($parts[0]);
+                $highVal = intval($parts[1]);
+                if ($offset > $highVal) {
+                    throw new GearInvalidOperationException("Invalid range encountered on query");
+                }
+                $count = $highVal - $offset;
+                return "LIMIT $count OFFSET {$parts[0]}";
+            case GearQueryBuilder::GearQueryBuilderLimitOffsetNRecordSig:
+                $parts = explode('-', $limitValue);
+                if (count($parts) != 2) {
+                    return null;
+                }
+                $offset = intval($parts[0]);
+                $count = intval($parts[1]);
+                return "LIMIT $count OFFSET {$parts[0]}";
+            default: return null;
         }
     }
 }

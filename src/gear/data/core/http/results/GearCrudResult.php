@@ -11,7 +11,7 @@ namespace gear\data\core\http\results;
     /*</bundles>*/
 
 /*<module>*/
-class GearRepositoryResult
+class GearCrudResult
 {
 
 }
