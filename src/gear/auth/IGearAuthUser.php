@@ -3,13 +3,13 @@
 
 /*<namespace.current>*/
 namespace gear\auth;
-    /*</namespace.current>*/
-    /*<namespace.use>*/
+/*</namespace.current>*/
+/*<namespace.use>*/
 use gear\data\core\entity\IGearIdEntity;
-    /*</namespace.use>*/
+/*</namespace.use>*/
 
-    /*<bundles>*/
-    /*</bundles>*/
+/*<bundles>*/
+/*</bundles>*/
 
 /*<module>*/
 /**
@@ -18,21 +18,13 @@ use gear\data\core\entity\IGearIdEntity;
  * @property string passwordHash
  * @property string email
  * @property string mobile
+ * @property string tell
  * @property string firstName
  * @property string lastName
+ * @property string middleName
  */
 interface IGearAuthUser extends IGearIdEntity
 {
-    //public
-    //    $username,
-    //    $mobile,
-    //    $email,
-    //    $firstName,
-    //    $lastName,
-    //
-    //    $passwordHash
-    //;
-
     /**
      * Returns username field.
      * @return string
@@ -58,7 +50,7 @@ interface IGearAuthUser extends IGearIdEntity
     function setPasswordHash($passwordHash);
 
     /**
-     * Returns passwordHash field.
+     * Returns mobile field.
      * @return string
      */
     function getMobile();
@@ -68,6 +60,18 @@ interface IGearAuthUser extends IGearIdEntity
      * @return void
      */
     function setMobile($mobile);
+
+    /**
+     * Returns tell field.
+     * @return string
+     */
+    function getTell();
+    /**
+     * Evaluates tell field.
+     * @param $tell string
+     * @return void
+     */
+    function setTell($tell);
 
     /**
      * Returns email field.
@@ -86,7 +90,7 @@ interface IGearAuthUser extends IGearIdEntity
      */
     function getFirstName();
     /**
-     * Evaluates lastName field.
+     * Evaluates firstName field.
      * @param $firstName string
      * @return void
      */
@@ -102,6 +106,17 @@ interface IGearAuthUser extends IGearIdEntity
      * @return void
      */
     function setLastName($lastName);
+    /**
+     * Returns middleName field.
+     * @return string
+     */
+    function getMiddleName();
+    /**
+     * Evaluates middleName field.
+     * @param $middleName string
+     * @return void
+     */
+    function setMiddleName($middleName);
 }
 /*</module>*/
 ?>

@@ -6,14 +6,12 @@ namespace gear\auth\meta;
     /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\auth\IGearAuthUser;
-
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-
 class GearAuthenticationResult
 {
     /** @var bool */
@@ -93,6 +91,5 @@ class GearAuthenticationResult
         return $this->user;
     }
 }
-
 /*</module>*/
 ?>

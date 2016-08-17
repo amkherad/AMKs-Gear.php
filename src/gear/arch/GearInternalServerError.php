@@ -40,8 +40,8 @@ class GearInternalServerError
         }
 
         http_response_code($errorCode);
-        $errMessage = (defined('DEBUG') && $errorCode == 500) ? 'Internal Server Error!' : $ex->getMessage();
-        echo "<h1 style=\"color:red\">$errorCode - $errMessage</h1><br>" .
+        $errMessage = defined('DEBUG') ? $ex->getMessage() : 'An Error Has Been Occurred!';
+        echo "<title>$errorCode - Error</title><h1 style=\"color:red\">$errorCode - $errMessage</h1><br>" .
             (defined('DEBUG') ?
                 $ex->getMessage() . '<br>' .
                 $ex->getFile() . ' at line: ' . $ex->getLine() . '<br><br>' .

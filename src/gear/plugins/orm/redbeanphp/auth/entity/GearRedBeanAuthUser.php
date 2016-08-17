@@ -28,7 +28,6 @@ class GearRedBeanAuthUser extends GearRedBeanEntity implements IGearAuthUser
     }
     public function setUsername($username)
     {
-        echo $username;
         $this->username = $username;
     }
 
@@ -75,6 +74,24 @@ class GearRedBeanAuthUser extends GearRedBeanEntity implements IGearAuthUser
     public function setMobile($mobile)
     {
         $this->mobile = $mobile;
+    }
+
+    public function getTell()
+    {
+        return $this->tell;
+    }
+    public function setTell($tell)
+    {
+        $this->tell = $tell;
+    }
+
+    public function getMiddleName()
+    {
+        return $this->middleName;
+    }
+    public function setMiddleName($middleName)
+    {
+        $this->middleName = $middleName;
     }
 }
 /*</module>*/

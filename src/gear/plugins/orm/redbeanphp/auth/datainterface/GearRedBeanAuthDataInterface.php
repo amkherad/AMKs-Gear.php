@@ -3,7 +3,7 @@
 
 /*<namespace.current>*/
 namespace gear\plugins\orm\redbeanphp\auth\datainterface;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
 use gear\auth\datainterface\IGearAuthDataInterface;
 use gear\auth\GearAuthenticationManager;
@@ -18,7 +18,6 @@ use gear\plugins\orm\redbeanphp\datainterface\GearRedBeanDataInterface;
 /*</bundles>*/
 
 /*<module>*/
-
 class GearRedBeanAuthDataInterface implements IGearAuthDataInterface
 {
     private
@@ -103,6 +102,5 @@ class GearRedBeanAuthDataInterface implements IGearAuthDataInterface
         }
     }
 }
-
 /*</module>*/
 ?>
