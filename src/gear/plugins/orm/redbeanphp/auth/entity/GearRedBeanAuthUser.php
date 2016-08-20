@@ -13,7 +13,6 @@ use gear\data\orm\redbeanphp\entity\GearRedBeanEntity;
 /*</bundles>*/
 
 /*<module>*/
-
 class GearRedBeanAuthUser extends GearRedBeanEntity implements IGearAuthUser
 {
     public function getId()

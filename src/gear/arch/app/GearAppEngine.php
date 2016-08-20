@@ -17,7 +17,6 @@ use gear\arch\http\GearHttpResponse;
 use gear\arch\GearLogger;
 use gear\arch\http\GearHttpContext;
 use gear\arch\GearInternalServerError;
-
 /*</namespace.use>*/
 
 /*<bundles>*/
