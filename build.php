@@ -372,6 +372,18 @@ BUILD_makeBundle(
 );
 $BUILD_filesLog = false;
 BUILD_makeBundle(
+    'Gear.ViewHelpers',
+    'gear.view-helpers.php',
+    'gear.view-helpers.c.php',
+    "$BUILD_rootDirectory/src/gear/fancypack/viewhelpers",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
     'jQueryDataTables',
     'gear.jdt.php',
     'gear.jdt.c.php',

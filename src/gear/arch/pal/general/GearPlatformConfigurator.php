@@ -13,7 +13,6 @@ use gear\arch\http\GearHttpContext;
 /*</namespace.use>*/
 
 /*<generals>*/
-
 GearBundle::setRootDirectory(getcwd());
 
 function RenderBody()
@@ -24,6 +23,5 @@ function RenderBody()
         $context->getResponse()->write($output->getBuffer());
     }
 }
-
 /*</generals>*/
 ?>

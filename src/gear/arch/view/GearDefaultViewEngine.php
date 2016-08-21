@@ -7,7 +7,7 @@
 
 /*<namespace.current>*/
 namespace gear\arch\view;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\controller\GearController;
 use gear\arch\core\GearConfiguration;
@@ -22,14 +22,12 @@ use gear\arch\helpers\GearPath;
 use gear\arch\http\IGearActionResult;
 use gear\arch\http\results\GearBatchActionResult;
 use gear\arch\io\GearHtmlStream;
-
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-
 class GearDefaultViewEngine implements IGearViewEngine
 {
     /**
@@ -38,9 +36,11 @@ class GearDefaultViewEngine implements IGearViewEngine
     protected
         $probLocations = [
         '/:rootarea/:area/views/:controller',
+        '/:rootarea/:area/views/:controller/_shared',
         '/:rootarea/:area/views/:shared',
         '/:rootarea/:area/views',
         '/views/:controller',
+        '/views/:controller/_shared',
         '/views/:shared',
         '/views',
     ];
@@ -123,8 +123,8 @@ class GearDefaultViewEngine implements IGearViewEngine
             $viewPath,
             $viewName,
             $controller->dataBag,
-            $controller->html,
-            $controller->url,
+            $controller->getHtml(),
+            $controller->getUrl(),
             $controller->helper,
             $layout,
             $model,

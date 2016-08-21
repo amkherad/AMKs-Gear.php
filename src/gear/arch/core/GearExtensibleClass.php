@@ -14,27 +14,35 @@ namespace gear\arch\core;
 class GearExtensibleClass
 {
     /** @var array */
-    private $extensionMethods = [];
-    private $caseSensitive = false;
+    protected static $staticExtensionMethods = [];
+    /** @var array */
+    protected $extensionMethods = [];
+    protected $caseSensitive = false;
 
     /**
      * GearExtensibleClass constructor.
      * @param $caseSensitive bool Indicates the case-sensitiveness of name comparison.
      */
-    public function __construct($caseSensitive)
+    public function __construct($caseSensitive = false)
     {
         $this->caseSensitive = $caseSensitive;
     }
 
     public function __call($name, $args)
     {
+        $lowerName = strtolower($name);
+        if (!$this->caseSensitive) {
+            $name = $lowerName;
+        }
         if (isset($this->extensionMethods[$name])) {
             $method = $this->extensionMethods[$name];
+        } elseif (isset(static::$staticExtensionMethods[$lowerName])) {
+            $method = static::$staticExtensionMethods[$lowerName];
         } else {
             throw new GearInvalidOperationException("Method '$name' not found.");
         }
 
-        return call_user_func($method, $args, $this);
+        return call_user_func_array($method, $args);
     }
 
     /**
@@ -75,6 +83,27 @@ class GearExtensibleClass
             $name = strtolower($name);
         }
         unset($this->extensionMethods[$name]);
+    }
+
+    /**
+     * Adds an extension method to extended methods list.
+     * @param $name
+     * @param $callableValue
+     */
+    public static function setStaticExtensionMethod($name, $callableValue)
+    {
+        $name = strtolower($name);
+        static::$staticExtensionMethods[$name] = $callableValue;
+    }
+
+    /**
+     * Removes an extension method from extended methods list.
+     * @param $name
+     */
+    public static function removeStaticExtensionMethod($name)
+    {
+        $name = strtolower($name);
+        unset(static::$staticExtensionMethods[$name]);
     }
 }
 /*</module>*/

@@ -2,7 +2,7 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-namespace gear\fancypack\viewhelpers\html;
+namespace gear\fancypack\jdt\languages;
 /*</namespace.current>*/
 /*<namespace.use>*/
 /*</namespace.use>*/
@@ -11,9 +11,12 @@ namespace gear\fancypack\viewhelpers\html;
 /*</bundles>*/
 
 /*<module>*/
-class GearHtmlInjectionHelper implements IGearHelper
+class JqueryDataTablesAriaLanguagePack
 {
-
+    /** @var string */
+    public $sortAscending;
+    /** @var string */
+    public $sortDescending;
 }
 /*</module>*/
 ?>

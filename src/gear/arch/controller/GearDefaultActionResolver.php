@@ -7,10 +7,14 @@
 
 /*<namespace.current>*/
 namespace gear\arch\controller;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\core\IGearContext;
+use gear\arch\core\IGearMvcContext;
 use gear\arch\helpers\GearHelpers;
 use gear\arch\http\IGearActionResult;
+use gear\arch\http\IGearHttpRequest;
+use gear\arch\http\IGearHttpResponse;
 use gear\arch\http\IGearInnerActionResult;
 use gear\arch\core\GearInvalidOperationException;
 use gear\arch\core\GearSerializer;
@@ -20,7 +24,6 @@ use gear\arch\core\GearSerializer;
 /*</bundles>*/
 
 /*<module>*/
-
 class GearDefaultActionResolver implements IGearActionResolver
 {
     public function invokeAction(
@@ -56,12 +59,16 @@ class GearDefaultActionResolver implements IGearActionResolver
         $controller->checkExecution($context);
 
         try {
+            $response = $context->getResponse();
+
             $result = self::_execAction(
                 $context,
                 $mvcContext,
                 $controller,
                 $controllerReflection,
                 $actionReflection,
+                $request,
+                $response,
                 $actionName,
                 $suppliedArgumentss,
                 $actionParameters);
@@ -69,7 +76,7 @@ class GearDefaultActionResolver implements IGearActionResolver
             self::_executeActionResult(
                 $context,
                 $request,
-                $context->getResponse(),
+                $response,
                 $result);
 
         } catch (\Exception $ex) {
@@ -82,12 +89,28 @@ class GearDefaultActionResolver implements IGearActionResolver
         return true;
     }
 
+    /**
+     * @param IGearContext $context
+     * @param IGearMvcContext $mvcContext
+     * @param GearController $controller
+     * @param \ReflectionClass $controllerReflection
+     * @param \ReflectionMethod $actionReflection
+     * @param IGearHttpRequest $request
+     * @param IGearHttpResponse $response
+     * @param string $actionName
+     * @param mixed $args
+     * @param mixed $actionParameters
+     * @return mixed
+     * @throws GearInvalidOperationException
+     */
     public static function _execAction(
         $context,
         $mvcContext,
         $controller,
         $controllerReflection,
         $actionReflection,
+        $request,
+        $response,
         $actionName,
         $args,
         $actionParameters)
@@ -99,9 +122,10 @@ class GearDefaultActionResolver implements IGearActionResolver
             else
                 $result = call_user_func_array([$controller, $actionName], $args);
         } else {
-            if (!isset($args)) $args = $context->getAllValues();
+            if (!isset($args)) $args = $context->getRequest()->getAllValues();
             $actionArgs = array();
             foreach ($actionParameters as $p) {
+                /** @var $p \ReflectionParameter */
                 $value = null;
                 if (GearHelpers::TryGetArrayElementByNameCaseInSensetive($args, $p->getName(), $value))
                     $actionArgs[] = $value;
@@ -129,6 +153,13 @@ class GearDefaultActionResolver implements IGearActionResolver
         return $result;
     }
 
+    /**
+     * @param IGearContext $context
+     * @param IGearHttpRequest $request
+     * @param IGearHttpResponse $response
+     * @param IGearActionResult $result
+     * @throws GearInvalidOperationException
+     */
     private static function _executeActionResult($context, $request, $response, $result)
     {
         if (!isset($result)) return;

@@ -9,10 +9,12 @@
 namespace gear\_3rdparty\kunststube;
     /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\core\GearConfiguration;
+use gear\arch\core\IGearContext;
 use gear\arch\route\GearRouteMvcContext;
 use gear\arch\route\IGearRouteService;
+use Kunststube\Router\Route;
 use Kunststube\Router\Router;
-
 /*</namespace.use>*/
 
 /*<includes>*/
@@ -36,14 +38,20 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
 
     private $routeCache;
 
+    /**
+     * GearKunststubeRouteServiceMigration constructor.
+     * @param IGearContext $context
+     */
     public function __construct($context)
     {
+        /** @var GearConfiguration $config */
         $config = $context->getConfig();
         $this->context = $context;
         $this->config = $config;
         $router = new Router();
         $this->route = $router;
         $router->defaultCallback([$this, '_callback']);
+
     }
 
     public function getMvcContext()
@@ -99,7 +107,7 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
 
     public function createUrl($context, $mvcContext, $params)
     {
-
+        return $this->route->reverseRoute($params);
     }
 
     public function _callback(Route $route)

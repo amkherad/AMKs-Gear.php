@@ -18,6 +18,7 @@ namespace gear\arch\controller;
     /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\GearConfiguration;
+use gear\arch\core\GearExtensibleClass;
 use gear\arch\core\GearInspectableClass;
 use gear\arch\core\GearInvalidOperationException;
 use gear\arch\helpers\GearDynamicDictionary;
@@ -28,6 +29,8 @@ use gear\arch\core\IGearContext;
 use gear\arch\core\IGearMvcContext;
 use gear\arch\http\IGearHttpRequest;
 use gear\arch\http\IGearHttpResponse;
+use gear\arch\http\results\GearInternalServerErrorResult;
+use gear\arch\http\results\GearRedirectResult;
 use gear\arch\http\results\GearViewResult;
 use gear\arch\http\results\GearJsonResult;
 use gear\arch\http\results\GearStatusCodeResult;
@@ -46,7 +49,7 @@ GearBundle::Arch('core/GearInspectableClass');
 
 /*<module>*/
 
-abstract class GearController// extends InspectableClass
+abstract class GearController extends GearExtensibleClass
 {
     /** @var IGearContext */
     protected $context;
@@ -66,9 +69,9 @@ abstract class GearController// extends InspectableClass
     /** @var GearDynamicDictionary */
     public $dataBag;
     /** @var GearHtmlHelper */
-    public $html;
+    private $html;
     /** @var GearUrlHelper */
-    public $url;
+    private $url;
     /** @var GearGeneralHelper */
     public $helper;
 
@@ -86,18 +89,24 @@ abstract class GearController// extends InspectableClass
      */
     public function __construct($context)
     {
+        parent::__construct(false);
+
         $this->context = $context;
         $route = $context->getRoute();
         $config = $context->getConfig();
+        $mvcContext = $route->getMvcContext();
         $this->route = $route;
         $this->request = $context->getRequest();
         $this->response = $context->getResponse();
         $this->binder = $context->getBinder();
-        $this->mvcContext = $route->getMvcContext();
+        $this->mvcContext = $mvcContext;
 
         $this->layout = $config->getValue(Gear_Key_LayoutName, Gear_Section_View, Gear_DefaultLayoutName);
 
         $this->dataBag = new GearDynamicDictionary(array());
+        $urlHelper = new GearUrlHelper($context, $mvcContext, $route);
+        $this->url = $urlHelper;
+        $this->html = new GearHtmlHelper($context, $mvcContext, $urlHelper);
     }
 
     public function getRoute()
@@ -123,6 +132,21 @@ abstract class GearController// extends InspectableClass
     public function getBinder()
     {
         return $this->binder;
+    }
+
+    /**
+     * @return GearUrlHelper
+     */
+    public function getUrl()
+    {
+        return $this->url;
+    }
+    /**
+     * @return GearHtmlHelper
+     */
+    public function getHtml()
+    {
+        return $this->html;
     }
 
     public function beginExecute($context)
@@ -222,6 +246,11 @@ abstract class GearController// extends InspectableClass
         return new GearJsonResult($mixed, $allowGet);
     }
 
+    public function serverError($message = null)
+    {
+        return new GearInternalServerErrorResult($message);
+    }
+
     public function badRequest($message = null)
     {
         return new GearBadRequestResult($message);
@@ -255,6 +284,17 @@ abstract class GearController// extends InspectableClass
     public function viewModel($viewModel)
     {
         return new GearViewResult($this, null, $viewModel);
+    }
+
+    public function redirectToAction($actionName, $controllerName = null, $routeParams = null)
+    {
+        $url = $this->url->action($actionName, $controllerName, $routeParams);
+        return new GearRedirectResult($url, false);
+    }
+    public function redirectToActionPermanent($actionName, $controllerName = null, $routeParams = null)
+    {
+        $url = $this->url->action($actionName, $controllerName, $routeParams);
+        return new GearRedirectResult($url, true);
     }
 }
 

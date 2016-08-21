@@ -9,6 +9,9 @@
 namespace gear\arch\http\results;
 /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\core\IGearContext;
+use gear\arch\http\IGearHttpRequest;
+use gear\arch\http\IGearHttpResponse;
 use gear\arch\http\results\GearActionResultBase;
 use gear\arch\core\GearSerializer;
 /*</namespace.use>*/
@@ -16,10 +19,16 @@ use gear\arch\core\GearSerializer;
 /*<module>*/
 class GearJsonResult extends GearActionResultBase
 {
-    private
-        $content,
-        $allowGet;
+    /** @var mixed */
+    protected $content;
+    /** @var bool */
+    protected $allowGet;
 
+    /**
+     * GearJsonResult constructor.
+     * @param mixed $content
+     * @param bool $allowGet
+     */
     public function __construct($content, $allowGet)
     {
         $this->content = $content;
@@ -35,6 +44,17 @@ class GearJsonResult extends GearActionResultBase
         }
 
         $response->contentType('application/json');
+        $this->writeResult($context, $request, $response);
+    }
+
+    /**
+     * @param IGearContext $context
+     * @param IGearHttpRequest $request
+     * @param IGearHttpResponse $response
+     * @return GearErrorResult
+     */
+    public function writeResult($context, $request, $response)
+    {
         $response->write(GearSerializer::json($this->content));
     }
 }
