@@ -16,7 +16,7 @@ use gear\arch\http\IGearHttpResponse;
 /*<module>*/
 class JqueryDataTablesContext
 {
-    /** @var IGearMvcContext $context */
+    /** @var IGearContext $context */
     private $context;
     /** @var IGearHttpRequest */
     private $request;

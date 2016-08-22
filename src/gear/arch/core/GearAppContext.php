@@ -27,7 +27,8 @@ class GearAppContext implements IGearContext
         $response,
         //$binderFactory,
         $binder,
-        $services;
+        $services,
+        $values;
 
     public function __construct($config)
     {
@@ -36,6 +37,7 @@ class GearAppContext implements IGearContext
         //$this->request = $request;
         //$this->response = $response;
         $this->services = [];
+        $this->values = [];
 
         //$this->binder = $binderFactory->createEngine($this);
     }
@@ -85,17 +87,35 @@ class GearAppContext implements IGearContext
         $this->binder = $binder;
     }
 
-    function registerService($serviceName, $service)
+    public function setValue($name, $value)
+    {
+        if (!isset($value) && isset($this->values[$name])) {
+            unset($this->values[$name]);
+            return;
+        }
+
+        $this->values[$name] = $value;
+    }
+
+    public function getValue($name)
+    {
+        if (isset($this->values[$name])) {
+            return $this->values[$name];
+        }
+        return null;
+    }
+
+    public function registerService($serviceName, $service)
     {
         $this->services[$serviceName] = $service;
     }
 
-    function removeService($serviceName)
+    public function removeService($serviceName)
     {
         unset($this->services[$serviceName]);
     }
 
-    function getService($serviceName)
+    public function getService($serviceName)
     {
         return isset($this->services[$serviceName])
             ? $this->services[$serviceName]

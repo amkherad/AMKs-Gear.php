@@ -6,6 +6,8 @@ namespace gear\arch\app;
     /*</namespace.current>*/
 /*<namespace.use>*/
 use \Exception;
+use gear\arch\core\IGearContext;
+use gear\arch\core\IGearEngineFactory;
 use gear\arch\GearBundle;
 use gear\arch\GearAutoload;
 use gear\arch\core\GearAppContext;
@@ -32,12 +34,16 @@ class GearAppEngine
 
     public static $GearConfigCache;
 
-    private
-        $context,
-        $configuration,
-        $applicationEntry,
-        $controllerFactory,
-        $actionResolverFactory;
+    /** @var IGearContext */
+    private $context;
+    /** @var GearConfiguration */
+    private $configuration;
+    /** @var GearApplication */
+    private $applicationEntry;
+    /** @var IGearEngineFactory */
+    private $controllerFactory;
+    /** @var IGearEngineFactory */
+    private $actionResolverFactory;
 
     private $_startExecutionTime;
     private $_createExecutionTime;
@@ -104,6 +110,9 @@ class GearAppEngine
         return $factory;
     }
 
+    /**
+     * @param IGearContext $context
+     */
     public static function resolveBundles($context)
     {
         $config = $context->getConfig();
@@ -134,6 +143,9 @@ class GearAppEngine
         }
     }
 
+    /**
+     * @param IGearContext $context
+     */
     public static function resolveDependencies($context)
     {
         $config = $context->getConfig();
@@ -232,10 +244,12 @@ class GearAppEngine
             self::resolveBundles($context);
             self::resolveDependencies($context);
 
+            /** @var IGearEngineFactory $routeFactory */
             $routeFactory = self::getFactory($config, Gear_Section_Router, Gear_DefaultRouterFactory);
             $route = $routeFactory->createEngine($context);
             $context->registerService(Gear_ServiceRouterEngine, $route);
 
+            /** @var IGearEngineFactory $binderFactory */
             $binderFactory = self::getFactory($config, Gear_Section_Binder, Gear_DefaultModelBinderFactory);
             $binder = $binderFactory->createEngine($context);
 
@@ -273,6 +287,7 @@ class GearAppEngine
 
             $applicationEntry = $config->getValue(Gear_Key_ApplicationEntry, Gear_Section_AppEngine);
             if (isset($applicationEntry)) {
+                /** @var GearApplication $applicationEntryClass */
                 $applicationEntryClass = new $applicationEntry();
                 $engine->applicationEntry = $applicationEntryClass;
 
@@ -291,6 +306,7 @@ class GearAppEngine
     static function _render500Error($engine, $ex)
     {
         if ($engine != null) {
+            /** @var GearApplication $app */
             $app = $engine->applicationEntry;
             if ($app != null) {
                 $app->onExceptionOccurred($ex);

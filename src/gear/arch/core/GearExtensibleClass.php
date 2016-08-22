@@ -97,6 +97,18 @@ class GearExtensibleClass
     }
 
     /**
+     * Adds a list of extension methods to extended methods list.
+     * @param $dictionaryOfCallable
+     */
+    public static function setStaticExtensionMethods($dictionaryOfCallable)
+    {
+        foreach ($dictionaryOfCallable as $name => $callable) {
+            $name = strtolower($name);
+            static::$staticExtensionMethods[$name] = $callable;
+        }
+    }
+
+    /**
      * Removes an extension method from extended methods list.
      * @param $name
      */

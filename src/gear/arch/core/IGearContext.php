@@ -30,6 +30,23 @@ interface IGearContext
     function getBinder();
 
     /**
+     * Register and holds a variable, passing null as value cause value to remove from context.
+     *
+     * @param string $name
+     * @param mixed $value
+     * @return mixed
+     */
+    function setValue($name, $value);
+
+    /**
+     * Returns a stored value from context. returns null on not existence.
+     *
+     * @param $name
+     * @return mixed
+     */
+    function getValue($name);
+
+    /**
      * Registers a public service into context.
      *
      * @param $serviceName string

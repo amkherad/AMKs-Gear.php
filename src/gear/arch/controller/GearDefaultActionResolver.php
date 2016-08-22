@@ -44,6 +44,8 @@ class GearDefaultActionResolver implements IGearActionResolver
             $actionName = $preferedAction;
         }
 
+        $context->setValue('ActionName', $actionName);
+
         $suppliedArgumentss = array();
 
         $controllerReflection = new \ReflectionClass($controller);

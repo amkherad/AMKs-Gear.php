@@ -2,7 +2,7 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-namespace gear\fancypack\jdt;
+namespace gear\fancypack\viewhelpers\html;
 /*</namespace.current>*/
 /*<namespace.use>*/
 /*</namespace.use>*/
@@ -11,7 +11,7 @@ namespace gear\fancypack\jdt;
 /*</bundles>*/
 
 /*<module>*/
-class JqueryDataTablesColumnInfo
+class HiddenBuilder
 {
 
 }
