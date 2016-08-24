@@ -27,8 +27,11 @@ class GearHttpRequest implements IGearHttpRequest
         $this->route = $route;
     }
 
-    public function getValue($name)
+    public function getValue($name, $defaultValue = null)
     {
+        if (!isset($_REQUEST[$name])) {
+            return $defaultValue;
+        }
         return $_REQUEST[$name];
     }
 

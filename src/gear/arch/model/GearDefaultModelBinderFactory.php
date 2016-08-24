@@ -6,7 +6,7 @@ namespace gear\arch\model;
 /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\IGearEngineFactory;
-use gear\arch\core\GearDefaultModelBinder;
+use gear\arch\model\GearDefaultModelBindingEngine;
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -18,7 +18,7 @@ class GearDefaultModelBinderFactory implements IGearEngineFactory
 {
     function createEngine($context)
     {
-        return new GearDefaultModelBinder();
+        return new GearDefaultModelBindingEngine();
     }
 }
 /*</module>*/

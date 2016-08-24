@@ -63,6 +63,15 @@ class GearHtmlHelper extends GearExtensibleClass
     {
         return $this->url;
     }
+
+    public function partial($name, $model = null, $params = null)
+    {
+
+    }
+    public function partialIfExists($name, $model = null, $params = null)
+    {
+
+    }
 }
 
 /*</module>*/

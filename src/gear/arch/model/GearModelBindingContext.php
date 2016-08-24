@@ -2,14 +2,16 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-namespace gear\arch\http\results;
+namespace gear\arch\model;
 /*</namespace.current>*/
+/*<namespace.use>*/
+/*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-class GearActionPartialViewResult
+class GearModelBindingContext
 {
 
 }

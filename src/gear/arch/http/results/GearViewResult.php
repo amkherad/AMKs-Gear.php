@@ -30,6 +30,7 @@ class GearViewResult extends GearActionResultBase
     {
         $viewEngineFactory = $context->getService(Gear_ServiceViewEngineFactory);
 
+        /** @var IGearViewEngine $viewEngine */
         $viewEngine = $viewEngineFactory->createEngine($context);
 
         $viewName = $this->viewName;

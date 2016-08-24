@@ -100,6 +100,11 @@ class GearUrlHelper extends GearExtensibleClass
         }
         return $path;
     }
+
+    public function asset($path)
+    {
+        return $this->content('assets/' . $path);
+    }
 }
 /*</module>*/
 ?>

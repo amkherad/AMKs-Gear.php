@@ -12,11 +12,12 @@ namespace gear\arch\http;
 interface IGearHttpRequest
 {
     /**
-     * @param $name string
+     * @param string $name
+     * @param mixed|null $defaultValue
      *
      * @return mixed
      */
-    function getValue($name);
+    function getValue($name, $defaultValue = null);
 
     /**
      * @return string

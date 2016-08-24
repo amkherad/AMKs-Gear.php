@@ -1,27 +1,20 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Ali Mousavi Kherad
- * Date: 7/19/2016
- * Time: 1:42 AM
- */
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
 namespace gear\arch\model;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\GearInvalidOperationException;
 use gear\arch\helpers\GearHelpers;
-
+use gear\arch\model\IGearModelBindingEngine;
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-
-class GearDefaultModelBinder implements IGearModelBinder
+class GearDefaultModelBindingEngine implements IGearModelBindingEngine
 {
     protected
         $useRequestParams = true
@@ -63,7 +56,7 @@ class GearDefaultModelBinder implements IGearModelBinder
             $result = null;
             foreach ($sources as $source) {
                 if (!$source || !isset($source)) continue;
-                if (GearHelpers::TryGetArrayElementByNameCaseInSensetive($source, $k, $result))
+                if (GearHelpers::tryGetArrayElementByNameCaseInSensetive($source, $k, $result))
                     $instance->$k = $result;
             }
         }

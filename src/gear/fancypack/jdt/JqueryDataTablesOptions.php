@@ -14,6 +14,12 @@ use gear\fancypack\jdt\languages\JqueryDataTablesLanguagePack;
 /*<module>*/
 class JqueryDataTablesOptions
 {
+    const JdtColumnFilterModeList = 'list';
+    const JdtColumnFilterModeText = 'text';
+    const JdtColumnFilterModeNone = 'none';
+    const JdtColumnFilterModeBoolean = 'bool';
+    const JdtColumnFilterModeDateTime = 'date';
+
     /** @var bool */
     public $processing;
     /** @var bool */

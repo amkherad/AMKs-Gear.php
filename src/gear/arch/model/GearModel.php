@@ -18,7 +18,7 @@ use gear\arch\model\IGearModel;
 /*<module>*/
 class GearModel implements IGearModel
 {
-    function validate(&$errorDictionary)
+    public function validate(&$errorDictionary)
     {
         $errorDictionary = array();
         return true;

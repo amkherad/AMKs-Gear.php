@@ -6,6 +6,7 @@ namespace gear\fancypack\jdt;
 /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\controller\GearController;
+use gear\arch\helpers\GearHtmlHelper;
 use gear\fancypack\jdt\http\results\GearJdtResult;
 /*</namespace.use>*/
 
@@ -16,5 +17,10 @@ use gear\fancypack\jdt\http\results\GearJdtResult;
 GearController::setStaticExtensionMethod('jdtResult', function ($viewModel, $iteratable) {
     return new GearJdtResult($viewModel, $iteratable);
 });
+GearHtmlHelper::setStaticExtensionMethods([
+    'jqueryDataTables' => function ($id, $options = null) {
+        return new GearJdtResult($viewModel, $iteratable);
+    }
+]);
 /*</generals>*/
 ?>

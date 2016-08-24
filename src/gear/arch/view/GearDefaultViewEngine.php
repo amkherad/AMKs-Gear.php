@@ -82,6 +82,43 @@ class GearDefaultViewEngine implements IGearViewEngine
         return $execResult;
     }
 
+    public function renderPartialView(
+        $context,
+        $controller,
+        $partialViewName,
+        $model
+    )
+    {
+        $route = $context->getRoute();
+        $mvcContext = $route->getMvcContext();
+        $controllerName = $mvcContext->getControllerName();
+
+        $execResult = self::_renderView(
+            $this,
+            0,
+            $context,
+            $mvcContext,
+            $controllerName,
+            $controller,
+            $partialViewName,
+            $model,
+            false);
+
+        $result = array();
+        if (is_array($execResult)) {
+            foreach ($execResult as $r) {
+                if ($r instanceof IGearActionResult) {
+                    $result[] = $r;
+                }
+            }
+        }
+        if (sizeof($result) > 0) {
+            return new GearBatchActionResult($result);
+        }
+
+        return $execResult;
+    }
+
     /**
      * @param $viewEngine IGearViewEngine
      * @param $indent int
@@ -122,6 +159,7 @@ class GearDefaultViewEngine implements IGearViewEngine
             $viewEngine,
             $viewPath,
             $viewName,
+            $controller,
             $controller->dataBag,
             $controller->getHtml(),
             $controller->getUrl(),
@@ -249,6 +287,7 @@ class GearDefaultViewEngine implements IGearViewEngine
      * @param $viewEngine IGearViewEngine
      * @param $path string
      * @param $viewName string
+     * @param GearController $controller
      * @param $dataBag GearDynamicDictionary
      * @param $html GearHtmlHelper
      * @param $url GearUrlHelper
@@ -268,6 +307,7 @@ class GearDefaultViewEngine implements IGearViewEngine
         $viewEngine,
         $path,
         $viewName,
+        $controller,
         $dataBag,
         $html,
         $url,
@@ -278,13 +318,14 @@ class GearDefaultViewEngine implements IGearViewEngine
     {
         $viewPath = self::probView($config, $context, $mvcContext, $viewEngine, $path, $viewName);
 
-        global $Layout, $DataBag, $Model, $Html, $Url, $Helper;
+        global $Layout, $DataBag, $Model, $Html, $Url, $Helper, $Controller;
         $Model = $model;
         $Layout = $layout;
         $DataBag = $dataBag;
         $Html = $html;
         $Url = $url;
         $Helper = $helper;
+        $Controller = $controller;
 
         $level = ob_get_level();
         ob_start();

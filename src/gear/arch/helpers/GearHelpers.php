@@ -11,7 +11,7 @@ namespace gear\arch\helpers;
 /*<module>*/
 class GearHelpers
 {
-    public static function TryGetArrayElementByNameCaseInSensetive(array&$arr, $key, &$result)
+    public static function tryGetArrayElementByNameCaseInSensetive(array&$arr, $key, &$result)
     {
         $key = strtolower($key);
         foreach ($arr as $k => $val)
@@ -21,6 +21,15 @@ class GearHelpers
             }
         return false;
     }
+
+    public static function isNullOrWhitespace($string)
+    {
+        if ((!isset($string)) || $string == null) {
+            return true;
+        }
+        return preg_match('/^[\s]*$/', $string);
+    }
+
     private static function _dumpArray($arr,$indent){
         $size=sizeof($arr);
         echo"<span style=\"color:orange;\">Array($size)</span> => [";
