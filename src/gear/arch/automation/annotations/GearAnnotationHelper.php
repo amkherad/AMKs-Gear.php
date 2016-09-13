@@ -53,14 +53,32 @@ class GearAnnotationHelper
 
         foreach ($args as $arg) {
             $eqPos = strpos($arg, '=');
+            $key = '';
+            $value = '';
             if ($eqPos !== false) {
                 $fP = trim( substr($arg, 0, $eqPos) , " \t\n\r\0\x0B\"'*" );
                 $sP = trim( substr($arg, $eqPos + 1) , " \t\n\r\0\x0B\"'*" );
 
-                $this->args[$fP] = $sP;
+                $key = $fP;
+                $value = $sP;
             } else {
-                $this->args[$arg] = $arg;
+                $key = $arg;
+                $value = $arg;
             }
+
+            if (is_numeric($value)) {
+                if (is_integer($value)) {
+                    $value = intval($value);
+                } else {
+                    $value = floatval($value);
+                }
+            } elseif (strtolower($value) == 'false') {
+                $value = false;
+            } elseif (strtolower($value) == 'true') {
+                $value = true;
+            }
+
+            $this->args[$key] = $value;
         }
     }
 

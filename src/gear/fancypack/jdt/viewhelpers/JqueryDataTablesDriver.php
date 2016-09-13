@@ -24,20 +24,21 @@ class JqueryDataTablesDriver
 {
     /**
      * @param IGearHttpRequest $request
+     * @param bool $apiInstance
      *
      * @return array
      */
-    public static function getOrders($request)
+    public static function getOrders($request, $apiInstance)
     {
         $result = [];
 
         $index = 0;
         for (; ;) {
-            $orderCol = $request->getValue("order[$index][column]");
+            $orderCol = $request->getValue($apiInstance ? "order[$index][column]" : "iSortCol_$index");
             if (GearHelpers::isNullOrWhitespace($orderCol)) break;
             $col = ctype_digit($orderCol) ? intval($orderCol) : null;
             if ($col != null) {
-                $result[$col] = $request->getValue(["order[$index][dir]"]);
+                $result[$col] = $request->getValue($apiInstance ? "order[$index][dir]" : "sSortDir_$index");
             }
             $index++;
         }
@@ -47,26 +48,27 @@ class JqueryDataTablesDriver
 
     /**
      * @param IGearHttpRequest $request
+     * @param bool $apiInstance
      * @param array $orders
      * @param int $index
      *
      * @return null
      */
-    public static function readColumn($request, $orders, $index)
+    public static function readColumn($request, $apiInstance, $orders, $index)
     {
-        $name = $request->getValue("columns[$index][name]");
+        $name = $request->getValue($apiInstance ? "columns[$index][name]" : "mDataProp_$index");
         if (GearHelpers::isNullOrWhitespace($name)) {
             return null;
         }
-        $data = $request->getValue("columns[$index][data]");
-        $orderable = boolval($request->getValue("columns[$index][orderable]"));
-        $searchable = boolval($request->getValue("columns[$index][searchable]"));
+        $data = $request->getValue($apiInstance ? "columns[$index][data]" : "mDataProp_$index");
+        $orderable = boolval($request->getValue($apiInstance ? "columns[$index][orderable]" : "bSortable_$index"));
+        $searchable = boolval($request->getValue($apiInstance ? "columns[$index][searchable]" : "bSearchable_$index"));
         $order = null;
         $filter = null;
         $filterIsRegex = false;
         if ($searchable) {
-            $filter = $request->getValue("columns[$index][search][value]");
-            $filterIsRegex = boolval($request->getValue("columns[$index][search][regex]"));
+            $filter = $request->getValue($apiInstance ? "columns[$index][search][value]" : "sSearch_$index");
+            $filterIsRegex = boolval($request->getValue($apiInstance ? "columns[$index][search][regex]" : "bRegex_$index"));
         }
 
         if ($orderable) {
@@ -102,26 +104,28 @@ class JqueryDataTablesDriver
             throw new GearArgumentNullException('filterModel');
         }
 
-        $filterModel->setDraw($request->getValue("draw"));
-        $filterModel->setApiInstance($request->getValue("apiInstance", true));
+        $apiInstance = $request->getValue("apiInstance", true);
+        $filterModel->setApiInstance($apiInstance);
+
+        $filterModel->setDraw($request->getValue($apiInstance ? 'draw' : 'sEcho'));
 
         $columns = [];
-        $orders = self::getOrders($request);
+        $orders = self::getOrders($request, $apiInstance);
 
         $index = 0;
-        $col = self::readColumn($request, $orders, 0);
+        $col = self::readColumn($request, $apiInstance, $orders, 0);
         while ($col != null) {
             $columns[] = $col;
             $index++;
-            $col = self::readColumn($request, $orders, $index);
+            $col = self::readColumn($request, $apiInstance, $orders, $index);
         }
 
-        $filterModel->setGeneralFilter($request->getValue("search[value]"));
-        $regex = boolval($request->getValue("search[regex]"));
+        $filterModel->setGeneralFilter($request->getValue($apiInstance ? 'search[value]' : 'sSearch'));
+        $regex = boolval($request->getValue($apiInstance ? 'search[regex]' : 'bRegex'));
         $filterModel->setCompareMode($regex ? 'regex' : 'contains');
 
-        $startStr = $request->getValue("start");
-        $lengthStr = $request->getValue("length");
+        $startStr = $request->getValue($apiInstance ? 'start' : 'iDisplayStart');
+        $lengthStr = $request->getValue($apiInstance ? 'length' : 'iDisplayLength');
 
         if (ctype_digit($startStr)) {
             $filterModel->setStart(intval($startStr));

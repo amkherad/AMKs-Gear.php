@@ -113,7 +113,7 @@ class JqueryDataTablesRenderer
             'Removed5' => 'fnRender',
             'rowCallback' => 'fnRowCallback',
             'ajax.data' => '.fnServerData',
-            //'ajax' => '.fnServerParams',
+            //'ajax' => '',
             'ajax.type' => '.sServerMethod',
             'ajax.dataSrc' => '.sAjaxDataProp',
             'ajax.url' => '.sAjaxSource',
@@ -131,24 +131,28 @@ class JqueryDataTablesRenderer
             'tabIndex' => 'iTabIndex',
             'columns.data' => 'mData',
             'columns.render' => 'mRender',
-            'language.aria.sortAscending' => 'oLanguage.oAria.sSortAscending',
-            'language.aria.sortDescending' => 'oLanguage.oAria.sSortDescending',
-            'language.paginate.first' => 'oLanguage.oPaginate.sFirst',
-            'language.paginate.last' => 'oLanguage.oPaginate.sLast',
-            'language.paginate.next' => 'oLanguage.oPaginate.sNext',
-            'language.paginate.previous' => 'oLanguage.oPaginate.sPrevious',
-            'language.emptyTable' => 'oLanguage.sEmptyTable',
-            'language.info' => 'oLanguage.sInfo',
-            'language.infoEmpty' => 'oLanguage.sInfoEmpty',
-            'language.infoFiltered' => 'oLanguage.sInfoFiltered',
-            'language.infoPostFix' => 'oLanguage.sInfoPostFix',
-            'language.thousands' => 'oLanguage.sInfoThousands',
-            'language.lengthMenu' => 'oLanguage.sLengthMenu',
-            'language.loadingRecords' => 'oLanguage.sLoadingRecords',
-            'language.processing' => 'oLanguage.sProcessing',
-            'language.search' => 'oLanguage.sSearch',
-            'language.url' => 'oLanguage.sUrl',
-            'language.zeroRecords' => 'oLanguage.sZeroRecords',
+            'language' => 'oLanguage',
+            'language.aria' => 'oAria',
+            'language.aria.sortAscending' => 'sSortAscending',
+            'language.aria.sortDescending' => 'sSortDescending',
+            'language.paginate' => 'oPaginate',
+            'language.paginate.first' => 'sFirst',
+            'language.paginate.last' => 'sLast',
+            'language.paginate.next' => 'sNext',
+            'language.paginate.previous' => 'sPrevious',
+            'language.emptyTable' => 'sEmptyTable',
+            'language.info' => 'sInfo',
+            'language.infoEmpty' => 'sInfoEmpty',
+            'language.infoFiltered' => 'sInfoFiltered',
+            'language.infoPostFix' => 'sInfoPostFix',
+            'language.thousands' => 'sInfoThousands',
+            'language.lengthMenu' => 'sLengthMenu',
+            'language.loadingRecords' => 'sLoadingRecords',
+            'language.infoThousands' => 'sInfoThousands',
+            'language.processing' => 'sProcessing',
+            'language.search' => 'sSearch',
+            'language.url' => 'sUrl',
+            'language.zeroRecords' => 'sZeroRecords',
             'search' => 'oSearch',
             'columns.cellType' => 'sCellType',
             'columns.className' => 'sClass',
@@ -167,7 +171,8 @@ class JqueryDataTablesRenderer
             'columns.width' => 'sWidth',
         ];
 
-        return self::_convertToOldApi($mapping, null, $options, null);
+        $rootObj = null;
+        return self::_convertToOldApi($mapping, $rootObj, $options, null);
     }
 
     /**
@@ -177,7 +182,7 @@ class JqueryDataTablesRenderer
      * @param string $level
      * @return array
      */
-    private static function _convertToOldApi($mapping, $rootObj, $obj, $level)
+    private static function _convertToOldApi($mapping, &$rootObj, $obj, $level)
     {
         $reflection = new ReflectionClass($obj);
         $props = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED);
@@ -194,6 +199,9 @@ class JqueryDataTablesRenderer
             $target = &$fields;
             if (isset($mapping[$stageName])) {
                 $name = $mapping[$stageName];
+                //if ($name == '') {
+                //    continue;
+                //}
                 //$fields[$name] = '';
                 if (substr($name, 0, 1) == '.') {
                     $name = substr($name, 1);
@@ -203,6 +211,10 @@ class JqueryDataTablesRenderer
                 }
             }
 
+            if ($rootObj == null) {
+                $rootObj = &$fields;
+            }
+
             if (is_object($val)) {
                 if ($val instanceof GearRawOutput) {
                     $val = strval($val);
@@ -210,12 +222,12 @@ class JqueryDataTablesRenderer
                 } else {
                     $target[] = "\"$name\":" . self::_convertToOldApi(
                             $mapping,
-                            $rootObj == null ? $fields : $rootObj,
+                            $rootObj,
                             $val,
-                            "$level$name.");
+                            "$stageName.");
                 }
             } elseif (is_array($val)) {
-                $target[] = "\"$name\":" . self::_convertToOldApiArray($mapping, $rootObj, $val, "$level$name.");
+                $target[] = "\"$name\":" . self::_convertToOldApiArray($mapping, $rootObj, $val, "$stageName.");
             } elseif (is_numeric($val)) {
                 $target[] = "\"$name\":$val";
             } elseif (is_string($val)) {
