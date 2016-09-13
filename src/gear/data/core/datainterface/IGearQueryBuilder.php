@@ -61,8 +61,15 @@ interface IGearQueryBuilder
     function groupBy();
     function having();
 
+    function skip($count);
+    function take($count);
+
     function select();
     function selectOne();
+
+    function count();
+
+    function setConverter($converter);
 }
 /*</module>*/
 ?>

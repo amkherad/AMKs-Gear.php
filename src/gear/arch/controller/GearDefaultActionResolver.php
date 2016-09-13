@@ -124,14 +124,14 @@ class GearDefaultActionResolver implements IGearActionResolver
             else
                 $result = call_user_func_array([$controller, $actionName], $args);
         } else {
-            if (!isset($args)) $args = $context->getRequest()->getAllValues();
+            /*if (!isset($args))*/ $args = $context->getRequest()->getAllValues();
             $actionArgs = array();
             foreach ($actionParameters as $p) {
                 /** @var $p \ReflectionParameter */
                 $value = null;
-                if (GearHelpers::TryGetArrayElementByNameCaseInSensetive($args, $p->getName(), $value))
+                if (GearHelpers::TryGetArrayElementByNameCaseInSensetive($args, $p->getName(), $value)) {
                     $actionArgs[] = $value;
-                else {
+                } else {
                     try {
                         $class = $p->getClass();
                     } catch (\Exception$ex) {
@@ -145,7 +145,14 @@ class GearDefaultActionResolver implements IGearActionResolver
                             $mvcContext
                         );
                     } else {
-                        throw new GearInvalidOperationException("Action '$actionName' argument uses an undefined class type.");
+                        if ($p->isArray()) {
+                            throw new GearInvalidOperationException("Action '$actionName' argument uses an undefined class type.");
+                        } else {
+                            $name = $p->getName();
+                            if (isset($args[$name])) {
+                                $actionArgs[$name] = $args[$name];
+                            }
+                        }
                     }
                 }
             }

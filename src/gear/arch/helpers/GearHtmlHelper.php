@@ -5,9 +5,11 @@
 namespace gear\arch\helpers;
     /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\controller\GearController;
 use gear\arch\core\GearExtensibleClass;
 use gear\arch\core\IGearContext;
 use gear\arch\core\IGearMvcContext;
+use gear\arch\view\IGearViewEngine;
 
 /*</namespace.use>*/
 
@@ -24,6 +26,8 @@ class GearHtmlHelper extends GearExtensibleClass
     private $mvcContext;
     /** @var GearUrlHelper */
     private $url;
+    /** @var GearController */
+    private $controller;
 
     /**
      * UrlHelper constructor.
@@ -31,13 +35,14 @@ class GearHtmlHelper extends GearExtensibleClass
      * @param IGearMvcContext $mvcContext
      * @param GearUrlHelper $urlHelper
      */
-    public function __construct($context, $mvcContext, $urlHelper)
+    public function __construct($context, $mvcContext, $urlHelper, $controller)
     {
         parent::__construct(true);
 
         $this->context = $context;
         $this->mvcContext = $mvcContext;
         $this->url = $urlHelper;
+        $this->controller = $controller;
     }
 
     /**
@@ -66,7 +71,24 @@ class GearHtmlHelper extends GearExtensibleClass
 
     public function partial($name, $model = null, $params = null)
     {
+        $context = $this->context;
+        $viewEngineFactory = $context->getService(Gear_ServiceViewEngineFactory);
 
+        /** @var IGearViewEngine $viewEngine */
+        $viewEngine = $viewEngineFactory->createEngine($context);
+
+        if(!isset($name)){
+            $name = $context->getRoute()->getMvcContext()->getActionName();
+        }
+
+        $viewEngine->renderView(
+            $context,
+            $this->controller,
+            $name,
+            $model
+        );
+
+        return null;
     }
     public function partialIfExists($name, $model = null, $params = null)
     {

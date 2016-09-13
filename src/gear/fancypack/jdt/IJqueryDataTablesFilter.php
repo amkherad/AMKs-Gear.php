@@ -24,6 +24,16 @@ interface IJqueryDataTablesFilter
     function setDraw($draw);
 
     /**
+     * @return bool
+     */
+    function getApiInstance();
+    /**
+     * @param bool $apiInstance
+     * @return void
+     */
+    function setApiInstance($apiInstance);
+
+    /**
      * @return int|null
      */
     function getStart();

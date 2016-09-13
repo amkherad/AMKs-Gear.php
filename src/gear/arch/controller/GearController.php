@@ -17,6 +17,7 @@
 namespace gear\arch\controller;
     /*</namespace.current>*/
 /*<namespace.use>*/
+use Exception;
 use gear\arch\core\GearConfiguration;
 use gear\arch\core\GearExtensibleClass;
 use gear\arch\core\GearInspectableClass;
@@ -106,29 +107,52 @@ abstract class GearController extends GearExtensibleClass
         $this->dataBag = new GearDynamicDictionary(array());
         $urlHelper = new GearUrlHelper($context, $mvcContext, $route);
         $this->url = $urlHelper;
-        $this->html = new GearHtmlHelper($context, $mvcContext, $urlHelper);
+        $this->html = new GearHtmlHelper($context, $mvcContext, $urlHelper, $this);
     }
 
+    /**
+     * @return IGearContext
+     */
+    public function getContext()
+    {
+        return $this->context;
+    }
+
+    /**
+     * @return IGearRouteService
+     */
     public function getRoute()
     {
         return $this->route;
     }
 
+    /**
+     * @return IGearHttpRequest
+     */
     public function getRequest()
     {
         return $this->request;
     }
 
+    /**
+     * @return IGearHttpResponse
+     */
     public function getResponse()
     {
         return $this->response;
     }
 
+    /**
+     * @return IGearMvcContext
+     */
     public function getMvcContext()
     {
         return $this->mvcContext;
     }
 
+    /**
+     * @return IGearModelBinder
+     */
     public function getBinder()
     {
         return $this->binder;
@@ -149,6 +173,9 @@ abstract class GearController extends GearExtensibleClass
         return $this->html;
     }
 
+    /**
+     * @param IGearContext $context
+     */
     public function beginExecute($context)
     {
         foreach($this->beginExecuteHandlers as $handler) {
@@ -156,6 +183,9 @@ abstract class GearController extends GearExtensibleClass
         }
     }
 
+    /**
+     * @param IGearContext $context
+     */
     public function checkExecution($context)
     {
         $this->authorize($context);
@@ -165,6 +195,9 @@ abstract class GearController extends GearExtensibleClass
         }
     }
 
+    /**
+     * @param IGearContext $context
+     */
     public function endExecute($context)
     {
         foreach($this->endExecuteHandlers as $handler) {
@@ -172,6 +205,10 @@ abstract class GearController extends GearExtensibleClass
         }
     }
 
+    /**
+     * @param IGearContext $context
+     * @param Exception $exception
+     */
     public function onExceptionOccurred($context, $exception)
     {
         foreach($this->exceptionHandlers as $handler) {
@@ -179,29 +216,51 @@ abstract class GearController extends GearExtensibleClass
         }
     }
 
+    /**
+     * @param IGearContext $context
+     */
     public function authorize($context)
     {
 
     }
 
+    /**
+     * @param callable $handler
+     * @throws GearInvalidOperationException
+     */
     public function addBeginExecuteHandler($handler) {
         if (!is_callable($handler)) {
             throw new GearInvalidOperationException();
         }
         $this->beginExecuteHandlers[] = $handler;
     }
+
+    /**
+     * @param callable $handler
+     * @throws GearInvalidOperationException
+     */
     public function addEndExecuteHandler($handler) {
         if (!is_callable($handler)) {
             throw new GearInvalidOperationException();
         }
         $this->endExecuteHandlers[] = $handler;
     }
+
+    /**
+     * @param callable $handler
+     * @throws GearInvalidOperationException
+     */
     public function addCheckExecutionHandler($handler) {
         if (!is_callable($handler)) {
             throw new GearInvalidOperationException();
         }
         $this->checkExecutionHandlers[] = $handler;
     }
+
+    /**
+     * @param callable $handler
+     * @throws GearInvalidOperationException
+     */
     public function addExceptionHandler($handler) {
         if (!is_callable($handler)) {
             throw new GearInvalidOperationException();
@@ -209,6 +268,10 @@ abstract class GearController extends GearExtensibleClass
         $this->exceptionHandlers[] = $handler;
     }
 
+    /**
+     * @param mixed $model
+     * @return mixed
+     */
     public function bind($model)
     {
         if (!isset($model)) {
@@ -224,6 +287,10 @@ abstract class GearController extends GearExtensibleClass
     //{
     //}
 
+    /**
+     * @param mixed $model
+     * @return bool
+     */
     public function validateModel($model)
     {
         if ($model == null) {
@@ -241,62 +308,127 @@ abstract class GearController extends GearExtensibleClass
     }
 
 
+    /**
+     * @param mixed $mixed
+     * @param bool|false $allowGet
+     * @return GearJsonResult
+     */
     public function json($mixed, $allowGet = false)
     {
         return new GearJsonResult($mixed, $allowGet);
     }
 
+    /**
+     * @param string|null $message
+     * @return GearInternalServerErrorResult
+     */
     public function serverError($message = null)
     {
         return new GearInternalServerErrorResult($message);
     }
 
+    /**
+     * @param string|null $message
+     * @return GearBadRequestResult
+     */
     public function badRequest($message = null)
     {
         return new GearBadRequestResult($message);
     }
 
+    /**
+     * @param string|null $message
+     * @return GearNotFoundResult
+     */
     public function notFound($message = null)
     {
         return new GearNotFoundResult($message);
     }
 
+    /**
+     * @param string|null $message
+     * @return GearUnauthorizedResult
+     */
     public function unauthorized($message = null)
     {
         return new GearUnauthorizedResult($message);
     }
 
+    /**
+     * @param string|null $message
+     * @return GearEmptyResult
+     */
     public function emptyResult($message = null)
     {
         return new GearEmptyResult($message);
     }
 
+    /**
+     * @param string $viewName
+     * @param mixed $model
+     * @return GearViewResult
+     */
     public function view($viewName = null, $model = null)
     {
         return new GearViewResult($this, $viewName, $model);
     }
 
+    /**
+     * @param string $viewName
+     * @return GearViewResult
+     */
     public function viewName($viewName)
     {
         return new GearViewResult($this, $viewName, null);
     }
 
+    /**
+     * @param mixed $viewModel
+     * @return GearViewResult
+     */
     public function viewModel($viewModel)
     {
         return new GearViewResult($this, null, $viewModel);
     }
 
+    /**
+     * @param string $actionName
+     * @param string|null $controllerName
+     * @param string|null $routeParams
+     * @return GearRedirectResult
+     */
     public function redirectToAction($actionName, $controllerName = null, $routeParams = null)
     {
         $url = $this->url->action($actionName, $controllerName, $routeParams);
         return new GearRedirectResult($url, false);
     }
+    /**
+     * @param string $actionName
+     * @param string|null $controllerName
+     * @param string|null $routeParams
+     * @return GearRedirectResult
+     */
     public function redirectToActionPermanent($actionName, $controllerName = null, $routeParams = null)
     {
         $url = $this->url->action($actionName, $controllerName, $routeParams);
         return new GearRedirectResult($url, true);
     }
+    /**
+     * @param string $url
+     * @return GearRedirectResult
+     */
+    public function redirectToUrl($url)
+    {
+        return new GearRedirectResult($url, false);
+    }
+    /**
+     * @param string $url
+     * @return GearRedirectResult
+     */
+    public function redirectToUrlPermanent($url)
+    {
+        return new GearRedirectResult($url, true);
+    }
 }
-
 /*</module>*/
 ?>

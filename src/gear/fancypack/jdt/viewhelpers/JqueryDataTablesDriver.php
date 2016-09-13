@@ -6,16 +6,20 @@ namespace gear\fancypack\jdt\viewhelpers;
 /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\GearArgumentNullException;
+use gear\arch\core\GearErrorStrategy;
 use gear\arch\helpers\GearHelpers;
 use gear\arch\http\IGearHttpRequest;
+use gear\data\core\query\builder\GearQueryBuilder;
 use gear\fancypack\jdt\IJqueryDataTablesFilter;
-
+use gear\fancypack\jdt\JqueryDataTablesFilter;
+use gear\fancypack\jdt\viewmodel\IJqueryDataTablesFilterViewModel;
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
+
 class JqueryDataTablesDriver
 {
     /**
@@ -28,12 +32,11 @@ class JqueryDataTablesDriver
         $result = [];
 
         $index = 0;
-        for(;;)
-        {
+        for (; ;) {
             $orderCol = $request->getValue("order[$index][column]");
             if (GearHelpers::isNullOrWhitespace($orderCol)) break;
             $col = ctype_digit($orderCol) ? intval($orderCol) : null;
-            if($col != null) {
+            if ($col != null) {
                 $result[$col] = $request->getValue(["order[$index][dir]"]);
             }
             $index++;
@@ -99,6 +102,9 @@ class JqueryDataTablesDriver
             throw new GearArgumentNullException('filterModel');
         }
 
+        $filterModel->setDraw($request->getValue("draw"));
+        $filterModel->setApiInstance($request->getValue("apiInstance", true));
+
         $columns = [];
         $orders = self::getOrders($request);
 
@@ -125,6 +131,133 @@ class JqueryDataTablesDriver
         }
 
         return $columns;
+    }
+
+    /**
+     * @param GearQueryBuilder $query
+     *
+     * @param IJqueryDataTablesFilter $filterModel
+     * @return GearQueryBuilder
+     */
+    public static function createInternalFiltererFiltersOnQuery(
+        $query,
+        $filterModel
+    )
+    {
+        $query = clone $query;
+
+
+
+        return $query;
+    }
+
+    /**
+     * @param GearQueryBuilder $query
+     * @param IGearHttpRequest $request
+     * @param IJqueryDataTablesFilterViewModel $filterViewModel
+     * @param JqueryDataTablesFilter $filterModel
+     *
+     * @return array
+     * @throws GearArgumentNullException
+     */
+    public static function createJqueryDataTablesFilter(
+        $query,
+        $request,
+        $filterViewModel,
+        $filterModel,
+        $countFiltereds = true
+    )
+    {
+        $columns = self::fillJqueryDataTablesFilter($request, $filterModel);
+        $filterModel->setColumns($columns);
+
+        if ($filterViewModel->useAutoFilterer()) {
+            $query = self::createInternalFiltererFiltersOnQuery($query, $filterModel);
+        }
+
+        $query = $filterViewModel->filterRows($filterModel, $query);
+
+        $filteredCount = $countFiltereds ? $query->count() : 0;
+
+        $query = $filterViewModel->orderRows($filterModel, $query);
+
+        $skipNull = $filterModel->getStart();
+        $skip = ctype_digit($skipNull) ? intval($skipNull) : 0;
+
+        $pageSizeNull = $filterModel->getLength();
+        $pageSize = ctype_digit($pageSizeNull) ? intval($pageSizeNull) : 10;
+
+        $query = $query
+            ->skip($skip)
+            ->take($pageSize);
+
+        //$data = $query->select();
+
+        return [
+            'result' => $query,
+            'count' => $filteredCount
+        ];
+    }
+
+    /**
+     * @param GearQueryBuilder $query
+     * @param IGearHttpRequest $request
+     * @param IJqueryDataTablesFilterViewModel $filterViewModel
+     *
+     * @return array
+     */
+    public static function createJqueryDataTablesResult(
+        $query,
+        $request,
+        $filterViewModel
+    )
+    {
+        $filterModel = new JqueryDataTablesFilter();
+
+        try {
+            $total = $query->count();
+
+            $result = self::createJqueryDataTablesFilter(
+                $query,
+                $request,
+                $filterViewModel,
+                $filterModel
+            );
+
+            $records = $filterViewModel->processRows($filterModel, $result['result']);
+
+            if ($filterModel->getApiInstance()) {
+                return [
+                    'draw' => $filterModel->getDraw(),
+                    'recordsTotal' => $total,
+                    'recordsFiltered' => $result['count'],
+                    'data' => $records
+                ];
+            } else {
+                return [
+                    'sEcho' => $filterModel->getDraw(),
+                    'iTotalRecords' => $total,
+                    'iTotalDisplayRecords' => $result['count'],
+                    'aaData' => $records
+                ];
+            }
+        } catch (\Exception $ex) {
+            $uid = null;
+            $error = GearErrorStrategy::saveLogAndGetTrace($ex, $uid);
+            if ($filterModel->getApiInstance()) {
+                return [
+                    'draw' => $filterModel->getDraw(),
+                    'error' => $error,
+                    'errorTackId' => $uid
+                ];
+            } else {
+                return [
+                    'sEcho' => $filterModel->getDraw(),
+                    'sError' => $error,
+                    'errorTackId' => $uid
+                ];
+            }
+        }
     }
 }
 /*</module>*/

@@ -14,9 +14,13 @@ use gear\arch\core\IGearEngineFactory;
 /*<module>*/
 class GearDefaultViewEngineFactory implements IGearEngineFactory
 {
+    static $instance ;
     function createEngine($context)
     {
-        return new GearDefaultViewEngine();
+        if (self::$instance == null) {
+            self::$instance = new GearDefaultViewEngine();
+        }
+        return self::$instance;
     }
 }
 /*</module>*/

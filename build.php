@@ -372,6 +372,18 @@ BUILD_makeBundle(
 );
 $BUILD_filesLog = false;
 BUILD_makeBundle(
+    'Gear.FancyPack',
+    'gear.fancypack.php',
+    'gear.fancypack.c.php',
+    "$BUILD_rootDirectory/src/gear/fancypack/core",
+    "$BUILD_rootDirectory/bin",
+    [
+        'php'
+    ],
+    []
+);
+$BUILD_filesLog = false;
+BUILD_makeBundle(
     'Gear.ViewHelpers',
     'gear.view-helpers.php',
     'gear.view-helpers.c.php',

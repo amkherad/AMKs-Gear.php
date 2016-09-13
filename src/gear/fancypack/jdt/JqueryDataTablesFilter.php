@@ -17,7 +17,10 @@ namespace gear\fancypack\jdt;
 /*<module>*/
 class JqueryDataTablesFilter implements IJqueryDataTablesFilter
 {
+    public static $defaultPageSize = 20;
+
     private $draw;
+    private $apiInstance;
     private $start;
     private $length;
     private $generalFilter;
@@ -32,6 +35,15 @@ class JqueryDataTablesFilter implements IJqueryDataTablesFilter
     public function setDraw($draw)
     {
         $this->draw = $draw;
+    }
+
+    public function getApiInstance()
+    {
+        return $this->apiInstance;
+    }
+    public function setApiInstance($apiInstance)
+    {
+        $this->apiInstance = $apiInstance;
     }
 
     public function getStart()

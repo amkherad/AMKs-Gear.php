@@ -43,19 +43,34 @@ class GearJsonResult extends GearActionResultBase
             return new GearErrorResult("Action is not configured to serve data as GET http method.");
         }
 
+        $json = $this->createJson($context, $request, $response, $this->content);
         $response->contentType('application/json');
-        $this->writeResult($context, $request, $response);
+        $this->writeResult($context, $request, $response, $json);
     }
 
     /**
      * @param IGearContext $context
      * @param IGearHttpRequest $request
      * @param IGearHttpResponse $response
+     * @param mixed $content
+     * @return mixed
+     */
+    public function createJson($context, $request, $response, $content)
+    {
+        return $content;
+    }
+
+    /**
+     * @param IGearContext $context
+     * @param IGearHttpRequest $request
+     * @param IGearHttpResponse $response
+     * @param string $json
+     *
      * @return GearErrorResult
      */
-    public function writeResult($context, $request, $response)
+    public function writeResult($context, $request, $response, $json)
     {
-        $response->write(GearSerializer::json($this->content));
+        $response->write(GearSerializer::json($json));
     }
 }
 /*</module>*/

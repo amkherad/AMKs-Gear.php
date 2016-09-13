@@ -21,6 +21,15 @@ interface IGearQueryBuilderSqlGenerator
         $grouping,
         $ordering,
         $join);
+
+    function createCount(
+        $table,
+        $cols,
+        $conditions,
+        $limit,
+        $grouping,
+        $ordering,
+        $join);
 }
 /*</module>*/
 ?>

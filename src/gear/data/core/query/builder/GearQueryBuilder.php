@@ -20,7 +20,6 @@ use gear\data\core\query\builder\sqlgenerator\IGearQueryBuilderSqlGenerator;
 /*</bundles>*/
 
 /*<module>*/
-
 class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 {
     const ConditionJoinAndBehavior = 'and';
@@ -30,11 +29,12 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 
     const GearQueryBuilderLimitNRecordSig = 'limit';
     const GearQueryBuilderLimitRangeSig = 'range';
-    const GearQueryBuilderLimitOffsetNRecordSig = 'offset';
+    const GearQueryBuilderLimitOffsetSig = 'offset';
     const GearQueryBuilderLimitOne = 'limit:one';
-    const GearQueryBuilderLimitNRecord = 'limit:{N}';
-    const GearQueryBuilderLimitRange = 'range:{A}-{B}';
-    const GearQueryBuilderLimitOffsetNRecord = 'offset:{A}-{B}';
+    const GearQueryBuilderLimitNRecord = 'limit:{COUNT}';
+    const GearQueryBuilderLimitRange = 'range:{BEGIN}-{END}';
+    const GearQueryBuilderLimitOffsetNRecord = 'offset:{OFFSET}-{COUNT}';
+    const GearQueryBuilderLimitOffset = 'offset:{OFFSET}';
     const GearQueryBuilderLimitNoLimit = null;
 
     public static $DefaultConditionJoinBehavior = 'and';
@@ -45,15 +45,19 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 
         $andConditions = [],
         $orConditions = [],
-        $whereConditions = [];
+        $whereConditions = [],
+
+        $limitType,
+        $skip,
+        $count
+    ;
+
+    public $unicode = true;
 
     /** @var IGearQueryBuilderSqlGenerator */
     private $queryBuilderSqlGenerator;
     /** @var IGearQueryBuilderEvaluator */
     private $queryEvaluator;
-
-    public
-        $unicode = true;
 
     /**
      * GearQueryBuilder constructor.
@@ -70,6 +74,8 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         $queryBuilderSqlGenerator,
         $queryEvaluator)
     {
+        parent::__construct();
+
         if ($entityName == null) {
             throw new GearArgumentNullException('entityName');
         }
@@ -161,6 +167,36 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 
     public function createLimit()
     {
+        if ($this->limitType == null) {
+            return null;
+        }
+
+        switch ($this->limitType) {
+            case self::GearQueryBuilderLimitOffsetSig: {
+                $limit = str_replace('{OFFSET}', $this->skip, self::GearQueryBuilderLimitOffsetNRecord);
+                if ($this->count != null) {
+                    $limit = str_replace('{COUNT}', $this->count, $limit);
+                }
+                return $limit;
+            }
+            case self::GearQueryBuilderLimitNRecordSig: {
+                if ($this->count == 1) {
+                    return self::GearQueryBuilderLimitOne;
+                } else {
+                    return str_replace('{COUNT}', $this->count, self::GearQueryBuilderLimitNRecord);
+                }
+            }
+            case self::GearQueryBuilderLimitRangeSig: {
+                $limit = str_replace('{BEGIN}', $this->skip, self::GearQueryBuilderLimitRange);
+                if ($this->count != null) {
+                    $limit = str_replace('{END}', $this->count, $limit);
+                }
+                return $limit;
+            }
+            case self::GearQueryBuilderLimitOne:
+                return self::GearQueryBuilderLimitOne;
+        }
+
         return null;
     }
 
@@ -332,6 +368,39 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     public function groupBy(){}
     public function having(){}
 
+    public function skip($count)
+    {
+        if ($this->limitType != null && $this->limitType != self::GearQueryBuilderLimitOffsetSig) {
+            throw new GearInvalidOperationException();
+        }
+
+        if ($this->skip == null) {
+            $this->skip = $count;
+        } else {
+            $this->skip += $count;
+        }
+
+        $this->limitType = self::GearQueryBuilderLimitOffsetSig;
+
+        return $this;
+    }
+    public function take($count)
+    {
+        if ($this->limitType != null && $this->limitType != self::GearQueryBuilderLimitOffsetSig) {
+            throw new GearInvalidOperationException();
+        }
+
+        if ($this->count == null) {
+            $this->count = $count;
+        } else {
+            $this->count += $count;
+        }
+
+        $this->limitType = self::GearQueryBuilderLimitOffsetSig;
+
+        return $this;
+    }
+
     public function select()
     {
         return $this->queryEvaluator->getManyResult($this,
@@ -360,9 +429,45 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
             ));
     }
 
+    public function count()
+    {
+        return $this->queryEvaluator->getScalarResult($this,
+            $this->queryBuilderSqlGenerator->createCount(
+                $this->tableName,
+                $this->createColumns(),
+                $this->createConditions(),
+                $this->createLimit(),
+                $this->createGrouping(),
+                $this->createOrdering(),
+                $this->createJoins()
+            ));
+    }
+
+    public function __clone()
+    {
+        $query = new self($this->entityName,
+            $this->tableName,
+            $this->queryBuilderSqlGenerator,
+            $this->queryEvaluator);
+
+        $query->andConditions = $this->andConditions;
+        $query->orConditions = $this->orConditions;
+        $query->whereConditions = $this->whereConditions;
+
+        $query->unicode = $this->unicode;
+
+        return $query;
+    }
+
     public function __toString()
     {
         return (string)$this->createConditions();
+    }
+
+    public function setConverter($converter)
+    {
+
+        return $this;
     }
 }
 /*</module>*/

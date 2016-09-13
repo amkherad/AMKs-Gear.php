@@ -66,7 +66,7 @@ class GearUrlHelper extends GearExtensibleClass
         return $this->route->createUrl($this->context, $this->mvcContext, $routeParams);
     }
 
-    public function action($actionName, $controllerName = null, $routeParams = null)
+    public function action($actionName, $controllerName = null, $routeParams = null, $queryStrings = null)
     {
         if ($controllerName == null) {
             $controllerName = $this->mvcContext->getControllerName();
@@ -85,9 +85,21 @@ class GearUrlHelper extends GearExtensibleClass
             $routeParams = $headArray;
         }
 
-        return
+        $url =
             $this->urlPrefix .
             $this->route->createUrl($this->context, $this->mvcContext, $routeParams);
+
+        if (is_array($queryStrings)) {
+            $queries = [];
+            foreach ($queryStrings as $key => $qs) {
+                $queries[] = $key.'='.urlencode($qs);
+            }
+            if (count($queries) > 0) {
+                $url .= '?' . (implode('&', $queries));
+            }
+        }
+
+        return $url;
     }
 
     public function content($path)

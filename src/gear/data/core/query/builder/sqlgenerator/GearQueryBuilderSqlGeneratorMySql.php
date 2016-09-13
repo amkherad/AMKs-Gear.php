@@ -3,20 +3,18 @@
 
 /*<namespace.current>*/
 namespace gear\data\core\query\builder\sqlgenerator;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\GearArgumentNullException;
 use gear\arch\core\GearInvalidOperationException;
 use gear\data\core\query\builder\GearQueryBuilder;
 use gear\data\core\query\builder\sqlgenerator\IGearQueryBuilderSqlGenerator;
-
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-
 class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
 {
     public function createSelect(
@@ -68,6 +66,37 @@ class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
         return trim("SELECT $cols FROM $table $conditions $limit $join");
     }
 
+    function createCount(
+        $table,
+        $cols,
+        $conditions,
+        $limit,
+        $grouping,
+        $ordering,
+        $join)
+    {
+        if ($table == null) {
+            throw new GearArgumentNullException('table');
+        }
+
+        if ($cols == null) {
+            $cols = '*';
+        }
+
+        if ($conditions != null) {
+            $conditions = "WHERE $conditions";
+        }
+
+        if ($limit != null) {
+            $limit = $this->formatLimit($limit);
+        }
+
+        //return trim("SELECT COUNT($cols) FROM $table $conditions $limit $join");
+        return trim("SELECT COUNT($cols) FROM $table $conditions");
+    }
+
+
+
     public function formatLimit($limit)
     {
         if ($limit == null) {
@@ -98,14 +127,18 @@ class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
                 }
                 $count = $highVal - $offset;
                 return "LIMIT $count OFFSET {$parts[0]}";
-            case GearQueryBuilder::GearQueryBuilderLimitOffsetNRecordSig:
+            case GearQueryBuilder::GearQueryBuilderLimitOffsetSig:
                 $parts = explode('-', $limitValue);
                 if (count($parts) != 2) {
                     return null;
                 }
                 $offset = intval($parts[0]);
                 $count = intval($parts[1]);
-                return "LIMIT $count OFFSET {$parts[0]}";
+                return "LIMIT $count OFFSET {$offset}";
+            case GearQueryBuilder::GearQueryBuilderLimitOffset:
+                $offset = intval($limitValue);
+                //http://dev.mysql.com/doc/refman/5.7/en/select.html#id4651990
+                return "LIMIT 18446744073709551615 OFFSET {$offset}";
             default: return null;
         }
     }

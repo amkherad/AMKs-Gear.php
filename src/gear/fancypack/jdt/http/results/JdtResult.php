@@ -8,16 +8,14 @@ namespace gear\fancypack\jdt\http\results;
 use gear\arch\core\GearArgumentNullException;
 use gear\arch\core\GearSerializer;
 use gear\arch\http\results\GearJsonResult;
-use gear\fancypack\jdt\JqueryDataTablesContext;
 use gear\fancypack\jdt\viewmodel\IJqueryDataTablesViewModel;
-
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-class GearJdtResult extends GearJsonResult
+class JdtResult extends GearJsonResult
 {
     /** @var IJqueryDataTablesViewModel */
     private $viewModel;
@@ -38,7 +36,7 @@ class GearJdtResult extends GearJsonResult
         parent::__construct($arraySerializable, true);
     }
 
-    public function writeResult($context, $request, $response)
+    public function writeResult($context, $request, $response, $json)
     {
         $array = null;
         if (is_array($this->content)) {
@@ -47,15 +45,15 @@ class GearJdtResult extends GearJsonResult
             $array = iterator_to_array($this->content);
         }
 
-        $jdtContext = new JqueryDataTablesContext($context, $request, $response);
-
-        $viewModel = $this->viewModel;
-
-        $array = $viewModel->filterRows($jdtContext, $array);
-        $array = $viewModel->orderRows($jdtContext, $array);
-        $array = $viewModel->processRows($jdtContext, $array);
-
-        $response->write(GearSerializer::json($array));
+        //$jdtContext = new JqueryDataTablesContext($context, $request, $response);
+//
+        //$viewModel = $this->viewModel;
+//
+        //$array = $viewModel->filterRows($jdtContext, $array);
+        //$array = $viewModel->orderRows($jdtContext, $array);
+        //$array = $viewModel->processRows($jdtContext, $array);
+//
+        //$response->write(GearSerializer::json($array));
     }
 }
 /*</module>*/

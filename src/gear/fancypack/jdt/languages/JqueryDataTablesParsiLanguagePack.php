@@ -43,7 +43,7 @@ class JqueryDataTablesParsiLanguagePack extends JqueryDataTablesLanguagePack
         $aria->sortAscending = ": برای مرتب سازی سعودی";
         $aria->sortDescending = ": برای مرتب سازی نزولی";
 
-        $this->url = "Url";
+        //$this->url = "Url";
     }
 }
 /*</module>*/
