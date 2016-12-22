@@ -22,7 +22,37 @@ interface IGearHttpRequest
     /**
      * @return string
      */
+    function getBody();
+
+    /**
+     * @return string
+     */
     function getMethod();
+
+    /**
+     * @return string
+     */
+    function getContentType();
+
+    /**
+     * @return bool
+     */
+    function isMultipart();
+
+    /**
+     * @return bool
+     */
+    function isJsonRequest();
+
+    /**
+     * @return bool
+     */
+    function isXmlRequest();
+
+    /**
+     * @return bool
+     */
+    function isUrlEncodedRequest();
 
     /**
      * @return string

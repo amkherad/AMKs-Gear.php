@@ -26,11 +26,11 @@ class JqueryDataTablesFiltererInitializer
         $outputHtml = <<<JavaScript
     function _listDataTableFiltererInitializer(obj) {
         // Apply the search
-        listDataTable.columns().every(function(colIndx) {
+        obj.columns().every(function(colIndx) {
             var that = this;
 
             var column = this.settings()[0].aoColumns[colIndx];
-            var individualColumnInfo = column.individualColumnInfo;
+            var individualColumnInfo = column;
             var filterOnEnter = this.settings()[0].filterOnEnter;
 
             var innerHtml;
@@ -38,15 +38,15 @@ class JqueryDataTablesFiltererInitializer
                 individualColumnInfo = $.extend({
                     filterList: null,
                     filterMode: 'none',
-                    useRemoteData: false,
-                    remoteDataUrl: 'jdtRemoteData',
-                    remoteDataAjaxRequestType: 'POST',
-                    remoteDataAjaxRequestData: 'defaultUrl',
-                    placeHolder: null,
-                    trueDisplayName: 'صحیح',
-                    falseDisplayName: 'غلط',
-                    addNoFilter: true,
-                    noFilterDisplayName: '(نمایش همه)'
+                    filterUseRemoteData: false,
+                    filterRemoteDataUrl: 'jdtRemoteData',
+                    filterRemoteDataAjaxRequestType: 'POST',
+                    filterRemoteDataAjaxRequestData: 'defaultUrl',
+                    filterPlaceHolder: null,
+                    filterTrueDisplayName: 'صحیح',
+                    filterFalseDisplayName: 'غلط',
+                    filterAddNoFilter: true,
+                    filterNoFilterDisplayName: '(نمایش همه)'
                 }, individualColumnInfo);
                 switch (individualColumnInfo.filterMode) {
                     case '{$filterTypeNone}':

@@ -44,7 +44,7 @@ class GearJsonResult extends GearActionResultBase
         }
 
         $json = $this->createJson($context, $request, $response, $this->content);
-        $response->contentType('application/json');
+        $response->setContentType('application/json');
         $this->writeResult($context, $request, $response, $json);
     }
 

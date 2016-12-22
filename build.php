@@ -19,6 +19,9 @@ define('BUILD_Requires_Content_End', '/*</requires>*/');
 define('BUILD_Generals_Content_Begin', '/*<generals>*/');
 define('BUILD_Generals_Content_End', '/*</generals>*/');
 
+define('BUILD_Dependencies_Content_Begin', '/*<dependencies>*/');
+define('BUILD_Dependencies_Content_End', '/*</dependencies>*/');
+
 define('BUILD_Includes_Content_Begin', '/*<includes>*/');
 define('BUILD_Includes_Content_End', '/*</includes>*/');
 
@@ -153,7 +156,6 @@ function BUILD_resolveDependencies($bundleId, $modules)
 function BUILD_makeBundle(
     $bundleId,
     $outputName,
-    $compressedOutputName,
     $rootPath,
     $outputPath,
     $fileFormats,
@@ -165,6 +167,10 @@ function BUILD_makeBundle(
     foreach ($additionalFiles as $addFile) {
         $BUILD_modules[] = $addFile;
     }
+    //if (file_exists("$rootPath/_bundle_config.php")) {
+    //    array_unshift ($BUILD_modules, "$rootPath/_bundle_config.php");
+    //}
+    
     $BUILD_modules = BUILD_expandFiles($BUILD_modules, BUILD_Requires_Content_Begin, BUILD_Requires_Content_End);
 
     usort($BUILD_modules,
@@ -177,12 +183,14 @@ function BUILD_makeBundle(
 
     $BUILD_totalModule = '';
     $BUILD_totalGenerals = '';
+    $BUILD_totalDependencies = '';
     $BUILD_totalBundles = '';
     $BUILD_3rdpartyUse = [];
     foreach ($BUILD_exportedModules as $dir) {
         $moduleContent = $dir['content'];
 
         $moduleBody = BUILD_getSection($moduleContent, BUILD_Module_Content_Begin, BUILD_Module_Content_End);
+        $moduleDependencies = BUILD_getSection($moduleContent, BUILD_Dependencies_Content_Begin, BUILD_Dependencies_Content_End);
         $moduleGenerals = BUILD_getSection($moduleContent, BUILD_Generals_Content_Begin, BUILD_Generals_Content_End);
         $moduleNamespaceCurrent = BUILD_getSection($moduleContent, BUILD_NamespaceCurrent_Content_Begin, BUILD_NamespaceCurrent_Content_End);
         $moduleNamespaceUse = BUILD_getSection($moduleContent, BUILD_NamespaceUse_Content_Begin, BUILD_NamespaceUse_Content_End);
@@ -209,6 +217,7 @@ $moduleBody\n";
             if ($moduleBody != '') $BUILD_totalModule .= "$moduleBody\n";
         }
         if ($moduleGenerals != '') $BUILD_totalGenerals .= "$moduleGenerals\n";
+        if ($moduleDependencies != '') $BUILD_totalDependencies .= "$moduleDependencies\n";
         if ($moduleBundles != '') $BUILD_totalBundles .= "$moduleBundles\n";
     }
 
@@ -229,6 +238,9 @@ define('{$bundleIdUnderlined}_IsCompressedBundle', true);
     $BUILD_totalContentNormal = "<?php
 //Bundle: $bundleId
 
+/* Dependencies: */
+$BUILD_totalDependencies
+
 /* Modules: */
 $BUILD_totalModule
 
@@ -239,6 +251,9 @@ $BUILD_totalGenerals
     $BUILD_totalContentCompressed = "<?php
 //Bundle: $bundleId
 
+/* Dependencies: */
+$BUILD_totalDependencies
+
 /* Modules: */
 $BUILD_totalModule
 
@@ -246,8 +261,8 @@ $BUILD_totalModule
 $BUILD_totalGenerals
 ";
 
-    file_put_contents("$outputPath\\$outputName", $BUILD_totalContentNormal);
-    //file_put_contents("$outputPath\\$compressedOutputName", $BUILD_totalContentCompressed);
+    file_put_contents("$outputPath\\$outputName.php", $BUILD_totalContentNormal);
+    //file_put_contents("$outputPath\\$outputName-c.php", $BUILD_totalContentCompressed);
 }
 
 
@@ -262,8 +277,7 @@ $BUILD_rootDirectory = dirname(__FILE__);
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear',
-    'gear.arch.php',
-    'gear.arch.c.php',
+    'gear.arch',
     "$BUILD_rootDirectory/src/gear/arch",
     "$BUILD_rootDirectory/bin",
     [
@@ -276,8 +290,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.Data',
-    'gear.data.php',
-    'gear.data.c.php',
+    'gear.data',
     "$BUILD_rootDirectory/src/gear/data/core",
     "$BUILD_rootDirectory/bin",
     [
@@ -288,8 +301,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.Orm.RedBeanPhp',
-    'gear.rb-lib.php',
-    'gear.rb-lib.c.php',
+    'gear.rb-lib',
     "$BUILD_rootDirectory/src/gear/plugins/orm/redbeanphp/lib/redbean",
     "$BUILD_rootDirectory/bin",
     [
@@ -301,8 +313,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.Orm.RedBeanPhp',
-    'gear.orm-rb.php',
-    'gear.orm-rb.c.php',
+    'gear.orm-rb',
     "$BUILD_rootDirectory/src/gear/plugins/orm/redbeanphp/core",
     "$BUILD_rootDirectory/bin",
     [
@@ -313,8 +324,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.Authentication',
-    'gear.auth.php',
-    'gear.auth.c.php',
+    'gear.auth',
     "$BUILD_rootDirectory/src/gear/auth",
     "$BUILD_rootDirectory/bin",
     [
@@ -325,8 +335,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.Authentication.RedBeanPhp',
-    'gear.auth-rb.php',
-    'gear.auth-rb.c.php',
+    'gear.auth-rb',
     "$BUILD_rootDirectory/src/gear/plugins/orm/redbeanphp/auth",
     "$BUILD_rootDirectory/bin",
     [
@@ -337,8 +346,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.Cms',
-    'gear.cms.php',
-    'gear.cms.c.php',
+    'gear.cms',
     "$BUILD_rootDirectory/src/gear/cms",
     "$BUILD_rootDirectory/bin",
     [
@@ -349,8 +357,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.Appfix',
-    'gear.appfix.php',
-    'gear.appfix.c.php',
+    'gear.appfix',
     "$BUILD_rootDirectory/src/gear/appfix",
     "$BUILD_rootDirectory/bin",
     [
@@ -361,8 +368,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Kunststube',
-    'gear.kunststube.php',
-    'gear.kunststube.c.php',
+    'gear.kunststube',
     "$BUILD_rootDirectory/src/gear/_3rdparty/kunststube",
     "$BUILD_rootDirectory/bin",
     [
@@ -373,8 +379,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.FancyPack',
-    'gear.fancypack.php',
-    'gear.fancypack.c.php',
+    'gear.fancypack',
     "$BUILD_rootDirectory/src/gear/fancypack/core",
     "$BUILD_rootDirectory/bin",
     [
@@ -385,8 +390,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.ViewHelpers',
-    'gear.view-helpers.php',
-    'gear.view-helpers.c.php',
+    'gear.view-helpers',
     "$BUILD_rootDirectory/src/gear/fancypack/viewhelpers",
     "$BUILD_rootDirectory/bin",
     [
@@ -397,8 +401,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'jQueryDataTables',
-    'gear.jdt.php',
-    'gear.jdt.c.php',
+    'gear.jdt',
     "$BUILD_rootDirectory/src/gear/fancypack/jdt",
     "$BUILD_rootDirectory/bin",
     [
@@ -409,8 +412,7 @@ BUILD_makeBundle(
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'jQueryTableSorter',
-    'gear.jts.php',
-    'gear.jts.c.php',
+    'gear.jts',
     "$BUILD_rootDirectory/src/gear/fancypack/jts",
     "$BUILD_rootDirectory/bin",
     [

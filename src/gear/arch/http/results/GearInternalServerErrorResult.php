@@ -39,7 +39,7 @@ class GearInternalServerErrorResult extends GearStatusCodeResult
     public function writeResult($context, $request, $response)
     {
         //parent::writeResult($context, $request, $response);
-        $response->contentType('application/json');
+        $response->setContentType('application/json');
 
         if (defined('DEBUG')) {
             $response->write(\GearSerializer::json([

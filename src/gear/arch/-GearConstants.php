@@ -44,6 +44,7 @@ define('Gear_Key_DebugMode',                        'DebugMode');
 define('Gear_Key_ApplicationEntry',                 'ApplicationEntry');
 define('Gear_Key_RouterUrl',                        'RouterUrl');
 define('Gear_Key_ControllerSuffix',                 'ControllerSuffix');
+define('Gear_Key_URLPrefix',                        'URLPrefix');
 
 define('Gear_PlaceHolder_Action',                   '[action]');
 define('Gear_PlaceHolder_HttpMethod',               '[http_method]');

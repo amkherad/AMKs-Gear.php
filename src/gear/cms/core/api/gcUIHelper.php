@@ -2,20 +2,18 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-namespace gear\fancypack\jdt;
+namespace gear\cms\core\api;
 /*</namespace.current>*/
 /*<namespace.use>*/
-use gear\fancypack\core\client\GearJsOptions;
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-class JqueryDataTablesSelect extends GearJsOptions
+class gcUIHelpers
 {
-    /** @var string */
-    public $style;
+
 }
 /*</module>*/
 ?>

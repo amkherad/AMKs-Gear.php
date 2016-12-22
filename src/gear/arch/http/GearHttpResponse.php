@@ -26,6 +26,12 @@ class GearHttpResponse implements IGearHttpResponse
     private
         $innerStream;
 
+    /** @var string */
+    private $encoding = 'UTF-8';
+
+    /** @var string */
+    private $contentType = 'text/html';
+
     public function __construct()
     {
         $this->innerStream = new GearHtmlStream();
@@ -41,7 +47,7 @@ class GearHttpResponse implements IGearHttpResponse
         if (is_string($mixed)) {
             echo $mixed;
         } elseif (is_object($mixed) || is_array($mixed)) {
-            $this->contentType('application/json');
+            $this->setContentType('application/json');
             echo GearSerializer::json($mixed);
         } else {
             echo GearSerializer::stringify($mixed);
@@ -63,20 +69,12 @@ class GearHttpResponse implements IGearHttpResponse
         $this->write($this->innerStream->getBuffer());
     }
 
-    public function statusCode($statusCode)
+    public function setStatusCode($statusCode)
     {
         if (headers_sent()) {
             throw new GearInvalidOperationException();
         }
         header(Gear_PoweredResponseHeader, true, $statusCode);
-    }
-
-    public function contentType($contentType)
-    {
-        if (headers_sent()) {
-            throw new GearInvalidOperationException();
-        }
-        header("Content-Type: $contentType", true);
     }
 
     public function setHeader($name, $value)
@@ -85,6 +83,29 @@ class GearHttpResponse implements IGearHttpResponse
             throw new GearInvalidOperationException();
         }
         header("$name: $value", true);
+    }
+
+    public function setContentType($contentType)
+    {
+        if (headers_sent()) {
+            throw new GearInvalidOperationException();
+        }
+        $this->contentType = $contentType;
+        $this->_setContentType($contentType, $this->encoding);
+    }
+
+    function setEncoding($encoding)
+    {
+        if (headers_sent()) {
+            throw new GearInvalidOperationException();
+        }
+        $this->encoding = $encoding;
+        $this->_setContentType($this->contentType, $encoding);
+    }
+
+    private function _setContentType($contentType, $encoding) {
+        header("Content-Type: $contentType; charset=$encoding", true);
+        //header("Content-Type: $contentType", true);
     }
 }
 

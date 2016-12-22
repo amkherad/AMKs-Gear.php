@@ -2,20 +2,19 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-namespace gear\fancypack\jdt;
+namespace gear\cms\core\remote;
 /*</namespace.current>*/
 /*<namespace.use>*/
-use gear\fancypack\core\client\GearJsOptions;
+use gear\cms\core\engine\GearCmsController;
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-class JqueryDataTablesSelect extends GearJsOptions
+class GearCmsRemotingController extends GearCmsController
 {
-    /** @var string */
-    public $style;
+
 }
 /*</module>*/
 ?>

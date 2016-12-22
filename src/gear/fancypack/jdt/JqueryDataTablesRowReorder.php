@@ -5,7 +5,7 @@
 namespace gear\fancypack\jdt;
 /*</namespace.current>*/
 /*<namespace.use>*/
-use gear\arch\client\GearJsOptions;
+use gear\fancypack\core\client\GearJsOptions;
 /*</namespace.use>*/
 
 /*<bundles>*/

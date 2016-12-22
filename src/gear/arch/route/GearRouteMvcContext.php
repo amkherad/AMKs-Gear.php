@@ -9,7 +9,7 @@
 namespace gear\arch\route;
 /*</namespace.current>*/
 /*<namespace.use>*/
-use gear\arch\route\IGearMvcContext;
+use gear\arch\core\IGearMvcContext;
 /*</namespace.use>*/
 
 /*<bundles>*/

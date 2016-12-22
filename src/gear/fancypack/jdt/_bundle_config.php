@@ -2,18 +2,16 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-namespace gear\cms\_build\api;
+namespace gear\fancypack\jdt;
 /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\GearBundle;
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
-/*<module>*/
-class gcUIHelpers
-{
-
-}
-/*</module>*/
+/*<dependencies>*/
+GearBundle::dependency('gear.fancypack');
+/*</dependencies>*/
 ?>

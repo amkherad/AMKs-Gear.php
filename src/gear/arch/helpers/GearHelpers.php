@@ -11,7 +11,7 @@ namespace gear\arch\helpers;
 /*<module>*/
 class GearHelpers
 {
-    public static function tryGetArrayElementByNameCaseInSensetive(array&$arr, $key, &$result)
+    public static function tryGetArrayElementByNameCaseInSensetive(&$arr, $key, &$result)
     {
         $key = strtolower($key);
         foreach ($arr as $k => $val)

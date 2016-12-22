@@ -15,15 +15,15 @@ use gear\fancypack\viewhelpers\section\GearHtmlSections;
 
 /*<generals>*/
 GearHtmlHelper::setStaticExtensionMethods([
-    'renderSection' => function ($sectionName) {
+    'renderSection' => [GearHtmlSections::class, 'renderSection']/*function ($sectionName) {
         GearHtmlSections::renderSection($sectionName);
-    },
-    'beginSection' => function ($sectionName) {
+    }*/,
+    'beginSection' => [GearHtmlSections::class, 'beginSection']/*function ($sectionName) {
         GearHtmlSections::beginSection($sectionName);
-    },
-    'endSection' => function ($sectionName = null) {
+    }*/,
+    'endSection' => [GearHtmlSections::class, 'endSection']/*function ($sectionName = null) {
         GearHtmlSections::endSection($sectionName);
-    },
+    }*/,
 
 
     'renderScript' => function () {
@@ -55,6 +55,21 @@ GearHtmlHelper::setStaticExtensionMethods([
     'endHtml' => function () {
         GearHtmlSections::endSection('Html');
     },
+
+    'antiForgeryToken' => function () {
+        return '';
+    },
+    'validationMessageFor' => function ($name) {
+        return '';
+    },
+
+    'valueOf' => function ($name) {
+        global $Model;
+        if ($Model != null ) {
+            return $Model->$name;
+        }
+        return '';
+    }
 ]);
 /*</generals>*/
 ?>

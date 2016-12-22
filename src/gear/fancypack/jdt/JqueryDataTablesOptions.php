@@ -118,6 +118,9 @@ class JqueryDataTablesOptions extends GearClientLibraryOptions
     /** @var JqueryDataTablesColumnInfo[] */
     public $columns;
 
+    /** @var JqueryDataTablesColumnDefinition[] */
+    public $columnDefs;
+
     /** @var JqueryDataTablesColumnInfo[] */
     public $searchCols;
 
@@ -126,6 +129,9 @@ class JqueryDataTablesOptions extends GearClientLibraryOptions
 
     /** @var mixed */
     public $data;
+
+    /** @var mixed */
+    public $initComplete;
 
 
     /**

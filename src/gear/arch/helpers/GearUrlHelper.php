@@ -16,7 +16,7 @@ use gear\arch\route\IGearRouteService;
 /*</bundles>*/
 
 /*<module>*/
-class GearUrlHelper extends GearExtensibleClass
+class GearUrlHelper extends GearExtensibleClass implements IActionUrlBuilder
 {
     /** @var IGearContext */
     private $context;
@@ -42,7 +42,7 @@ class GearUrlHelper extends GearExtensibleClass
         $this->route = $routeService;
 
         $config = $context->getConfig();
-        $this->urlPrefix = $config->getValue('URLPrefix', Gear_Section_AppEngine);
+        $this->urlPrefix = $config->getValue(Gear_Key_URLPrefix, Gear_Section_AppEngine);
     }
 
     /**

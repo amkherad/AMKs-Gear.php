@@ -73,6 +73,8 @@ class JqueryDataTablesRenderer
             'columns.orderData' => 'aDataSort',
             'lengthMenu' => 'aLengthMenu',
             'columnDefs.targets' => 'aTargets',
+            'columnDefs.data' => 'mData',
+            'columnDefs.render' => 'mRender',
             'columns' => 'aoColumns',
             'columnDefs' => 'aoColumnDefs',
             'searchCols' => 'aoSearchCols',

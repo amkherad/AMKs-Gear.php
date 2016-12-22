@@ -2,20 +2,18 @@
 //$SOURCE_LICENSE$
 
 /*<namespace.current>*/
-namespace gear\fancypack\jdt;
+namespace gear\arch\helpers;
 /*</namespace.current>*/
 /*<namespace.use>*/
-use gear\fancypack\core\client\GearJsOptions;
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-class JqueryDataTablesSelect extends GearJsOptions
+interface IActionUrlBuilder
 {
-    /** @var string */
-    public $style;
+    function action($actionName, $controllerName = null, $routeParams = null, $queryStrings = null);
 }
 /*</module>*/
 ?>

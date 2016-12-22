@@ -3,14 +3,14 @@
 
 /*<namespace.current>*/
 namespace gear\arch\helpers;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\controller\GearController;
 use gear\arch\core\GearExtensibleClass;
 use gear\arch\core\IGearContext;
 use gear\arch\core\IGearMvcContext;
+use gear\arch\view\GearViewFileNotFoundException;
 use gear\arch\view\IGearViewEngine;
-
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -81,7 +81,7 @@ class GearHtmlHelper extends GearExtensibleClass
             $name = $context->getRoute()->getMvcContext()->getActionName();
         }
 
-        $viewEngine->renderView(
+        $viewEngine->renderPartialView(
             $context,
             $this->controller,
             $name,
@@ -92,7 +92,28 @@ class GearHtmlHelper extends GearExtensibleClass
     }
     public function partialIfExists($name, $model = null, $params = null)
     {
+        try {
+            $context = $this->context;
+            $viewEngineFactory = $context->getService(Gear_ServiceViewEngineFactory);
 
+            /** @var IGearViewEngine $viewEngine */
+            $viewEngine = $viewEngineFactory->createEngine($context);
+
+            if(!isset($name)) {
+                $name = $context->getRoute()->getMvcContext()->getActionName();
+            }
+
+            $viewEngine->renderPartialView(
+                $context,
+                $this->controller,
+                $name,
+                $model
+            );
+
+            return null;
+        } catch (GearViewFileNotFoundException $ex) {
+
+        }
     }
 }
 

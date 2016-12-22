@@ -6,17 +6,17 @@ namespace gear\fancypack\jdt;
     /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\automation\annotations\GearAnnotationHelper;
+use gear\arch\helpers\GearHelpers;
+use gear\arch\helpers\IActionUrlBuilder;
 use gear\fancypack\core\client\GearJsOptions;
 use ReflectionClass;
 use ReflectionProperty;
-
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-
 class JqueryDataTablesColumnInfo extends GearJsOptions
 {
     const JdtIgnore = 'JdtIgnore';
@@ -52,8 +52,6 @@ class JqueryDataTablesColumnInfo extends GearJsOptions
     public $targets;
     /** @var mixed */
     public $contentPadding;
-    /** @var mixed */
-    public $individualColumnInfo;
 
     /** @var JqueryDataTablesSearchModel */
     public $search;
@@ -62,6 +60,34 @@ class JqueryDataTablesColumnInfo extends GearJsOptions
     public $render;
     /** @var mixed */
     public $createdCell;
+
+    /** @var string */
+    public $filterMode;
+    /** @var bool */
+    public $filterUseRemoteData;
+    /** @var string */
+    public $filterRemoteDataUrl;
+    /** @var string */
+    public $filterRemoteDataAjaxRequestType;
+    /** @var string */
+    public $filterRemoteDataAjaxRequestData;
+    /** @var mixed */
+    public $filterList;
+    /** @var string */
+    public $filterPlaceHolder;
+    /** @var string */
+    public $filterRemoteDataController;
+    /** @var string */
+    public $filterRemoteDataAction;
+    /** @var string */
+    public $filterTrueDisplayName;
+    /** @var string */
+    public $filterFalseDisplayName;
+    /** @var bool */
+    public $filterAddNoFilter;
+    /** @var string */
+    public $filterNoFilterDisplayName;
+
 
     /**
      * @JsonIgnore
@@ -75,27 +101,56 @@ class JqueryDataTablesColumnInfo extends GearJsOptions
         $this->name = $name;
         $this->data = $name;
         $this->title = $name;
-        $annotation = GearAnnotationHelper::exportAnnotation($doc, self::JdtAnnotation);
 
-        if ($annotation != null) {
-            $thisReflection = new ReflectionClass($this);
-            $props = $thisReflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED);
+        if ($doc != null) {
+            $annotation = GearAnnotationHelper::exportAnnotation($doc, self::JdtAnnotation);
 
-            foreach ($props as $prop) {
-                $pName = $prop->getName();
-                $an = $annotation->getArg($pName);
-                if ($an !== null) {
-                    $this->$pName = $an;
+            if ($annotation != null) {
+                $thisReflection = new ReflectionClass($this);
+                $props = $thisReflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED);
+
+                foreach ($props as $prop) {
+                    $pName = $prop->getName();
+                    $an = $annotation->getArg($pName);
+                    if ($an !== null) {
+                        $this->$pName = $an;
+                    }
                 }
             }
         }
     }
 
-    public static function fromModel($model)
+    /**
+     * Creates a new instance of JqueryDataTablesColumnInfo
+     *
+     * @param string $name
+     * @param string $title
+     * @param string $data
+     *
+     * @return JqueryDataTablesColumnInfo
+     */
+    public static function create($name, $title = null, $data = null) {
+        $instance = new self($name, null);
+
+        $instance->title = $title;
+        $instance->data = $data;
+
+        return $instance;
+    }
+
+    /**
+     * Creates a list of columns from a view model.
+     *
+     * @param object $model
+     * @param IActionUrlBuilder $urlBuilder
+     *
+     * @return array
+     */
+    public static function fromModel($model, $urlBuilder)
     {
         $reflection = new ReflectionClass($model);
 
-        $props = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED);
+        $props = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
 
         $result = [];
         foreach ($props as $prop) {
@@ -108,6 +163,13 @@ class JqueryDataTablesColumnInfo extends GearJsOptions
                 $prop->getName(),
                 $doc
             );
+
+            if (!GearHelpers::isNullOrWhitespace($field->filterRemoteDataAction)) {
+                $field->filterRemoteDataUrl = $urlBuilder->action(
+                    $field->filterRemoteDataAction,
+                    $field->filterRemoteDataController
+                );
+            }
 
             $result[] = $field;
         }
@@ -123,11 +185,7 @@ class JqueryDataTablesColumnInfo extends GearJsOptions
                 }
             }
             if (!is_numeric($b)) {
-                if (!is_numeric($a)) {
-                    return 0;
-                } else {
-                    return -1;
-                }
+                return -1;
             }
             if ($a == $b) {
                 return 0;
@@ -137,6 +195,7 @@ class JqueryDataTablesColumnInfo extends GearJsOptions
 
         $orderAfter = [];
         $orderBefore = [];
+        $retVal = [];
         foreach ($result as $ko => $ro) {
             $mo = $ro->modelOrder;
             $colIndex = strpos($mo, ':');
@@ -147,31 +206,40 @@ class JqueryDataTablesColumnInfo extends GearJsOptions
                 } else {
                     $orderAfter[$ko] = substr($mo, $colIndex + 1);
                 }
+            } else {
+                $retVal[] = $ro;
             }
         }
 
-        foreach ($orderAfter as $ak => $order) {
-            foreach ($result as $bk => $r) {
-                if ($r->name == $order) {
-                    $result[$bk] = $result[$ak];
-                    $result[$ak] = $r;
-                    break;
+        do {
+            $action = false;
+            foreach ($orderAfter as $ak => $order) {
+                foreach ($retVal as $bk => $r) {
+                    if ($r->name == $order) {
+                        array_splice($retVal, $bk + 1, 0, [$result[$ak]]);
+                        unset($orderAfter[$ak]);
+                        $action = true;
+                        break;
+                    }
                 }
             }
-        }
-        foreach ($orderBefore as $ak => $order) {
-            foreach ($result as $bk => $r) {
-                if ($r->name == $order) {
-                    $result[$bk] = $result[$ak];
-                    $result[$ak] = $r;
-                    break;
+        } while ($action && false);
+
+        do {
+            $action = false;
+            foreach ($orderBefore as $ak => $order) {
+                foreach ($retVal as $bk => $r) {
+                    if ($r->name == $order) {
+                        array_splice($retVal, $bk, 0, [$result[$ak]]);
+                        unset($orderBefore[$ak]);
+                        $action = true;
+                        break;
+                    }
                 }
             }
-        }
+        } while ($action && false);
 
-        //echo GearJsOptions::serialize($result);exit;
-
-        return $result;
+        return $retVal;
     }
 }
 

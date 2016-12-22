@@ -22,19 +22,26 @@ class GearDefaultModelBindingEngine implements IGearModelBindingEngine
 
     public function getModelFromContext($modelDescriptor, $context, $controller, $mvcContext)
     {
-        $constructor = $modelDescriptor->getConstructor();
-        if (isset($constructor)) {
-            throw new GearInvalidOperationException("ViewModel has a implemented constructor method.");
-        }
+        //$constructor = $modelDescriptor->getConstructor();
+        //if (isset($constructor)) {
+        //    throw new GearInvalidOperationException("ViewModel has a implemented constructor method.");
+        //}
         $instance = $modelDescriptor->newInstance();
         if ($instance == null) {
             throw new GearInvalidOperationException('Argument $instance is null.');
         }
 
-        $sources[] = $mvcContext->getParams();
-        if($this->useRequestParams) {
-            $sources[] = $context->getRequest()->getCurrentMethodValues();
+        $request = $context->getRequest();
+
+        $sources = [];
+        if ($request->isJsonRequest()) {
+            $sources[] = json_decode($request->getBody(), true, 512, JSON_OBJECT_AS_ARRAY);
         }
+        if ($this->useRequestParams) {
+            $sources[] = $request->getCurrentMethodValues();
+        }
+
+        $sources[] = $mvcContext->getParams();
         self::_bind($context, $instance, $sources);
 
         return $instance;
@@ -42,10 +49,17 @@ class GearDefaultModelBindingEngine implements IGearModelBindingEngine
 
     function fillModelFromContext($instance, $context, $controller, $mvcContext)
     {
-        $sources[] = $mvcContext->getParams();
-        if($this->useRequestParams) {
-            $sources[] = $context->getRequest()->getCurrentMethodValues();
+        $request = $context->getRequest();
+
+        $sources = [];
+        if ($request->isJsonRequest()) {
+            $sources[] = json_decode($request->getBody(), true, 512, JSON_OBJECT_AS_ARRAY);
         }
+        if ($this->useRequestParams) {
+            $sources[] = $request->getCurrentMethodValues();
+        }
+
+        $sources[] = $mvcContext->getParams();
         self::_bind($context, $instance, $sources);
     }
 

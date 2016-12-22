@@ -46,7 +46,7 @@ class GearDefaultActionResolver implements IGearActionResolver
 
         $context->setValue('ActionName', $actionName);
 
-        $suppliedArgumentss = array();
+        //$suppliedArgumentss = array();
 
         $controllerReflection = new \ReflectionClass($controller);
         try {
@@ -72,7 +72,7 @@ class GearDefaultActionResolver implements IGearActionResolver
                 $request,
                 $response,
                 $actionName,
-                $suppliedArgumentss,
+                null,//$suppliedArgumentss,
                 $actionParameters);
 
             self::_executeActionResult(
@@ -124,7 +124,10 @@ class GearDefaultActionResolver implements IGearActionResolver
             else
                 $result = call_user_func_array([$controller, $actionName], $args);
         } else {
-            /*if (!isset($args))*/ $args = $context->getRequest()->getAllValues();
+            if (!isset($args)) {
+                $args = array_merge($mvcContext->getParams(), $context->getRequest()->getAllValues());
+            }
+            //if (!isset($args)) $args = $context->getRequest()->getAllValues();
             $actionArgs = array();
             foreach ($actionParameters as $p) {
                 /** @var $p \ReflectionParameter */
@@ -150,13 +153,13 @@ class GearDefaultActionResolver implements IGearActionResolver
                         } else {
                             $name = $p->getName();
                             if (isset($args[$name])) {
-                                $actionArgs[$name] = $args[$name];
+                                $actionArgs[] = $args[$name];
                             }
                         }
                     }
                 }
             }
-            $actionArgs = array_merge($actionArgs, $args);
+            //$actionArgs = array_merge($actionArgs, $args);
             $result = call_user_func_array([$controller, $actionName], $actionArgs);
         }
         return $result;
@@ -179,7 +182,7 @@ class GearDefaultActionResolver implements IGearActionResolver
             } else {
                 $inner = null;
                 if(is_object($result)) {
-                    $response->contentType('application/json');
+                    $response->setContentType('application/json');
                     $response->write(GearSerializer::json($result));
                 } else {
                     $response->write($result);

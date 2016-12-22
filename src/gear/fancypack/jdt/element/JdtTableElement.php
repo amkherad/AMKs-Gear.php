@@ -41,7 +41,7 @@ class JdtTableElement extends GearHtmlElement
         foreach($this->columns as $column) {
             $thead .= "<th>{$column->title}</th>";
             $tfoot .= "<td>{$column->title}</td>";
-            $tbody .= "<td></td>";
+            //$tbody .= "<td></td>";
         }
         $thead .= '</tr></thead>';
         $tfoot .= '</tr></tfoot>';

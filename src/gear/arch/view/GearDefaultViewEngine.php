@@ -164,13 +164,14 @@ class GearDefaultViewEngine implements IGearViewEngine
             $controller->getHtml(),
             $controller->getUrl(),
             $controller->helper,
+            $useLayout,
             $layout,
             $model,
             $result);
         //ActionResult::ExecuteActionResult($context, $result);
 
         if (isset($layout)) {
-            $controller->layout = null;
+            //$controller->layout = null;
 
             $output = $context->getService(Gear_ServiceViewOutputStream);
             if ($output == null) {
@@ -201,7 +202,9 @@ class GearDefaultViewEngine implements IGearViewEngine
     protected static function checkFileExists(&$path)
     {
         if (file_exists($path)) {
-            return true;
+            if(filetype($path) != 'dir') {
+                return true;
+            }
         }
 
         if (file_exists("$path.phtml")) {
@@ -312,6 +315,7 @@ class GearDefaultViewEngine implements IGearViewEngine
         $html,
         $url,
         $helper,
+        $useLayout,
         &$layout,
         &$model,
         &$result)
@@ -319,8 +323,15 @@ class GearDefaultViewEngine implements IGearViewEngine
         $viewPath = self::probView($config, $context, $mvcContext, $viewEngine, $path, $viewName);
 
         global $Layout, $DataBag, $Model, $Html, $Url, $Helper, $Controller;
-        $Model = $model;
-        $Layout = $layout;
+        if ($model != null) {
+            $Model = $model;
+        }
+        $layoutBackup = '';
+        if ($useLayout) {
+            $Layout = $layout;
+        } else {
+            $layoutBackup = $Layout;
+        }
         $DataBag = $dataBag;
         $Html = $html;
         $Url = $url;
@@ -334,7 +345,11 @@ class GearDefaultViewEngine implements IGearViewEngine
         while (ob_get_level() > $level)
             $buffer = ob_get_clean() . $buffer;
         //global $Layout;
-        $layout = $Layout;
+        if ($useLayout) {
+            $layout = $Layout;
+        } else {
+            $Layout = $layoutBackup;
+        }
         return $buffer;
     }
 }

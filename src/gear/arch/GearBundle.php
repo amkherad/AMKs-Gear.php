@@ -47,7 +47,7 @@ class GearBundle
     public static function prob($module, $require = true, $once = true)
     {
         $userRoot = self::$userRootDirectory;
-        $engineRoot = self::$userRootDirectory;
+        $engineRoot = self::$engineRootDirectory;
 
         $firstBkSlash = stripos($module, '\\');
         if ($firstBkSlash > 0) {
@@ -102,6 +102,11 @@ class GearBundle
     public static function resolvePhar($phar)
     {
 
+    }
+    
+    public static function dependency($module)
+    {
+        self::prob($module);
     }
 
     public static function resolvePackage($module)

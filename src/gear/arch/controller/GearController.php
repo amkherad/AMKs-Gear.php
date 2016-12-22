@@ -30,6 +30,7 @@ use gear\arch\core\IGearContext;
 use gear\arch\core\IGearMvcContext;
 use gear\arch\http\IGearHttpRequest;
 use gear\arch\http\IGearHttpResponse;
+use gear\arch\http\results\GearFileResult;
 use gear\arch\http\results\GearInternalServerErrorResult;
 use gear\arch\http\results\GearRedirectResult;
 use gear\arch\http\results\GearViewResult;
@@ -42,6 +43,7 @@ use gear\arch\http\results\GearEmptyResult;
 use gear\arch\model\GearModel;
 use gear\arch\model\IGearModelBinder;
 use gear\arch\route\IGearRouteService;
+
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -80,8 +82,7 @@ abstract class GearController extends GearExtensibleClass
         $beginExecuteHandlers = [],
         $checkExecutionHandlers = [],
         $endExecuteHandlers = [],
-        $exceptionHandlers = []
-    ;
+        $exceptionHandlers = [];
 
     /**
      * Creates a controller.
@@ -165,6 +166,7 @@ abstract class GearController extends GearExtensibleClass
     {
         return $this->url;
     }
+
     /**
      * @return GearHtmlHelper
      */
@@ -178,7 +180,7 @@ abstract class GearController extends GearExtensibleClass
      */
     public function beginExecute($context)
     {
-        foreach($this->beginExecuteHandlers as $handler) {
+        foreach ($this->beginExecuteHandlers as $handler) {
             $handler($context);
         }
     }
@@ -190,7 +192,7 @@ abstract class GearController extends GearExtensibleClass
     {
         $this->authorize($context);
 
-        foreach($this->checkExecutionHandlers as $handler) {
+        foreach ($this->checkExecutionHandlers as $handler) {
             $handler($context);
         }
     }
@@ -200,7 +202,7 @@ abstract class GearController extends GearExtensibleClass
      */
     public function endExecute($context)
     {
-        foreach($this->endExecuteHandlers as $handler) {
+        foreach ($this->endExecuteHandlers as $handler) {
             $handler($context);
         }
     }
@@ -211,7 +213,7 @@ abstract class GearController extends GearExtensibleClass
      */
     public function onExceptionOccurred($context, $exception)
     {
-        foreach($this->exceptionHandlers as $handler) {
+        foreach ($this->exceptionHandlers as $handler) {
             $handler($context, $exception);
         }
     }
@@ -228,7 +230,8 @@ abstract class GearController extends GearExtensibleClass
      * @param callable $handler
      * @throws GearInvalidOperationException
      */
-    public function addBeginExecuteHandler($handler) {
+    public function addBeginExecuteHandler($handler)
+    {
         if (!is_callable($handler)) {
             throw new GearInvalidOperationException();
         }
@@ -239,7 +242,8 @@ abstract class GearController extends GearExtensibleClass
      * @param callable $handler
      * @throws GearInvalidOperationException
      */
-    public function addEndExecuteHandler($handler) {
+    public function addEndExecuteHandler($handler)
+    {
         if (!is_callable($handler)) {
             throw new GearInvalidOperationException();
         }
@@ -250,7 +254,8 @@ abstract class GearController extends GearExtensibleClass
      * @param callable $handler
      * @throws GearInvalidOperationException
      */
-    public function addCheckExecutionHandler($handler) {
+    public function addCheckExecutionHandler($handler)
+    {
         if (!is_callable($handler)) {
             throw new GearInvalidOperationException();
         }
@@ -261,7 +266,8 @@ abstract class GearController extends GearExtensibleClass
      * @param callable $handler
      * @throws GearInvalidOperationException
      */
-    public function addExceptionHandler($handler) {
+    public function addExceptionHandler($handler)
+    {
         if (!is_callable($handler)) {
             throw new GearInvalidOperationException();
         }
@@ -305,6 +311,27 @@ abstract class GearController extends GearExtensibleClass
             $this->dataBag[Gear_ValidationMessages] = $errors;
         }
         return $result;
+    }
+
+    /**
+     * Gets a value from both route values and request parameters.
+     *
+     * @param string $name
+     * @param mixed $defaultValue
+     *
+     * @return string
+     */
+    public function getParam($name, $defaultValue = null)
+    {
+        $params = $this->mvcContext->getParams();
+        if (isset($params[$name])) {
+            return $params[$name];
+        }
+        $params = $this->context->getRequest()->getAllValues();
+        if (isset($params[$name])) {
+            return $params[$name];
+        }
+        return $defaultValue;
     }
 
 
@@ -402,6 +429,7 @@ abstract class GearController extends GearExtensibleClass
         $url = $this->url->action($actionName, $controllerName, $routeParams);
         return new GearRedirectResult($url, false);
     }
+
     /**
      * @param string $actionName
      * @param string|null $controllerName
@@ -413,6 +441,7 @@ abstract class GearController extends GearExtensibleClass
         $url = $this->url->action($actionName, $controllerName, $routeParams);
         return new GearRedirectResult($url, true);
     }
+
     /**
      * @param string $url
      * @return GearRedirectResult
@@ -421,6 +450,7 @@ abstract class GearController extends GearExtensibleClass
     {
         return new GearRedirectResult($url, false);
     }
+
     /**
      * @param string $url
      * @return GearRedirectResult
@@ -428,6 +458,15 @@ abstract class GearController extends GearExtensibleClass
     public function redirectToUrlPermanent($url)
     {
         return new GearRedirectResult($url, true);
+    }
+
+    /**
+     * @param string $fileName
+     * @return GearRedirectResult
+     */
+    public function file($fileName)
+    {
+        return new GearFileResult($fileName);
     }
 }
 /*</module>*/

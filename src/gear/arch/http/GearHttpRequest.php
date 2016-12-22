@@ -35,9 +35,19 @@ class GearHttpRequest implements IGearHttpRequest
         return $_REQUEST[$name];
     }
 
+    public function getBody()
+    {
+        return file_get_contents("php://input");
+    }
+
     function getMethod()
     {
         return strtoupper($_SERVER['REQUEST_METHOD']);
+    }
+
+    function getContentType()
+    {
+        return $_SERVER['CONTENT_TYPE'];
     }
 
     function accepts()
@@ -60,6 +70,47 @@ class GearHttpRequest implements IGearHttpRequest
             default:
                 return $_POST;
         }
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMultipart()
+    {
+        return $this->getContentType() == 'multipart';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isJsonRequest()
+    {
+        $contentType = strtolower($this->getContentType());
+        return
+            $contentType == 'application/json' ||
+            $contentType == 'text/json';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isXmlRequest()
+    {
+        $contentType = strtolower($this->getContentType());
+        return
+            $contentType == 'application/xml' ||
+            $contentType == 'text/xml'/* || $contentType == 'application/xhtml+xml'*/;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUrlEncodedRequest()
+    {
+        $contentType = strtolower($this->getContentType());
+        return
+            $contentType == 'x-www-form-urlencoded';
+
     }
 }
 

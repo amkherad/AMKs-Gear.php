@@ -38,7 +38,7 @@ class JdtQueryResult extends GearJsonResult
         parent::__construct($query, true);
     }
 
-    public function createJson($context, $request, $response, $content)
+    public function createJson($context, $request, $response, $query)
     {
         //$array = null;
         //if (is_array($content)) {
@@ -49,7 +49,7 @@ class JdtQueryResult extends GearJsonResult
         //    $array = iterator_to_array($content);
         //}
 
-        return JqueryDataTablesDriver::createJqueryDataTablesResult($content, $request, $this->filterViewModel);
+        return JqueryDataTablesDriver::createJqueryDataTablesResult($query, $request, $this->filterViewModel);
     }
 }
 /*</module>*/
