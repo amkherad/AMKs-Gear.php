@@ -5,7 +5,6 @@
 namespace gear\arch\core;
 /*</namespace.current>*/
 /*<namespace.use>*/
-use gear\arch\core\GearConfiguration;
 use gear\arch\http\IGearHttpRequest;
 use gear\arch\http\IGearHttpResponse;
 use gear\arch\model\IGearModelBinder;
