@@ -576,6 +576,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     private
         $entityName,
         $tableName,
+        $rootAlias,
 
         $andConditions = [],
         $orConditions = [],
