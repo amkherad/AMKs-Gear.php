@@ -261,8 +261,16 @@ $BUILD_totalModule
 $BUILD_totalGenerals
 ";
 
-    file_put_contents("$outputPath\\$outputName.php", $BUILD_totalContentNormal);
-    //file_put_contents("$outputPath\\$outputName-c.php", $BUILD_totalContentCompressed);
+    file_put_contents("$outputPath/$outputName.php", $BUILD_totalContentNormal);
+    //file_put_contents("$outputPath/$outputName-c.php", $BUILD_totalContentCompressed);
+    
+    //try {
+        exec("php ./tools/PHPCompactor/src/phpcompactor.php '$outputPath/$outputName-compressed.php' '$outputPath/$outputName.php'");
+        
+        echo "php ./tools/PHPCompactor/src/phpcompactor.php '$outputPath/$outputName-compressed.php' '$outputPath/$outputName.php'<br>";
+    //} catch (\Exception $ex) {
+        
+   // }
 }
 
 
