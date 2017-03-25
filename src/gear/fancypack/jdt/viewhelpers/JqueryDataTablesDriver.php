@@ -214,7 +214,8 @@ class JqueryDataTablesDriver
     public static function createJqueryDataTablesResult(
         $query,
         $request,
-        $filterViewModel
+        $filterViewModel,
+        $countFiltereds = true
     )
     {
         $filterModel = new JqueryDataTablesFilter();
@@ -226,7 +227,8 @@ class JqueryDataTablesDriver
                 $query,
                 $request,
                 $filterViewModel,
-                $filterModel
+                $filterModel,
+                $countFiltereds
             );
 
             $records = $filterViewModel->processRows($filterModel, $result['result']);

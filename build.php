@@ -267,7 +267,7 @@ $BUILD_totalGenerals
     //try {
         exec("php ./tools/PHPCompactor/src/phpcompactor.php '$outputPath/$outputName-compressed.php' '$outputPath/$outputName.php'");
         
-        echo "php ./tools/PHPCompactor/src/phpcompactor.php '$outputPath/$outputName-compressed.php' '$outputPath/$outputName.php'<br>";
+        //echo "php ./tools/PHPCompactor/src/phpcompactor.php '$outputPath/$outputName-compressed.php' '$outputPath/$outputName.php'<br>";
     //} catch (\Exception $ex) {
         
    // }

@@ -19,25 +19,25 @@ interface IGearQueryBuilderEvaluator
      * @param $queryString string
      * @return mixed
      */
-    function getNonResult($queryBuilder, $queryString);
+    function getNonResult($queryBuilder, $queryString, $params = null);
     /**
      * @param $queryBuilder IGearQueryBuilder
      * @param $queryString string
      * @return mixed
      */
-    function getOneResult($queryBuilder, $queryString);
+    function getOneResult($queryBuilder, $queryString, $params = null);
     /**
      * @param $queryBuilder IGearQueryBuilder
      * @param $queryString string
      * @return mixed
      */
-    function getManyResult($queryBuilder, $queryString);
+    function getManyResult($queryBuilder, $queryString, $params = null);
     /**
      * @param $queryBuilder IGearQueryBuilder
      * @param $queryString string
      * @return mixed
      */
-    function getScalarResult($queryBuilder, $queryString);
+    function getScalarResult($queryBuilder, $queryString, $params = null);
 }
 /*</module>*/
 ?>

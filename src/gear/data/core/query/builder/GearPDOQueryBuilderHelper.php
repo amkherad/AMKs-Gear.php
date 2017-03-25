@@ -17,7 +17,7 @@ class GearPdoQueryBuilderHelper implements IGearQueryBuilderHelper
     private $pdo;
 
     /**
-     * GearPDOQueryBuilderHelper constructor.
+     * GearPdoQueryBuilderHelper constructor.
      * @param $pdo \PDO
      */
     public function __construct($pdo)

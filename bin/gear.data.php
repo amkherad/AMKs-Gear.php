@@ -101,10 +101,18 @@ class GearPdoDataInterface implements IGearCrudService
      * @param array $params
      * @return PDOStatement
      */
-    public function executeQuery($query, $params = [])
+    public function executeQuery($query, $params = null)
     {
         $q = $this->pdo->prepare($query);
+        
+        if ($params != null) {
+            foreach ($params as $key => $param) {
+                $q->bindValue($key, $param, PDO::PARAM_STR); 
+            }
+        }
+        
         $q->execute($params);
+        //$q->execute();
         return $q;
     }
 
@@ -181,18 +189,18 @@ class GearPdoQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
     }
 
 
-    public function getNonResult($queryBuilder, $queryString)
+    public function getNonResult($queryBuilder, $queryString, $params = null)
     {
-        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+        $query = $this->gearPdoDataInterface->executeQuery($queryString, $params);
 
         return true;
     }
 
-    public function getOneResult($queryBuilder, $queryString)
+    public function getOneResult($queryBuilder, $queryString, $params = null)
     {
-        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+        $query = $this->gearPdoDataInterface->executeQuery($queryString, $params);
 
-        $first = $result->fetch();
+        $first = $query->fetch();
         if ($first) {
             return $first;
         }
@@ -200,11 +208,11 @@ class GearPdoQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
         return null;
     }
 
-    public function getManyResult($queryBuilder, $queryString)
+    public function getManyResult($queryBuilder, $queryString, $params = null)
     {
-        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+        $query = $this->gearPdoDataInterface->executeQuery($queryString, $params);
 
-        $first = $result->fetchAll();
+        $first = $query->fetchAll();
         if ($first) {
             return $first;
         }
@@ -212,11 +220,11 @@ class GearPdoQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
         return null;
     }
 
-    public function getScalarResult($queryBuilder, $queryString)
+    public function getScalarResult($queryBuilder, $queryString, $params = null)
     {
-        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+        $query = $this->gearPdoDataInterface->executeQuery($queryString, $params);
 
-        $first = $result->fetchColumn();
+        $first = $query->fetchColumn();
         return $first;
     }
 }
@@ -226,7 +234,7 @@ class GearPdoQueryBuilderHelper implements IGearQueryBuilderHelper
     private $pdo;
 
     /**
-     * GearPDOQueryBuilderHelper constructor.
+     * GearPdoQueryBuilderHelper constructor.
      * @param $pdo \PDO
      */
     public function __construct($pdo)
@@ -504,25 +512,25 @@ interface IGearQueryBuilderEvaluator
      * @param $queryString string
      * @return mixed
      */
-    function getNonResult($queryBuilder, $queryString);
+    function getNonResult($queryBuilder, $queryString, $params = null);
     /**
      * @param $queryBuilder IGearQueryBuilder
      * @param $queryString string
      * @return mixed
      */
-    function getOneResult($queryBuilder, $queryString);
+    function getOneResult($queryBuilder, $queryString, $params = null);
     /**
      * @param $queryBuilder IGearQueryBuilder
      * @param $queryString string
      * @return mixed
      */
-    function getManyResult($queryBuilder, $queryString);
+    function getManyResult($queryBuilder, $queryString, $params = null);
     /**
      * @param $queryBuilder IGearQueryBuilder
      * @param $queryString string
      * @return mixed
      */
-    function getScalarResult($queryBuilder, $queryString);
+    function getScalarResult($queryBuilder, $queryString, $params = null);
 }
 interface IGearQueryBuilderHelper
 {
@@ -586,6 +594,14 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         $skip,
         $count
     ;
+    
+    private
+        $spName,
+        $spParameters;
+    
+    private
+        $fnName,
+        $fnParameters;
 
     public $unicode = true;
 
@@ -938,36 +954,62 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 
     public function select()
     {
-        return $this->queryEvaluator->getManyResult($this,
-            $this->queryBuilderSqlGenerator->createSelect(
-                $this->tableName,
-                $this->createColumns(),
-                $this->createConditions(),
-                $this->createLimit(),
-                $this->createGrouping(),
-                $this->createOrdering(),
-                $this->createJoins()
-            ));
+        $params = null;
+        if ($this->spName != null) {
+            $argNames = [];
+            $params = $this->_formatParameters($this->spParameters);
+            
+            foreach ($params as $key => $param) {
+                $argNames[] = ":$key";
+            }
+            
+            $query = 'CALL '.$this->spName.'('.implode(',',$argNames).')';
+        } else {
+            $query = $this->queryBuilderSqlGenerator->createSelect(
+                    $this->tableName,
+                    $this->createColumns(),
+                    $this->createConditions(),
+                    $this->createLimit(),
+                    $this->createGrouping(),
+                    $this->createOrdering(),
+                    $this->createJoins()
+                );
+        }
+        
+        return $this->queryEvaluator->getManyResult($this, $query, $params);
     }
 
     public function selectOne()
     {
-        return $this->queryEvaluator->getOneResult($this,
-            $this->queryBuilderSqlGenerator->createSelect(
-                $this->tableName,
-                $this->createColumns(),
-                $this->createConditions(),
-                self::GearQueryBuilderLimitOne,
-                $this->createGrouping(),
-                $this->createOrdering(),
-                $this->createJoins()
-            ));
+        $params = null;
+        if ($this->spName != null) {
+            $argNames = [];
+            $params = $this->_formatParameters($this->spParameters);
+            
+            foreach ($params as $key => $param) {
+                $argNames[] = ":$key";
+            }
+            
+            $query = 'CALL '.$this->spName.'('.implode(',',$argNames).')';
+            
+        } else {
+            $query = $this->queryBuilderSqlGenerator->createSelect(
+                    $this->tableName,
+                    $this->createColumns(),
+                    $this->createConditions(),
+                    self::GearQueryBuilderLimitOne,
+                    $this->createGrouping(),
+                    $this->createOrdering(),
+                    $this->createJoins()
+                );
+        }
+            
+        return $this->queryEvaluator->getOneResult($this, $query, $params);
     }
 
     public function count()
     {
-        return $this->queryEvaluator->getScalarResult($this,
-            $this->queryBuilderSqlGenerator->createCount(
+        $query = $this->queryBuilderSqlGenerator->createCount(
                 $this->tableName,
                 $this->createColumns(),
                 $this->createConditions(),
@@ -975,7 +1017,29 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
                 $this->createGrouping(),
                 $this->createOrdering(),
                 $this->createJoins()
-            ));
+            );
+            
+        return $this->queryEvaluator->getScalarResult($this, $query);
+    }
+    
+    public function _formatParameters($params) {
+        if ($params == null) return null;
+        
+        $count = 0;
+        foreach ($params as $key => $value) {
+            if (!ctype_alpha(substr($key, 0, 1))) {
+                $newKey = "token$count_$key";
+                $params[$newKey] = $value;
+                unset($params[$key]);
+            }
+            if (is_string($value) && substr($value, 0, 2) == '$_') {
+                unset($params[$key]);
+                $key = substr($value, 2);
+                $params[$key] = $this->$key;
+            }
+        }
+        
+        return $params;
     }
 
     public function __clone()
@@ -1007,13 +1071,31 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 
     function sp($storedProcedureName, $params = [])
     {
-        // TODO: Implement sp() method.
+        $this->spName = $storedProcedureName;
+        $this->spParameters = $params;
+        
+        return $this;
     }
 
     function fn($functionName, $params = [])
     {
-        // TODO: Implement fn() method.
+        $this->fnName = $functionName;
+        $this->fnParameters = $params;
+        
+        return $this;
     }
+}
+class GearQueryBuilderProcedureCall
+{
+    
+}
+class GearQueryBuilderProcedureCallDataSource
+{
+    
+}
+class GearQueryBuilderSelect
+{
+    
 }
 
 

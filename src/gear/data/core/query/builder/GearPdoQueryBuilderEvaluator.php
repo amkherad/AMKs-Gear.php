@@ -29,18 +29,18 @@ class GearPdoQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
     }
 
 
-    public function getNonResult($queryBuilder, $queryString)
+    public function getNonResult($queryBuilder, $queryString, $params = null)
     {
-        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+        $query = $this->gearPdoDataInterface->executeQuery($queryString, $params);
 
         return true;
     }
 
-    public function getOneResult($queryBuilder, $queryString)
+    public function getOneResult($queryBuilder, $queryString, $params = null)
     {
-        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+        $query = $this->gearPdoDataInterface->executeQuery($queryString, $params);
 
-        $first = $result->fetch();
+        $first = $query->fetch();
         if ($first) {
             return $first;
         }
@@ -48,11 +48,11 @@ class GearPdoQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
         return null;
     }
 
-    public function getManyResult($queryBuilder, $queryString)
+    public function getManyResult($queryBuilder, $queryString, $params = null)
     {
-        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+        $query = $this->gearPdoDataInterface->executeQuery($queryString, $params);
 
-        $first = $result->fetchAll();
+        $first = $query->fetchAll();
         if ($first) {
             return $first;
         }
@@ -60,11 +60,11 @@ class GearPdoQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
         return null;
     }
 
-    public function getScalarResult($queryBuilder, $queryString)
+    public function getScalarResult($queryBuilder, $queryString, $params = null)
     {
-        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+        $query = $this->gearPdoDataInterface->executeQuery($queryString, $params);
 
-        $first = $result->fetchColumn();
+        $first = $query->fetchColumn();
         return $first;
     }
 }

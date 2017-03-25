@@ -52,6 +52,14 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         $skip,
         $count
     ;
+    
+    private
+        $spName,
+        $spParameters;
+    
+    private
+        $fnName,
+        $fnParameters;
 
     public $unicode = true;
 
@@ -404,36 +412,62 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 
     public function select()
     {
-        return $this->queryEvaluator->getManyResult($this,
-            $this->queryBuilderSqlGenerator->createSelect(
-                $this->tableName,
-                $this->createColumns(),
-                $this->createConditions(),
-                $this->createLimit(),
-                $this->createGrouping(),
-                $this->createOrdering(),
-                $this->createJoins()
-            ));
+        $params = null;
+        if ($this->spName != null) {
+            $argNames = [];
+            $params = $this->_formatParameters($this->spParameters);
+            
+            foreach ($params as $key => $param) {
+                $argNames[] = ":$key";
+            }
+            
+            $query = 'CALL '.$this->spName.'('.implode(',',$argNames).')';
+        } else {
+            $query = $this->queryBuilderSqlGenerator->createSelect(
+                    $this->tableName,
+                    $this->createColumns(),
+                    $this->createConditions(),
+                    $this->createLimit(),
+                    $this->createGrouping(),
+                    $this->createOrdering(),
+                    $this->createJoins()
+                );
+        }
+        
+        return $this->queryEvaluator->getManyResult($this, $query, $params);
     }
 
     public function selectOne()
     {
-        return $this->queryEvaluator->getOneResult($this,
-            $this->queryBuilderSqlGenerator->createSelect(
-                $this->tableName,
-                $this->createColumns(),
-                $this->createConditions(),
-                self::GearQueryBuilderLimitOne,
-                $this->createGrouping(),
-                $this->createOrdering(),
-                $this->createJoins()
-            ));
+        $params = null;
+        if ($this->spName != null) {
+            $argNames = [];
+            $params = $this->_formatParameters($this->spParameters);
+            
+            foreach ($params as $key => $param) {
+                $argNames[] = ":$key";
+            }
+            
+            $query = 'CALL '.$this->spName.'('.implode(',',$argNames).')';
+            
+        } else {
+            $query = $this->queryBuilderSqlGenerator->createSelect(
+                    $this->tableName,
+                    $this->createColumns(),
+                    $this->createConditions(),
+                    self::GearQueryBuilderLimitOne,
+                    $this->createGrouping(),
+                    $this->createOrdering(),
+                    $this->createJoins()
+                );
+        }
+            
+        return $this->queryEvaluator->getOneResult($this, $query, $params);
     }
 
     public function count()
     {
-        return $this->queryEvaluator->getScalarResult($this,
-            $this->queryBuilderSqlGenerator->createCount(
+        $query = $this->queryBuilderSqlGenerator->createCount(
                 $this->tableName,
                 $this->createColumns(),
                 $this->createConditions(),
@@ -441,7 +475,29 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
                 $this->createGrouping(),
                 $this->createOrdering(),
                 $this->createJoins()
-            ));
+            );
+            
+        return $this->queryEvaluator->getScalarResult($this, $query);
+    }
+    
+    public function _formatParameters($params) {
+        if ($params == null) return null;
+        
+        $count = 0;
+        foreach ($params as $key => $value) {
+            if (!ctype_alpha(substr($key, 0, 1))) {
+                $newKey = "token$count_$key";
+                $params[$newKey] = $value;
+                unset($params[$key]);
+            }
+            if (is_string($value) && substr($value, 0, 2) == '$_') {
+                unset($params[$key]);
+                $key = substr($value, 2);
+                $params[$key] = $this->$key;
+            }
+        }
+        
+        return $params;
     }
 
     public function __clone()
@@ -473,12 +529,18 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 
     function sp($storedProcedureName, $params = [])
     {
-        // TODO: Implement sp() method.
+        $this->spName = $storedProcedureName;
+        $this->spParameters = $params;
+        
+        return $this;
     }
 
     function fn($functionName, $params = [])
     {
-        // TODO: Implement fn() method.
+        $this->fnName = $functionName;
+        $this->fnParameters = $params;
+        
+        return $this;
     }
 }
 /*</module>*/

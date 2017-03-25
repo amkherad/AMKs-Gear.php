@@ -111,10 +111,18 @@ class GearPdoDataInterface implements IGearCrudService
      * @param array $params
      * @return PDOStatement
      */
-    public function executeQuery($query, $params = [])
+    public function executeQuery($query, $params = null)
     {
         $q = $this->pdo->prepare($query);
+        
+        if ($params != null) {
+            foreach ($params as $key => $param) {
+                $q->bindValue($key, $param, PDO::PARAM_STR); 
+            }
+        }
+        
         $q->execute($params);
+        //$q->execute();
         return $q;
     }
 

@@ -21,6 +21,10 @@ class JdtQueryResult extends GearJsonResult
 {
     /** @var IJqueryDataTablesFilterViewModel */
     private $filterViewModel;
+    
+    /** @var bool */
+    public $countFiltereds = true;
+    
     /**
      * GearJdtResult constructor.
      * @param IJqueryDataTablesFilterViewModel $filterViewModel
@@ -49,7 +53,7 @@ class JdtQueryResult extends GearJsonResult
         //    $array = iterator_to_array($content);
         //}
 
-        return JqueryDataTablesDriver::createJqueryDataTablesResult($query, $request, $this->filterViewModel);
+        return JqueryDataTablesDriver::createJqueryDataTablesResult($query, $request, $this->filterViewModel, $this->countFiltereds);
     }
 }
 /*</module>*/
