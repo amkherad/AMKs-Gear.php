@@ -185,8 +185,9 @@ class JqueryDataTablesDriver
 
         $query = $filterViewModel->orderRows($filterModel, $query);
 
-        $skipNull = $filterModel->getStart();
-        $skip = ctype_digit($skipNull) ? intval($skipNull) : 0;
+        //$skipNull = $filterModel->getStart();
+        //$skip = ctype_digit($skipNull) ? intval($skipNull) : 0;
+        $skip = $filterModel->getStart();
 
         $pageSizeNull = $filterModel->getLength();
         $pageSize = ctype_digit($pageSizeNull) ? intval($pageSizeNull) : 10;
@@ -199,7 +200,7 @@ class JqueryDataTablesDriver
 
         return [
             'result' => $query,
-            'count' => $filteredCount
+            'count' => (int)$filteredCount
         ];
     }
 
@@ -219,7 +220,7 @@ class JqueryDataTablesDriver
         $filterModel = new JqueryDataTablesFilter();
 
         try {
-            $total = $query->count();
+            $total = (int)$query->count();
 
             $result = self::createJqueryDataTablesFilter(
                 $query,

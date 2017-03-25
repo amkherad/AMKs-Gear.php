@@ -70,6 +70,9 @@ interface IGearQueryBuilder
     function count();
 
     function setConverter($converter);
+
+    function sp($storedProcedureName, $params = []);
+    function fn($functionName, $params = []);
 }
 /*</module>*/
 ?>

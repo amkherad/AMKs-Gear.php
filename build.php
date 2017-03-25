@@ -321,6 +321,17 @@ BUILD_makeBundle(
     ],
     []
 );
+//$BUILD_filesLog = false;
+//BUILD_makeBundle(
+//    'Gear.Orm.Pdo',
+//    'gear.orm-pdo',
+//    "$BUILD_rootDirectory/src/gear/plugins/orm/pdo/core",
+//    "$BUILD_rootDirectory/bin",
+//    [
+//        'php'
+//    ],
+//    []
+//);
 $BUILD_filesLog = false;
 BUILD_makeBundle(
     'Gear.Authentication',

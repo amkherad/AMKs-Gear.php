@@ -63,7 +63,7 @@ class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
             $limit = $this->formatLimit($limit);
         }
 
-        return trim("SELECT $cols FROM $table $conditions $limit $join");
+        return trim("SELECT $cols FROM $table $conditions $limit $join;");
     }
 
     function createCount(
@@ -110,7 +110,7 @@ class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
             return null;
         }
         $limitType = substr($limit, 0, $col);
-        $limitValue = substr($limit, $col);
+        $limitValue = substr($limit, $col + 1);
 
         switch ($limitType) {
             case GearQueryBuilder::GearQueryBuilderLimitNRecordSig:
@@ -134,7 +134,7 @@ class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
                 }
                 $offset = intval($parts[0]);
                 $count = intval($parts[1]);
-                return "LIMIT $count OFFSET {$offset}";
+                return "LIMIT $count OFFSET $offset";
             case GearQueryBuilder::GearQueryBuilderLimitOffset:
                 $offset = intval($limitValue);
                 //http://dev.mysql.com/doc/refman/5.7/en/select.html#id4651990

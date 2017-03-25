@@ -24,6 +24,11 @@ class GearHtmlSections
         return self::$sections[$sectionName]['content'];
     }
 
+    public static function sectionExists($sectionName)
+    {
+        return isset(self::$sections[$sectionName]);
+    }
+
     public static function renderSection($sectionName)
     {
         if (!isset(self::$sections[$sectionName])) return;

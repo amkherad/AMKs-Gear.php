@@ -275,9 +275,7 @@ class GearDefaultViewEngine implements IGearViewEngine
             $searchedLocs[] = $viewPath;
         }
         if(!$found) {
-            throw new GearViewFileNotFoundException(
-                "View file '$rootPath' not found. searched locations were:<br>" .
-                implode('<br>', $searchedLocs));
+            throw new GearViewFileNotFoundException($rootPath, " Searched locations were:<br>" . implode('<br>', $searchedLocs));
         }
 
         return $viewPath;

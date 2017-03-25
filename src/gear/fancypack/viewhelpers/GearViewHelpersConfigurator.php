@@ -6,7 +6,6 @@ namespace gear\fancypack\viewhelpers;
 /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\helpers\GearHtmlHelper;
-use gear\fancypack\jdt\http\results\GearJdtResult;
 use gear\fancypack\viewhelpers\section\GearHtmlSections;
 /*</namespace.use>*/
 
@@ -23,6 +22,9 @@ GearHtmlHelper::setStaticExtensionMethods([
     }*/,
     'endSection' => [GearHtmlSections::class, 'endSection']/*function ($sectionName = null) {
         GearHtmlSections::endSection($sectionName);
+    }*/,
+    'sectionExists' => [GearHtmlSections::class, 'sectionExists']/*function ($sectionName = null) {
+        GearHtmlSections::sectionExists($sectionName);
     }*/,
 
 

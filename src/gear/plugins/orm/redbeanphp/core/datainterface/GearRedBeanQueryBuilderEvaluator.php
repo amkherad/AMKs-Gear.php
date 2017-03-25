@@ -18,7 +18,6 @@ use \RedBeanPHP\Facade as RedBean;
 /*</bundles>*/
 
 /*<module>*/
-
 class GearRedBeanQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
 {
     /** @var GearRedBeanDataInterface */

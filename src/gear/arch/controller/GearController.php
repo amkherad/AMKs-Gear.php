@@ -11,6 +11,7 @@
 //GearNotFoundResult
 //GearUnauthorizedResult
 //GearEmptyResult
+//GearAntiForgeryTokenManager
 /*</requires>*/
 
 /*<namespace.current>*/
@@ -43,7 +44,7 @@ use gear\arch\http\results\GearEmptyResult;
 use gear\arch\model\GearModel;
 use gear\arch\model\IGearModelBinder;
 use gear\arch\route\IGearRouteService;
-
+use gear\arch\security\GearAntiForgeryTokenManager;
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -313,6 +314,11 @@ abstract class GearController extends GearExtensibleClass
         return $result;
     }
 
+    public function validateAntiForgeryToken()
+    {
+        return GearAntiForgeryTokenManager::validateAntiForgeryToken();
+    }
+
     /**
      * Gets a value from both route values and request parameters.
      *
@@ -424,9 +430,9 @@ abstract class GearController extends GearExtensibleClass
      * @param string|null $routeParams
      * @return GearRedirectResult
      */
-    public function redirectToAction($actionName, $controllerName = null, $routeParams = null)
+    public function redirectToAction($actionName, $controllerName = null, $routeParams = null, $queryString = null)
     {
-        $url = $this->url->action($actionName, $controllerName, $routeParams);
+        $url = $this->url->action($actionName, $controllerName, $routeParams, $queryString);
         return new GearRedirectResult($url, false);
     }
 

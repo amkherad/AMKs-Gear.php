@@ -42,6 +42,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     private
         $entityName,
         $tableName,
+        $rootAlias,
 
         $andConditions = [],
         $orConditions = [],
@@ -375,7 +376,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         }
 
         if ($this->skip == null) {
-            $this->skip = $count;
+            $this->skip = intval($count);
         } else {
             $this->skip += $count;
         }
@@ -391,7 +392,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         }
 
         if ($this->count == null) {
-            $this->count = $count;
+            $this->count = intval($count);
         } else {
             $this->count += $count;
         }
@@ -468,6 +469,16 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     {
 
         return $this;
+    }
+
+    function sp($storedProcedureName, $params = [])
+    {
+        // TODO: Implement sp() method.
+    }
+
+    function fn($functionName, $params = [])
+    {
+        // TODO: Implement fn() method.
     }
 }
 /*</module>*/

@@ -5,15 +5,13 @@
 namespace gear\data\core\query\builder;
 /*</namespace.current>*/
 /*<namespace.use>*/
-use gear\data\core\query\builder\IGearQueryBuilderHelper;
-
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-class GearPDOQueryBuilderHelper implements IGearQueryBuilderHelper
+class GearPdoQueryBuilderHelper implements IGearQueryBuilderHelper
 {
     /** @var \PDO */
     private $pdo;

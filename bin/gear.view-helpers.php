@@ -69,6 +69,11 @@ class GearHtmlSections
         return self::$sections[$sectionName]['content'];
     }
 
+    public static function sectionExists($sectionName)
+    {
+        return isset(self::$sections[$sectionName]);
+    }
+
     public static function renderSection($sectionName)
     {
         if (!isset(self::$sections[$sectionName])) return;
@@ -187,6 +192,9 @@ GearHtmlHelper::setStaticExtensionMethods([
     }*/,
     'endSection' => [GearHtmlSections::class, 'endSection']/*function ($sectionName = null) {
         GearHtmlSections::endSection($sectionName);
+    }*/,
+    'sectionExists' => [GearHtmlSections::class, 'sectionExists']/*function ($sectionName = null) {
+        GearHtmlSections::sectionExists($sectionName);
     }*/,
 
 

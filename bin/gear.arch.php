@@ -212,6 +212,13 @@ class GearAnnotationHelper
         return new GearAnnotationHelper($name, $annotation);
     }
 }
+class GearAntiForgeryTokenManager
+{
+    public static function validateAntiForgeryToken()
+    {
+        return true;
+    }
+}
 class GearAppEngine
 {
     const Mvc = 'mvc';
@@ -1801,7 +1808,7 @@ class GearUrlHelper extends GearExtensibleClass implements IActionUrlBuilder
         return $this->route->createUrl($this->context, $this->mvcContext, $routeParams);
     }
 
-    public function action($actionName, $controllerName = null, $routeParams = null, $queryStrings = null)
+    public function action($actionName, $controllerName = null, $routeParams = null, $queryString = null)
     {
         if ($controllerName == null) {
             $controllerName = $this->mvcContext->getControllerName();
@@ -1811,6 +1818,14 @@ class GearUrlHelper extends GearExtensibleClass implements IActionUrlBuilder
         $areaName = $this->mvcContext->getAreaName();
         if ($areaName != null) {
             $headArray['area'] = $areaName;
+        }
+        if ($routeParams != null) {
+            foreach ($routeParams as $name => $param) {
+                if ($param == null || $param == '') {
+                    unset($headArray[$name]);
+                    unset($routeParams[$name]);
+                }
+            }
         }
         if (is_array($routeParams)) {
             $routeParams = array_merge($headArray, $routeParams);
@@ -1824,9 +1839,9 @@ class GearUrlHelper extends GearExtensibleClass implements IActionUrlBuilder
             $this->urlPrefix .
             $this->route->createUrl($this->context, $this->mvcContext, $routeParams);
 
-        if (is_array($queryStrings)) {
+        if (is_array($queryString)) {
             $queries = [];
-            foreach ($queryStrings as $key => $qs) {
+            foreach ($queryString as $key => $qs) {
                 $queries[] = $key.'='.urlencode($qs);
             }
             if (count($queries) > 0) {
@@ -3010,9 +3025,7 @@ class GearDefaultViewEngine implements IGearViewEngine
             $searchedLocs[] = $viewPath;
         }
         if(!$found) {
-            throw new GearViewFileNotFoundException(
-                "View file '$rootPath' not found. searched locations were:<br>" .
-                implode('<br>', $searchedLocs));
+            throw new GearViewFileNotFoundException($rootPath, " Searched locations were:<br>" . implode('<br>', $searchedLocs));
         }
 
         return $viewPath;
@@ -3510,11 +3523,11 @@ class GearRedirectResult extends GearStatusCodeResult
 }
 class GearViewFileNotFoundException extends GearHttpNotFoundException
 {
-    public function __construct($action)
+    public function __construct($action, $additionalInfo = null)
     {
         parent::__construct($action == null
-            ? "View file not found."
-            : "View file '$action' not found.");
+            ? "View file not found.$additionalInfo"
+            : "View file '$action' not found.$additionalInfo");
     }
 }
 abstract class GearController extends GearExtensibleClass
@@ -3778,6 +3791,11 @@ abstract class GearController extends GearExtensibleClass
         return $result;
     }
 
+    public function validateAntiForgeryToken()
+    {
+        return GearAntiForgeryTokenManager::validateAntiForgeryToken();
+    }
+
     /**
      * Gets a value from both route values and request parameters.
      *
@@ -3889,9 +3907,9 @@ abstract class GearController extends GearExtensibleClass
      * @param string|null $routeParams
      * @return GearRedirectResult
      */
-    public function redirectToAction($actionName, $controllerName = null, $routeParams = null)
+    public function redirectToAction($actionName, $controllerName = null, $routeParams = null, $queryString = null)
     {
-        $url = $this->url->action($actionName, $controllerName, $routeParams);
+        $url = $this->url->action($actionName, $controllerName, $routeParams, $queryString);
         return new GearRedirectResult($url, false);
     }
 

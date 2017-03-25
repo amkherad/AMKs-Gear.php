@@ -18,11 +18,11 @@ use gear\arch\http\exceptions\GearHttpNotFoundException;
 /*<module>*/
 class GearViewFileNotFoundException extends GearHttpNotFoundException
 {
-    public function __construct($action)
+    public function __construct($action, $additionalInfo = null)
     {
         parent::__construct($action == null
-            ? "View file not found."
-            : "View file '$action' not found.");
+            ? "View file not found.$additionalInfo"
+            : "View file '$action' not found.$additionalInfo");
     }
 }
 /*</module>*/

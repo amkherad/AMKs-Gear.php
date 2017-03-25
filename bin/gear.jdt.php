@@ -657,8 +657,9 @@ class JqueryDataTablesDriver
 
         $query = $filterViewModel->orderRows($filterModel, $query);
 
-        $skipNull = $filterModel->getStart();
-        $skip = ctype_digit($skipNull) ? intval($skipNull) : 0;
+        //$skipNull = $filterModel->getStart();
+        //$skip = ctype_digit($skipNull) ? intval($skipNull) : 0;
+        $skip = $filterModel->getStart();
 
         $pageSizeNull = $filterModel->getLength();
         $pageSize = ctype_digit($pageSizeNull) ? intval($pageSizeNull) : 10;
@@ -671,7 +672,7 @@ class JqueryDataTablesDriver
 
         return [
             'result' => $query,
-            'count' => $filteredCount
+            'count' => (int)$filteredCount
         ];
     }
 
@@ -691,7 +692,7 @@ class JqueryDataTablesDriver
         $filterModel = new JqueryDataTablesFilter();
 
         try {
-            $total = $query->count();
+            $total = (int)$query->count();
 
             $result = self::createJqueryDataTablesFilter(
                 $query,
@@ -738,7 +739,7 @@ class JqueryDataTablesDriver
 }
 class JqueryDataTablesFiltererInitializer
 {
-    public static function renderInitializer($addScriptTag = true)
+    public static function renderInitializer($useApi = true, $addScriptTag = true)
     {
         $filterTypeNone = JqueryDataTablesOptions::JdtColumnFilterModeNone;
         $filterTypeList = JqueryDataTablesOptions::JdtColumnFilterModeList;
@@ -746,7 +747,8 @@ class JqueryDataTablesFiltererInitializer
         $filterTypeBoolean = JqueryDataTablesOptions::JdtColumnFilterModeBoolean;
         $filterTypeDateTime = JqueryDataTablesOptions::JdtColumnFilterModeDateTime;
 
-        $outputHtml = <<<JavaScript
+        if ($useApi) {
+            $outputHtml = <<<JavaScript
     function _listDataTableFiltererInitializer(obj) {
         // Apply the search
         obj.columns().every(function(colIndx) {
@@ -887,6 +889,148 @@ class JqueryDataTablesFiltererInitializer
         });
     }
 JavaScript;
+        } else {
+            $outputHtml = <<<JavaScript
+    function _listDataTableFiltererInitializer(obj) {
+        // Apply the search
+        $.each(obj.aoColumns, function(colIndx, column) {
+            var that = this;
+
+            var individualColumnInfo = column;
+            var filterOnEnter = this.settings()[0].filterOnEnter;
+
+            var innerHtml;
+            if (column.bSearchable) {
+                individualColumnInfo = $.extend({
+                    filterList: null,
+                    filterMode: 'none',
+                    filterUseRemoteData: false,
+                    filterRemoteDataUrl: 'jdtRemoteData',
+                    filterRemoteDataAjaxRequestType: 'POST',
+                    filterRemoteDataAjaxRequestData: 'defaultUrl',
+                    filterPlaceHolder: null,
+                    filterTrueDisplayName: 'صحیح',
+                    filterFalseDisplayName: 'غلط',
+                    filterAddNoFilter: true,
+                    filterNoFilterDisplayName: '(نمایش همه)'
+                }, individualColumnInfo);
+                switch (individualColumnInfo.filterMode) {
+                    case '{$filterTypeNone}':
+
+                    case '{$filterTypeText}':
+                        {
+                            innerHtml = (individualColumnInfo.placeHolder == null
+                                    ? $('<input type="text" placeholder="جستجو ' + column.title + '..." />')
+                                    : $('<input type="text" placeholder="' + individualColumnInfo.placeHolder + '" />'))
+                                .addClass('jdtInput textInput');
+
+                            break;
+                        }
+                    case '{$filterTypeBoolean}':
+                        {
+                            innerHtml = $('<select></select>');
+                            if (individualColumnInfo.addNoFilter) {
+                                innerHtml
+                                    .append($('<option></option>')
+                                        .attr('value', '')
+                                        .text(individualColumnInfo.noFilterDisplayName));
+                            }
+                            innerHtml
+                                .append($('<option></option>')
+                                    .attr('value', true)
+                                    .text(individualColumnInfo.trueDisplayName))
+                                .append($('<option></option>')
+                                    .attr('value', false)
+                                    .text(individualColumnInfo.falseDisplayName))
+                                .addClass('jdtInput textInput');
+
+                            break;
+                        }
+                    case '{$filterTypeList}':{
+                        innerHtml = $('<select></select>')
+                            .addClass('jdtInput selectInput');
+
+                        if (individualColumnInfo.addNoFilter) {
+                            innerHtml
+                                .append($('<option></option>')
+                                    .attr('value', '')
+                                    .text(individualColumnInfo.noFilterDisplayName));
+                        }
+
+                        if (individualColumnInfo.useRemoteData) {
+                            $.ajax({
+                                url: individualColumnInfo.remoteDataUrl,
+                                type: individualColumnInfo.remoteDataAjaxRequestType,
+                                data: individualColumnInfo.remoteDataAjaxRequestData,
+                                success: function(data) {
+                                    $(data).each(function(idx, val) {
+                                        innerHtml
+                                            .append($('<option></option>')
+                                                .attr('value', val[0])
+                                                .text(val[1]));
+                                    });
+                                },
+                                error: function(xhr, textStatus, errorThrown) {
+                                    if (individualColumnInfo.filterList != null) {
+                                        $(individualColumnInfo.filterList).each(function(idx, val) {
+                                            innerHtml
+                                                .append($('<option></option>')
+                                                    .attr('value', val[0])
+                                                    .text(val[1]));
+                                        });
+                                    }
+                                }
+                            });
+                        } else if (individualColumnInfo.filterList != null) {
+                            $(individualColumnInfo.filterList).each(function(idx, val) {
+                                innerHtml
+                                    .append($('<option></option>')
+                                        .attr('value', val[0])
+                                        .text(val[1]));
+                            });
+                        } else {
+                            this.data().unique().sort().each(function(d, j) {
+                                innerHtml.append('<option value="' + d + '">' + d + '</option>');
+                            });
+                        }
+
+                        break;
+                    }
+                    case '{$filterTypeDateTime}':{
+                        innerHtml = $('<input/>')
+                            .addClass('jdtInput dateTimeInput');
+
+                        break;
+                    }
+                }
+            }
+            if (innerHtml != null)
+                innerHtml = innerHtml.appendTo($(this.footer()).empty());
+
+            if (filterOnEnter) {
+                $('.jdtInput', this.footer()).keypress(function(e) {
+                    if (e.which == 13) {
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                        return false;
+                    }
+                });
+            } else {
+                $('.jdtInput', this.footer()).on('keyup change', function() {
+                    if (that.search() !== this.value) {
+                        that
+                            .search(this.value)
+                            .draw();
+                    }
+                });
+            }
+        });
+    }
+JavaScript;
+        }
 
         $outputHtml = new GearHtmlString($outputHtml);
         if ($addScriptTag) {
@@ -1207,10 +1351,11 @@ class JqueryDataTablesRenderer
             'Removed5' => 'fnRender',
             'rowCallback' => 'fnRowCallback',
             'ajax.data' => '.fnServerData',
-            //'ajax' => '',
+            'ajax' => '',
             'ajax.type' => '.sServerMethod',
             'ajax.dataSrc' => '.sAjaxDataProp',
             'ajax.url' => '.sAjaxSource',
+            //'ajax' => 'ajx',
             'stateLoadCallback' => 'fnStateLoad',
             'stateLoaded' => 'fnStateLoaded',
             'stateLoadParams' => 'fnStateLoadParams',

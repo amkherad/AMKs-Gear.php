@@ -9,7 +9,218 @@ class GearCrudResult
 {
 
 }
-class GearPDOQueryBuilderHelper implements IGearQueryBuilderHelper
+class GearPdoDataInterface implements IGearCrudService
+{
+    /** @var PDO */
+    private $pdo;
+    private
+//        $databaseName,
+//        $provider,
+//        $username,
+//        $password,
+        $tableName,
+        $entityName;
+
+    protected function __construct(
+        $tableName,
+        $entityName,
+        $pdo
+    )
+    {
+        $this->tableName = $tableName;
+        $this->entityName = $entityName;
+
+        $this->pdo = $pdo;
+    }
+
+    function createModelInstance()
+    {
+        return null;
+    }
+
+    /**
+     * @return string entity name.
+     */
+    public function getEntityName()
+    {
+        return $this->entityName;
+    }
+
+    /**
+     * @return string table name.
+     */
+    public function getTableName()
+    {
+        return $this->tableName;
+    }
+
+    /**
+     * @param string $entityName
+     * @param PDO $pdo
+     * @return GearPdoDataInterface
+     */
+    public static function fromPdo(
+        $entityName,
+        $pdo
+    )
+    {
+        return new self($entityName, $pdo);
+    }
+
+    public static function fromParts(
+        $entityName,
+        $dsn,
+        $username,
+        $password,
+        $options = null
+    )
+    {
+        $pdo = new PDO($dsn, $username, $password, $options);
+        return new self($entityName, $pdo);
+    }
+
+    public function getUnderlyingContext()
+    {
+        return $this->pdo;
+    }
+
+    /**
+     * @return GearQueryBuilder
+     */
+    public function query()
+    {
+        return new GearQueryBuilder(
+            $this->entityName,
+            $this->tableName,
+            new GearQueryBuilderSqlGeneratorMySql(),
+            new GearPdoQueryBuilderEvaluator($this));
+    }
+
+    /**
+     * @param string $query
+     * @param array $params
+     * @return PDOStatement
+     */
+    public function executeQuery($query, $params = [])
+    {
+        $q = $this->pdo->prepare($query);
+        $q->execute($params);
+        return $q;
+    }
+
+    public function getAll()
+    {
+        return self::query()
+            ->select();
+    }
+
+    public function findAll($predicate)
+    {
+        // TODO: Implement FindAll() method.
+    }
+
+    public function findById($id)
+    {
+        return self::query()
+            ->isEqual("id", $id)
+            ->selectOne();
+    }
+
+    public function insert($entity)
+    {
+        $this->pdo->query("INSERT INTO `{$this->pdo->tableName}` ()");
+        return $this->pdo->lastInsertId();
+    }
+
+    public function update($entity)
+    {
+    }
+
+    public function updateById($id, $entity)
+    {
+        // TODO: Implement UpdateById() method.
+    }
+
+    public function delete($entity)
+    {
+        return true;
+    }
+
+    public function deleteById($id)
+    {
+    }
+
+    public function countAll()
+    {
+    }
+
+    public function count($predicate)
+    {
+    }
+
+    public function dispose()
+    {
+    }
+}
+class GearPdoEntity
+{
+
+}
+class GearPdoQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
+{
+    /** @var GearPdoDataInterface */
+    private $gearPdoDataInterface;
+
+    /**
+     * GearPdoQueryBuilderEvaluator constructor.
+     * @param $gearPdoDataInterface
+     */
+    public function __construct($gearPdoDataInterface)
+    {
+        $this->gearPdoDataInterface = $gearPdoDataInterface;
+    }
+
+
+    public function getNonResult($queryBuilder, $queryString)
+    {
+        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+
+        return true;
+    }
+
+    public function getOneResult($queryBuilder, $queryString)
+    {
+        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+
+        $first = $result->fetch();
+        if ($first) {
+            return $first;
+        }
+
+        return null;
+    }
+
+    public function getManyResult($queryBuilder, $queryString)
+    {
+        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+
+        $first = $result->fetchAll();
+        if ($first) {
+            return $first;
+        }
+
+        return null;
+    }
+
+    public function getScalarResult($queryBuilder, $queryString)
+    {
+        $result = $this->gearPdoDataInterface->executeQuery($queryString);
+
+        $first = $result->fetchColumn();
+        return $first;
+    }
+}
+class GearPdoQueryBuilderHelper implements IGearQueryBuilderHelper
 {
     /** @var \PDO */
     private $pdo;
@@ -76,7 +287,7 @@ class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
             $limit = $this->formatLimit($limit);
         }
 
-        return trim("SELECT $cols FROM $table $conditions $limit $join");
+        return trim("SELECT $cols FROM $table $conditions $limit $join;");
     }
 
     function createCount(
@@ -123,7 +334,7 @@ class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
             return null;
         }
         $limitType = substr($limit, 0, $col);
-        $limitValue = substr($limit, $col);
+        $limitValue = substr($limit, $col + 1);
 
         switch ($limitType) {
             case GearQueryBuilder::GearQueryBuilderLimitNRecordSig:
@@ -147,7 +358,7 @@ class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator
                 }
                 $offset = intval($parts[0]);
                 $count = intval($parts[1]);
-                return "LIMIT $count OFFSET {$offset}";
+                return "LIMIT $count OFFSET $offset";
             case GearQueryBuilder::GearQueryBuilderLimitOffset:
                 $offset = intval($limitValue);
                 //http://dev.mysql.com/doc/refman/5.7/en/select.html#id4651990
@@ -282,6 +493,9 @@ interface IGearQueryBuilder
     function count();
 
     function setConverter($converter);
+
+    function sp($storedProcedureName, $params = []);
+    function fn($functionName, $params = []);
 }
 interface IGearQueryBuilderEvaluator
 {
@@ -695,7 +909,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         }
 
         if ($this->skip == null) {
-            $this->skip = $count;
+            $this->skip = intval($count);
         } else {
             $this->skip += $count;
         }
@@ -711,7 +925,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         }
 
         if ($this->count == null) {
-            $this->count = $count;
+            $this->count = intval($count);
         } else {
             $this->count += $count;
         }
@@ -788,6 +1002,16 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     {
 
         return $this;
+    }
+
+    function sp($storedProcedureName, $params = [])
+    {
+        // TODO: Implement sp() method.
+    }
+
+    function fn($functionName, $params = [])
+    {
+        // TODO: Implement fn() method.
     }
 }
 

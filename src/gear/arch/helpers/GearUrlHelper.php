@@ -66,7 +66,7 @@ class GearUrlHelper extends GearExtensibleClass implements IActionUrlBuilder
         return $this->route->createUrl($this->context, $this->mvcContext, $routeParams);
     }
 
-    public function action($actionName, $controllerName = null, $routeParams = null, $queryStrings = null)
+    public function action($actionName, $controllerName = null, $routeParams = null, $queryString = null)
     {
         if ($controllerName == null) {
             $controllerName = $this->mvcContext->getControllerName();
@@ -76,6 +76,14 @@ class GearUrlHelper extends GearExtensibleClass implements IActionUrlBuilder
         $areaName = $this->mvcContext->getAreaName();
         if ($areaName != null) {
             $headArray['area'] = $areaName;
+        }
+        if ($routeParams != null) {
+            foreach ($routeParams as $name => $param) {
+                if ($param == null || $param == '') {
+                    unset($headArray[$name]);
+                    unset($routeParams[$name]);
+                }
+            }
         }
         if (is_array($routeParams)) {
             $routeParams = array_merge($headArray, $routeParams);
@@ -89,9 +97,9 @@ class GearUrlHelper extends GearExtensibleClass implements IActionUrlBuilder
             $this->urlPrefix .
             $this->route->createUrl($this->context, $this->mvcContext, $routeParams);
 
-        if (is_array($queryStrings)) {
+        if (is_array($queryString)) {
             $queries = [];
-            foreach ($queryStrings as $key => $qs) {
+            foreach ($queryString as $key => $qs) {
                 $queries[] = $key.'='.urlencode($qs);
             }
             if (count($queries) > 0) {
