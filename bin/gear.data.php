@@ -170,7 +170,7 @@ class GearPdoDataInterface implements IGearCrudService
     {
     }
 }
-class GearPdoEntity
+class GearPdoEntity implements IGearEntity
 {
 
 }
@@ -556,11 +556,19 @@ interface IGearQueryBuilderSqlGenerator
         $ordering,
         $join);
 }
-abstract class IdEntityBase implements IGearIdEntity
+abstract class GearIdEntityBase implements IGearIdEntity
 {
     public
         $id
     ;
+    
+    function getId() {
+        return $this->id;
+    }
+}
+class GearPdoIdEntity extends GearIdEntityBase
+{
+
 }
 class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 {

@@ -3,7 +3,7 @@
 
 /*<namespace.current>*/
 namespace gear\data\core\entity;
-    /*</namespace.current>*/
+/*</namespace.current>*/
 /*<namespace.use>*/
 /*</namespace.use>*/
 
@@ -14,7 +14,7 @@ namespace gear\data\core\entity;
 /*</bundles>*/
 
 /*<module>*/
-class GearPdoEntity
+class GearPdoEntity implements IGearEntity
 {
 
 }

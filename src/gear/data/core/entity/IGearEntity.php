@@ -3,12 +3,12 @@
 
 /*<namespace.current>*/
 namespace gear\data\core\entity;
-    /*</namespace.current>*/
-    /*<namespace.use>*/
-    /*</namespace.use>*/
+/*</namespace.current>*/
+/*<namespace.use>*/
+/*</namespace.use>*/
 
-    /*<bundles>*/
-    /*</bundles>*/
+/*<bundles>*/
+/*</bundles>*/
 
 /*<module>*/
 interface IGearEntity

@@ -107,6 +107,13 @@ class GearDefaultPasswordHashProvider implements IGearPasswordHashProvider
         return hash($this->algorithm, $password, false);
     }
 }
+class GearPdoAuthManager extends GearAuthenticationManager
+{
+    public function __construct($userEntityClassLoader, $dataInterface, $passHashProvider, $successfulHandler)
+    {
+        parent::__construct($userEntityClassLoader, $dataInterface, $passHashProvider, $successfulHandler);
+    }
+}
 interface IGearAuthCookieService
 {
     /**
