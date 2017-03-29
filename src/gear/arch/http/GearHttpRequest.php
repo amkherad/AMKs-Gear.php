@@ -39,6 +39,21 @@ class GearHttpRequest implements IGearHttpRequest
     {
         return file_get_contents("php://input");
     }
+    
+    public function getHeaders()
+    {
+        return getallheaders();
+    }
+    
+    public function getQueryString()
+    {
+        return $_SERVER['QUERY_STRING'];
+    }
+    
+    public function getForm()
+    {
+        return $_POST;
+    }
 
     function getMethod()
     {
@@ -48,6 +63,13 @@ class GearHttpRequest implements IGearHttpRequest
     function getContentType()
     {
         return $_SERVER['CONTENT_TYPE'];
+    }
+    
+    function getProtocol()
+    {
+        $protocol = $_SERVER["SERVER_PROTOCOL"];
+        $slash = strpos($protocol, '/');
+        return substr($protocol, 0, $slash);
     }
 
     function accepts()

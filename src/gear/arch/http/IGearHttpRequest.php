@@ -23,6 +23,21 @@ interface IGearHttpRequest
      * @return string
      */
     function getBody();
+    
+    /**
+     * @return array
+     */
+    function getHeaders();
+
+    /**
+     * @return array
+     */
+    function getQueryString();
+
+    /**
+     * @return array
+     */
+    function getForm();
 
     /**
      * @return string
@@ -33,6 +48,11 @@ interface IGearHttpRequest
      * @return string
      */
     function getContentType();
+
+    /**
+     * @return string
+     */
+    function getProtocol();
 
     /**
      * @return bool

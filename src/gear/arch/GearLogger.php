@@ -9,13 +9,13 @@
 
 /*<namespace.current>*/
 namespace gear\arch;
-    /*</namespace.current>*/
-    /*<namespace.use>*/
+/*</namespace.current>*/
+/*<namespace.use>*/
 use gear\arch\core\IGearLogger;
-    /*</namespace.use>*/
+/*</namespace.use>*/
 
-    /*<bundles>*/
-    /*</bundles>*/
+/*<bundles>*/
+/*</bundles>*/
 
 /*<module>*/
 

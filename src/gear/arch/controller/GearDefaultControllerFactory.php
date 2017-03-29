@@ -50,6 +50,7 @@ class GearDefaultControllerFactory implements IGearEngineFactory
         if (!class_exists($controllerName)) {
             throw new GearHttpNotFoundException("Controller '$controllerName' not found.");
         }
+        
         return new $controllerName($context);
     }
 
