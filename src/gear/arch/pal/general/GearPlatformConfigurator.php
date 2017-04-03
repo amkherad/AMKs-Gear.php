@@ -14,14 +14,5 @@ use gear\arch\http\GearHttpContext;
 
 /*<generals>*/
 GearBundle::setRootDirectory(getcwd());
-
-function RenderBody()
-{
-    $context = GearHttpContext::current();
-    $output = $context->getService(Gear_ServiceViewOutputStream);
-    if($output != null) {
-        $context->getResponse()->write($output->getBuffer());
-    }
-}
 /*</generals>*/
 ?>

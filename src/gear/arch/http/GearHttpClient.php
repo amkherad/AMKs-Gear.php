@@ -46,10 +46,12 @@ class GearHttpClient
         $this->headers = $headers;
         $this->requestType = $requestType;
     }
-    
+
     /**
      * Create a GearHttpClient from GearHttpRequest.
      *
+     * @param string $url
+     * @param IGearHttpRequest $request
      * @return string
      */
     public static function fromRequest($url, $request)
@@ -61,10 +63,11 @@ class GearHttpClient
             $request->getMethod()
         );
     }
-    
+
     /**
      * Excludes a header from request.
      *
+     * @param string $key
      * @return string
      */
     public function excludeRequestHeader($key)
@@ -81,21 +84,24 @@ class GearHttpClient
     {
         $this->responseExcludedHeaders[] = $key;
     }
-    
+
     /**
      * Add/replace a header to request.
      *
+     * @param string $key
+     * @param mixed $value
      * @return string
      */
     public function addHeader($key, $value)
     {
         $this->headers[$key] = $value;
     }
-    
+
     /**
      * Execute curl request.
      *
      * @return string
+     * @throws \Exception
      */
     public function execute()
     {
@@ -108,14 +114,14 @@ class GearHttpClient
         curl_setopt($ch, CURLOPT_POSTFIELDS, $this->body);
         curl_setopt($ch, CURLOPT_HEADER, $this->hasReturnHeaders);
         
-        if (defined('DEBUG')) {
+        if (isDebug()) {
             curl_setopt($ch, CURLOPT_VERBOSE, true);
         }
         
         $requestHeaders = $this->headers;
         
         if ($requestHeaders != null && sizeof($requestHeaders) > 0) {
-            $requestHeaders = array_diff_key($requestHeaders, array_flip($this->requestExcludedHeaders));
+            $requestHeaders = array_diff_ukey($requestHeaders, array_flip($this->requestExcludedHeaders), 'strcasecmp');
         }
         
         $curlHeaders = [];
@@ -138,7 +144,7 @@ class GearHttpClient
         curl_close($ch);
         if ($response === FALSE)
         {
-            if (defined('DEBUG')) {
+            if (isDebug()) {
                 GearLogger::write($error);
             }
             throw new \Exception($error);
@@ -147,7 +153,7 @@ class GearHttpClient
         $responseBody = substr($response, $header_size);
         $responseHeaders = $this->hasReturnHeaders ? substr($response, 0, $header_size) : null;
         
-        if (defined('DEBUG')) {
+        if (isDebug()) {
             GearLogger::write('curl successfull request on '.$this->url);
         }
         
@@ -170,7 +176,7 @@ class GearHttpClient
         $rawHeaders = $result['headers'];
         
         $headers = GearGeneralHelper::parseHeaders($rawHeaders);
-        $headers = array_diff_key($headers, array_flip($this->responseExcludedHeaders));
+        $headers = array_diff_ukey($headers, array_flip($this->responseExcludedHeaders), 'strcasecmp');
         
         if ($headers != null) {
             foreach ($headers as $key => $value) {

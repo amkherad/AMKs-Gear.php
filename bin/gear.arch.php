@@ -1404,29 +1404,38 @@ class GearHttpRequest implements IGearHttpRequest
         return $_POST;
     }
 
-    function getMethod()
+    public function getMethod()
     {
         return strtoupper($_SERVER['REQUEST_METHOD']);
     }
 
-    function getContentType()
+    public function getRawUrl()
     {
-        return $_SERVER['CONTENT_TYPE'];
-    }
-    
-    function getProtocol()
-    {
-        $protocol = $_SERVER["SERVER_PROTOCOL"];
-        $slash = strpos($protocol, '/');
-        return substr($protocol, 0, $slash);
+        return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
     }
 
-    function accepts()
+    public function getContentType()
+    {
+        if (isset($_SERVER['CONTENT_TYPE'])) {
+            return $_SERVER['CONTENT_TYPE'];
+        }
+        return 'text/html';
+    }
+
+    public function getProtocol()
+    {
+        return $_SERVER['REQUEST_SCHEME'];
+        //$protocol = $_SERVER["SERVER_PROTOCOL"];
+        //$slash = strpos($protocol, '/');
+        //return substr($protocol, 0, $slash);
+    }
+
+    public function accepts()
     {
 
     }
 
-    function getAllValues()
+    public function getAllValues()
     {
         return $_REQUEST;
     }
@@ -2094,6 +2103,11 @@ interface IGearHttpRequest
      * @return string
      */
     function getMethod();
+
+    /**
+     * @return string
+     */
+    function getRawUrl();
 
     /**
      * @return string
@@ -3210,10 +3224,12 @@ class GearHttpClient
         $this->headers = $headers;
         $this->requestType = $requestType;
     }
-    
+
     /**
      * Create a GearHttpClient from GearHttpRequest.
      *
+     * @param string $url
+     * @param IGearHttpRequest $request
      * @return string
      */
     public static function fromRequest($url, $request)
@@ -3225,10 +3241,11 @@ class GearHttpClient
             $request->getMethod()
         );
     }
-    
+
     /**
      * Excludes a header from request.
      *
+     * @param string $key
      * @return string
      */
     public function excludeRequestHeader($key)
@@ -3245,21 +3262,24 @@ class GearHttpClient
     {
         $this->responseExcludedHeaders[] = $key;
     }
-    
+
     /**
      * Add/replace a header to request.
      *
+     * @param string $key
+     * @param mixed $value
      * @return string
      */
     public function addHeader($key, $value)
     {
         $this->headers[$key] = $value;
     }
-    
+
     /**
      * Execute curl request.
      *
      * @return string
+     * @throws \Exception
      */
     public function execute()
     {
@@ -3272,14 +3292,14 @@ class GearHttpClient
         curl_setopt($ch, CURLOPT_POSTFIELDS, $this->body);
         curl_setopt($ch, CURLOPT_HEADER, $this->hasReturnHeaders);
         
-        if (defined('DEBUG')) {
+        if (isDebug()) {
             curl_setopt($ch, CURLOPT_VERBOSE, true);
         }
         
         $requestHeaders = $this->headers;
         
         if ($requestHeaders != null && sizeof($requestHeaders) > 0) {
-            $requestHeaders = array_diff_key($requestHeaders, array_flip($this->requestExcludedHeaders));
+            $requestHeaders = array_diff_ukey($requestHeaders, array_flip($this->requestExcludedHeaders), 'strcasecmp');
         }
         
         $curlHeaders = [];
@@ -3302,7 +3322,7 @@ class GearHttpClient
         curl_close($ch);
         if ($response === FALSE)
         {
-            if (defined('DEBUG')) {
+            if (isDebug()) {
                 GearLogger::write($error);
             }
             throw new \Exception($error);
@@ -3311,7 +3331,7 @@ class GearHttpClient
         $responseBody = substr($response, $header_size);
         $responseHeaders = $this->hasReturnHeaders ? substr($response, 0, $header_size) : null;
         
-        if (defined('DEBUG')) {
+        if (isDebug()) {
             GearLogger::write('curl successfull request on '.$this->url);
         }
         
@@ -3334,7 +3354,7 @@ class GearHttpClient
         $rawHeaders = $result['headers'];
         
         $headers = GearGeneralHelper::parseHeaders($rawHeaders);
-        $headers = array_diff_key($headers, array_flip($this->responseExcludedHeaders));
+        $headers = array_diff_ukey($headers, array_flip($this->responseExcludedHeaders), 'strcasecmp');
         
         if ($headers != null) {
             foreach ($headers as $key => $value) {
@@ -4174,8 +4194,6 @@ abstract class GearController extends GearExtensibleClass
 
 
 /* Generals: */
-GearBundle::setRootDirectory(getcwd());
-
 function RenderBody()
 {
     $context = GearHttpContext::current();
@@ -4184,5 +4202,10 @@ function RenderBody()
         $context->getResponse()->write($output->getBuffer());
     }
 }
+
+function isDebug() {
+    return defined('DEBUG');
+}
+GearBundle::setRootDirectory(getcwd());
 GearBundle::setEngineDirectory(__DIR__);
 

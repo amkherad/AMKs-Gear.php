@@ -4,9 +4,10 @@
  *
  * Strip comments, combine entire library into one file.
  *
- * Modified by Jurriaan Pruis - Better 'compression'
+ * Modified by Jurriaan Pruis - Better compression
  *
  **/
+ 
 require_once('lib/compactor.php');
 
 if ($argc < 3) {
@@ -26,7 +27,7 @@ $compactor = new Compactor($target);
 $compactor->setFilter(function ($in)
 {
   $in = preg_replace('/.*\/\/ DEBUG ONLY/','',$in);
-  return preg_replace('/.*->logger->.*/','',$in);
+  return preg_replace('/.*->logger->.*\/','',$in);
 });
 */
 $compactor->exclude('framework.php');

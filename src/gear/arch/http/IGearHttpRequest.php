@@ -47,6 +47,11 @@ interface IGearHttpRequest
     /**
      * @return string
      */
+    function getRawUrl();
+
+    /**
+     * @return string
+     */
     function getContentType();
 
     /**
