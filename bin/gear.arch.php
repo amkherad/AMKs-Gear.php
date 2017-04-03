@@ -1391,17 +1391,50 @@ class GearHttpRequest implements IGearHttpRequest
     
     public function getHeaders()
     {
-        return getallheaders();
+        if (function_exists('getallheaders')) {
+            return getallheaders();
+        } else {
+            $headers = array();
+            foreach($_SERVER as $key => $value)
+            {
+                if(preg_match("/^HTTP_X_/", $key))
+                    $headers[$key] = $value;
+            }
+            return $headers;
+        }
     }
     
-    public function getQueryString()
+    public function getHeader($name, $defaultValue = null)
+    {
+        $name = str_replace('-', '_', $name);
+        $name = strtoupper($name);
+        return isset($_SERVER['HTTP_' . $name])
+            ? $_SERVER['HTTP_' . $name]
+            : $defaultValue;
+    }
+    
+    public function getQueryStrings()
     {
         return $_SERVER['QUERY_STRING'];
     }
     
-    public function getForm()
+    public function getQueryString($name, $defaultValue = null)
+    {
+        return isset($_GET[$name])
+            ? $_GET[$name]
+            : $defaultValue;
+    }
+    
+    public function getForms()
     {
         return $_POST;
+    }
+    
+    public function getForm($name, $defaultValue = null)
+    {
+        return isset($_POST[$name])
+            ? $_POST[$name]
+            : $defaultValue;
     }
 
     public function getMethod()
@@ -1458,6 +1491,14 @@ class GearHttpRequest implements IGearHttpRequest
     public function isMultipart()
     {
         return $this->getContentType() == 'multipart';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAjaxRequest()
+    {
+        return $this->getHeader('X-Requested-With') == 'XMLHttpRequest';
     }
 
     /**
@@ -2088,16 +2129,31 @@ interface IGearHttpRequest
      * @return array
      */
     function getHeaders();
+    
+    /**
+     * @return string
+     */
+    function getHeader($name);
 
     /**
      * @return array
      */
-    function getQueryString();
+    function getQueryStrings();
 
     /**
      * @return array
      */
-    function getForm();
+    function getForms();
+    
+    /**
+     * @return string
+     */
+    function getQueryString($name);
+    
+    /**
+     * @return string
+     */
+    function getForm($name);
 
     /**
      * @return string
@@ -2123,6 +2179,11 @@ interface IGearHttpRequest
      * @return bool
      */
     function isMultipart();
+
+    /**
+     * @return bool
+     */
+    function isAjaxRequest();
 
     /**
      * @return bool

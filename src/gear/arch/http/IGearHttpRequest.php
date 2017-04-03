@@ -28,16 +28,31 @@ interface IGearHttpRequest
      * @return array
      */
     function getHeaders();
+    
+    /**
+     * @return string
+     */
+    function getHeader($name);
 
     /**
      * @return array
      */
-    function getQueryString();
+    function getQueryStrings();
 
     /**
      * @return array
      */
-    function getForm();
+    function getForms();
+    
+    /**
+     * @return string
+     */
+    function getQueryString($name);
+    
+    /**
+     * @return string
+     */
+    function getForm($name);
 
     /**
      * @return string
@@ -63,6 +78,11 @@ interface IGearHttpRequest
      * @return bool
      */
     function isMultipart();
+
+    /**
+     * @return bool
+     */
+    function isAjaxRequest();
 
     /**
      * @return bool
