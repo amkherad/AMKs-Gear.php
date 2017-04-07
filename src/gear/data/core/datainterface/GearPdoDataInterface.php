@@ -5,6 +5,7 @@
 namespace gear\data\core\datainterface;
     /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\data\core\query\builder\GearPdoQueryBuilderEvaluator;
 use gear\data\core\query\builder\GearQueryBuilder;
 use gear\data\core\query\builder\sqlgenerator\GearQueryBuilderSqlGeneratorMySql;
 use PDO;
@@ -65,19 +66,22 @@ class GearPdoDataInterface implements IGearCrudService
     }
 
     /**
+     * @param string $tableName
      * @param string $entityName
      * @param PDO $pdo
      * @return GearPdoDataInterface
      */
     public static function fromPdo(
+        $tableName,
         $entityName,
         $pdo
     )
     {
-        return new self($entityName, $pdo);
+        return new self($tableName, $entityName, $pdo);
     }
 
     public static function fromParts(
+        $tableName,
         $entityName,
         $dsn,
         $username,
@@ -86,7 +90,7 @@ class GearPdoDataInterface implements IGearCrudService
     )
     {
         $pdo = new PDO($dsn, $username, $password, $options);
-        return new self($entityName, $pdo);
+        return new self($tableName, $entityName, $pdo);
     }
 
     public function getUnderlyingContext()
@@ -113,15 +117,17 @@ class GearPdoDataInterface implements IGearCrudService
      */
     public function executeQuery($query, $params = null)
     {
+        //echo $query;
         $q = $this->pdo->prepare($query);
         
         if ($params != null) {
             foreach ($params as $key => $param) {
-                $q->bindValue($key, $param, PDO::PARAM_STR); 
+                $q->bindValue($key, $param, PDO::PARAM_STR);
             }
         }
-        
-        $q->execute($params);
+        //var_dump($params);
+        //var_dump($q->execute($params)); exit;
+        $q->execute($params);// exit;
         //$q->execute();
         return $q;
     }
@@ -142,6 +148,11 @@ class GearPdoDataInterface implements IGearCrudService
         return self::query()
             ->isEqual("id", $id)
             ->selectOne();
+    }
+
+    public function lastInsertId()
+    {
+        return $this->pdo->lastInsertId();
     }
 
     public function insert($entity)

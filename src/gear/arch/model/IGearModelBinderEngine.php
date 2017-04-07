@@ -14,7 +14,7 @@ use gear\arch\core\IGearMvcContext;
 /*</bundles>*/
 
 /*<module>*/
-interface IGearModelBindingEngine
+interface IGearModelBinderEngine
 {
     /**
      * @param \ReflectionClass $modelDescriptor

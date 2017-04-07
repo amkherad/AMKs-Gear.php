@@ -7,7 +7,7 @@ namespace gear\arch\core;
 /*<namespace.use>*/
 use gear\arch\http\IGearHttpRequest;
 use gear\arch\http\IGearHttpResponse;
-use gear\arch\model\IGearModelBinder;
+use gear\arch\model\IGearModelBinderEngine;
 use gear\arch\route\IGearRouteService;
 /*</namespace.use>*/
 
@@ -25,7 +25,7 @@ interface IGearContext
     function getRequest();
     /** @return IGearHttpResponse */
     function getResponse();
-    /** @return IGearModelBinder */
+    /** @return IGearModelBinderEngine */
     function getBinder();
 
     /**

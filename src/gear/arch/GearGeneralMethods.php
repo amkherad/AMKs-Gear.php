@@ -16,9 +16,14 @@ use gear\arch\http\GearHttpContext;
 function RenderBody()
 {
     $context = GearHttpContext::current();
+    if ($context == null) return;
+
     $output = $context->getService(Gear_ServiceViewOutputStream);
     if($output != null) {
-        $context->getResponse()->write($output->getBuffer());
+        $response = $context->getResponse();
+        if ($response != null) {
+            $response->write($output->getBuffer());
+        }
     }
 }
 

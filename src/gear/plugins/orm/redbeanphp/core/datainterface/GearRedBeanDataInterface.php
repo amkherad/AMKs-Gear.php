@@ -135,6 +135,11 @@ class GearRedBeanDataInterface implements IGearCrudService
     {
         RedBean::close();
     }
+
+    function lastInsertId()
+    {
+        return RedBean::getInsertID();
+    }
 }
 /*</module>*/
 ?>

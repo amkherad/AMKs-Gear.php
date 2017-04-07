@@ -33,12 +33,12 @@ class GearRedBeanQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
     }
 
 
-    public function getNonResult($queryBuilder, $queryString)
+    public function getNonResult($queryBuilder, $queryString, $params = null)
     {
         return RedBean::exec($queryString);
     }
 
-    public function getOneResult($queryBuilder, $queryString)
+    public function getOneResult($queryBuilder, $queryString, $params = null)
     {
         $entityName = $queryBuilder->getEntityName();
         $record = RedBean::getRow($queryString);
@@ -46,7 +46,7 @@ class GearRedBeanQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
         return $result;
     }
 
-    public function getManyResult($queryBuilder, $queryString)
+    public function getManyResult($queryBuilder, $queryString, $params = null)
     {
         $entityName = $queryBuilder->getEntityName();
         $records = RedBean::getAll($queryString);
@@ -54,7 +54,7 @@ class GearRedBeanQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
         return $result;
     }
 
-    public function getScalarResult($queryBuilder, $queryString)
+    public function getScalarResult($queryBuilder, $queryString, $params = null)
     {
         return RedBean::getCell($queryString);
     }

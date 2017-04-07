@@ -30,6 +30,8 @@ interface IGearCrudService
     function countAll();
     function count($predicate);
 
+    function lastInsertId();
+
     function insert($entity);
 
     function update($entity);

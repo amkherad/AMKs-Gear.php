@@ -7,14 +7,13 @@ namespace gear\arch\model;
 /*<namespace.use>*/
 use gear\arch\core\GearInvalidOperationException;
 use gear\arch\helpers\GearHelpers;
-use gear\arch\model\IGearModelBindingEngine;
 /*</namespace.use>*/
 
 /*<bundles>*/
 /*</bundles>*/
 
 /*<module>*/
-class GearDefaultModelBindingEngine implements IGearModelBindingEngine
+class GearDefaultModelBinderEngine implements IGearModelBinderEngine
 {
     protected
         $useRequestParams = true
@@ -47,7 +46,7 @@ class GearDefaultModelBindingEngine implements IGearModelBindingEngine
         return $instance;
     }
 
-    function fillModelFromContext($instance, $context, $controller, $mvcContext)
+    public function fillModelFromContext($instance, $context, $controller, $mvcContext)
     {
         $request = $context->getRequest();
 

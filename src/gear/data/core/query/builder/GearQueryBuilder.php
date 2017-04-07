@@ -52,6 +52,9 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         $skip,
         $count
     ;
+
+    private
+        $params = [];
     
     private
         $spName,
@@ -216,10 +219,10 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
 
     public function formatValue($value)
     {
-        $value = trim($value);
-        if (is_numeric($value) && !is_string($value)) {
-            return "$value";
+        if (!is_string($value)) {
+            return $value;
         }
+        $value = trim($value);
         if ($value[0] == self::SqlFieldEscapeSymbol) {
             return substr($value, 1);
         }
@@ -237,35 +240,51 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     /**
      * Adds a string condition to condition list.
      * @param $condition string
+     * @param array|null $params
      *
-     * @throws GearInvalidOperationException
      * @return GearQueryBuilder
      */
-    public function where($condition)
+    public function where($condition, $params = null)
     {
         $this->whereConditions[] = $condition;
 
+        if ($params != null && sizeof($params) > 0) {
+            $this->params = array_merge($this->params, $params);
+        }
+
         return $this;
     }
 
     /**
-     * @param $condition
+     * @param string $condition
+     * @param array|null $params
+     *
      * @return $this
      */
-    public function orCondition($condition)
+    public function orCondition($condition, $params = null)
     {
         $this->orConditions[] = $condition;
 
+        if ($params != null && sizeof($params) > 0) {
+            $this->params = array_merge($this->params, $params);
+        }
+
         return $this;
     }
 
     /**
-     * @param $condition
+     * @param string $condition
+     * @param array|null $params
+     *
      * @return $this
      */
-    public function andCondition($condition)
+    public function andCondition($condition, $params = null)
     {
         $this->andConditions[] = $condition;
+
+        if ($params != null && sizeof($params) > 0) {
+            $this->params = array_merge($this->params, $params);
+        }
 
         return $this;
     }
@@ -273,9 +292,11 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     /**
      * @param $var
      * @param $indices
+     * @param array|null $params
+     *
      * @return $this
      */
-    public function isIn($var, $indices)
+    public function isIn($var, $indices, $params = null)
     {
         $items = [];
         foreach ($indices as $element) {
@@ -283,7 +304,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         }
         $items = implode(',', $items);
 
-        $this->where("$var IN ($items)");
+        $this->where("$var IN ($items)", $params);
 
         return $this;
     }
@@ -291,14 +312,16 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     /**
      * @param $var1
      * @param $var2
+     * @param array|null $params
+     *
      * @return $this
      */
-    public function isEqual($var1, $var2)
+    public function isEqual($var1, $var2, $params = null)
     {
         //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$var1 = $val2");
+        $this->where("$var1 = $val2", $params);
 
         return $this;
     }
@@ -306,14 +329,16 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     /**
      * @param $var1
      * @param $var2
+     * @param array|null $params
+     *
      * @return $this
      */
-    public function isGreater($var1, $var2)
+    public function isGreater($var1, $var2, $params = null)
     {
         //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$var1 > $val2");
+        $this->where("$var1 > $val2", $params);
 
         return $this;
     }
@@ -321,14 +346,16 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     /**
      * @param $var1
      * @param $var2
+     * @param array|null $params
+     *
      * @return $this
      */
-    public function isGreaterEqual($var1, $var2)
+    public function isGreaterEqual($var1, $var2, $params = null)
     {
         //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$var1 >= $val2");
+        $this->where("$var1 >= $val2", $params);
 
         return $this;
     }
@@ -336,14 +363,16 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     /**
      * @param $var1
      * @param $var2
+     * @param array|null $params
+     *
      * @return $this
      */
-    public function isLesser($var1, $var2)
+    public function isLesser($var1, $var2, $params = null)
     {
         //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$var1 < $val2");
+        $this->where("$var1 < $val2", $params);
 
         return $this;
     }
@@ -351,14 +380,16 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
     /**
      * @param $var1
      * @param $var2
+     * @param array|null $params
+     *
      * @return $this
      */
-    public function isLesserEqual($var1, $var2)
+    public function isLesserEqual($var1, $var2, $params = null)
     {
         //$val1 = $this->formatValue($var1);
         $val2 = $this->formatValue($var2);
 
-        $this->where("$var1 <= $val2");
+        $this->where("$var1 <= $val2", $params);
 
         return $this;
     }
@@ -432,6 +463,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
                     $this->createOrdering(),
                     $this->createJoins()
                 );
+            $params = $this->params;
         }
         
         return $this->queryEvaluator->getManyResult($this, $query, $params);
@@ -460,6 +492,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
                     $this->createOrdering(),
                     $this->createJoins()
                 );
+            $params = $this->params;
         }
             
         return $this->queryEvaluator->getOneResult($this, $query, $params);
@@ -476,8 +509,9 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
                 $this->createOrdering(),
                 $this->createJoins()
             );
+        $params = $this->params;
             
-        return $this->queryEvaluator->getScalarResult($this, $query);
+        return $this->queryEvaluator->getScalarResult($this, $query, $params);
     }
     
     public function _formatParameters($params) {
@@ -486,7 +520,7 @@ class GearQueryBuilder extends GearExtensibleClass implements IGearQueryBuilder
         $count = 0;
         foreach ($params as $key => $value) {
             if (!ctype_alpha(substr($key, 0, 1))) {
-                $newKey = "token$count_$key";
+                $newKey = "token{$count}_$key";
                 $params[$newKey] = $value;
                 unset($params[$key]);
             }

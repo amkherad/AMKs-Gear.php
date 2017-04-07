@@ -31,10 +31,10 @@ GearController::setStaticExtensionMethods([
         return new JdtTableElement($name, $columns, $renderHeader, $renderFooter);
     }
 ]);
-GearHtmlHelper::setStaticExtensionMethods([
+//GearHtmlHelper::setStaticExtensionMethods([
     //'jqueryDataTables' => function ($id, $options = null) {
     //    return new GearJdtResult($viewModel, $iteratable);
     //}
-]);
+//]);
 /*</generals>*/
 ?>

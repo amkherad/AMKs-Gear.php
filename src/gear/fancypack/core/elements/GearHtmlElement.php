@@ -5,11 +5,9 @@
 namespace gear\fancypack\core\elements;
 /*</namespace.current>*/
 /*<namespace.use>*/
-use gear\arch\core\GearSerializer;
 use gear\arch\io\GearHtmlStream;
 use gear\arch\io\IGearHtmlRenderer;
 use gear\arch\io\IGearOutputStream;
-
 /*</namespace.use>*/
 
 /*<bundles>*/

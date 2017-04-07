@@ -198,6 +198,7 @@ GearHtmlHelper::setStaticExtensionMethods([
     }*/,
 
 
+
     'renderScript' => function () {
         GearHtmlSections::renderSection('Scripts');
     },
@@ -227,20 +228,33 @@ GearHtmlHelper::setStaticExtensionMethods([
     'endHtml' => function () {
         GearHtmlSections::endSection('Html');
     },
+]);
 
-    'antiForgeryToken' => function () {
+GearHtmlHelper::setMemberExtensionMethods([
+    'antiForgeryToken' => function ($obj, $createNew = true) {
+        /** @var GearHtmlHelper $obj */
+        return GearAntiForgeryTokenManager::getAntiForgeryToken($createNew);
+    },
+    'validationMessageFor' => function ($obj, $name) {
+        /** @var GearHtmlHelper $obj */
+
+        $controller = $obj->getController();
+        $validationMessages = $controller->getViewData(Gear_ValidationMessages);
+        if ($validationMessages != null) {
+            return isset($validationMessages[$name])
+                ? $validationMessages[$name]
+                : '';
+        }
         return '';
     },
-    'validationMessageFor' => function ($name) {
-        return '';
-    },
 
-    'valueOf' => function ($name) {
+    'valueOf' => function ($obj, $name) {
+        /** @var GearHtmlHelper $obj */
         global $Model;
         if ($Model != null ) {
             return $Model->$name;
         }
-        return '';
+        return $obj->getContext()->getRequest()->getValue($name, '');
     }
 ]);
 

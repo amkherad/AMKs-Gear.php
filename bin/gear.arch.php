@@ -218,6 +218,21 @@ class GearAntiForgeryTokenManager
     {
         return true;
     }
+
+    public static function generateAntiForgeryToken()
+    {
+        return '';
+    }
+
+    public static function getAntiForgeryToken($createNew = true)
+    {
+
+        $antiForgeryToken = self::generateAntiForgeryToken();
+
+
+
+        return $antiForgeryToken;
+    }
 }
 class GearAppEngine
 {
@@ -716,14 +731,7 @@ class GearDefaultControllerFactory implements IGearEngineFactory
         return $controllerPath;
     }
 }
-class GearDefaultModelBinderFactory implements IGearEngineFactory
-{
-    function createEngine($context)
-    {
-        return new GearDefaultModelBindingEngine();
-    }
-}
-class GearDefaultModelBindingEngine implements IGearModelBindingEngine
+class GearDefaultModelBinderEngine implements IGearModelBinderEngine
 {
     protected
         $useRequestParams = true
@@ -756,7 +764,7 @@ class GearDefaultModelBindingEngine implements IGearModelBindingEngine
         return $instance;
     }
 
-    function fillModelFromContext($instance, $context, $controller, $mvcContext)
+    public function fillModelFromContext($instance, $context, $controller, $mvcContext)
     {
         $request = $context->getRequest();
 
@@ -783,6 +791,13 @@ class GearDefaultModelBindingEngine implements IGearModelBindingEngine
                     $instance->$k = $result;
             }
         }
+    }
+}
+class GearDefaultModelBinderFactory implements IGearEngineFactory
+{
+    function createEngine($context)
+    {
+        return new GearDefaultModelBinderEngine();
     }
 }
 class GearDefaultRouteFactory implements IGearEngineFactory
@@ -957,6 +972,9 @@ class GearExtensibleClass
     protected static $staticExtensionMethods = [];
     /** @var array */
     protected $extensionMethods = [];
+    /** @var array */
+    protected static $memberExtensionMethods = [];
+
     protected $caseSensitive = false;
 
     /**
@@ -974,7 +992,14 @@ class GearExtensibleClass
         if (!$this->caseSensitive) {
             $name = $lowerName;
         }
-        if (isset($this->extensionMethods[$name])) {
+        if (isset(static::$memberExtensionMethods[$lowerName])) {
+            $method = static::$memberExtensionMethods[$lowerName];
+            if ($args == null) {
+                $args = [$this];
+            } else {
+                $args = array_merge([$this], $args);
+            }
+        } elseif (isset($this->extensionMethods[$name])) {
             $method = $this->extensionMethods[$name];
         } elseif (isset(static::$staticExtensionMethods[$lowerName])) {
             $method = static::$staticExtensionMethods[$lowerName];
@@ -984,6 +1009,40 @@ class GearExtensibleClass
 
         return call_user_func_array($method, $args);
     }
+
+    /**
+     * Adds an extension method to extended member methods list.
+     * @param $name
+     * @param $callableValue
+     */
+    public static function setMemberExtensionMethod($name, $callableValue)
+    {
+        $name = strtolower($name);
+        static::$memberExtensionMethods[$name] = $callableValue;
+    }
+
+    /**
+     * Adds a list of extension methods to extended member methods list.
+     * @param $dictionaryOfCallable
+     */
+    public static function setMemberExtensionMethods($dictionaryOfCallable)
+    {
+        foreach ($dictionaryOfCallable as $name => $callable) {
+            $name = strtolower($name);
+            static::$memberExtensionMethods[$name] = $callable;
+        }
+    }
+
+    /**
+     * Removes an extension method from extended member methods list.
+     * @param $name
+     */
+    public function removeMemberExtensionMethod($name)
+    {
+        $name = strtolower($name);
+        unset(static::$memberExtensionMethods[$name]);
+    }
+
 
     /**
      * Adds an extension method to extended methods list.
@@ -1024,6 +1083,7 @@ class GearExtensibleClass
         }
         unset($this->extensionMethods[$name]);
     }
+
 
     /**
      * Adds an extension method to extended methods list.
@@ -1175,6 +1235,7 @@ class GearHtmlHelper extends GearExtensibleClass
      * @param IGearContext $context
      * @param IGearMvcContext $mvcContext
      * @param GearUrlHelper $urlHelper
+     * @param $controller
      */
     public function __construct($context, $mvcContext, $urlHelper, $controller)
     {
@@ -1209,6 +1270,15 @@ class GearHtmlHelper extends GearExtensibleClass
     {
         return $this->url;
     }
+
+    /**
+     * @return GearController
+     */
+    public function getController()
+    {
+        return $this->controller;
+    }
+
 
     public function partial($name, $model = null, $params = null)
     {
@@ -2048,7 +2118,7 @@ interface IGearContext
     function getRequest();
     /** @return IGearHttpResponse */
     function getResponse();
-    /** @return IGearModelBinder */
+    /** @return IGearModelBinderEngine */
     function getBinder();
 
     /**
@@ -2239,18 +2309,7 @@ interface IGearModel
 {
     function validate(&$errorDictionary);
 }
-interface IGearModelBinder
-{
-    /**
-     * @param IGearContext $context
-     * @param IGearMvcContext $mvcContext
-     * @param IGearHttpRequest $request
-     * @param GearModelBindingContext $bindingContext
-     * @return mixed
-     */
-    function bind($context, $mvcContext, $request, $bindingContext);
-}
-interface IGearModelBindingEngine
+interface IGearModelBinderEngine
 {
     /**
      * @param \ReflectionClass $modelDescriptor
@@ -2891,12 +2950,12 @@ class GearDefaultActionResolver implements IGearActionResolver
                 $result = $result->executeResult($context, $request, $response);
             } else {
                 $inner = null;
-                if(is_object($result)) {
-                    $response->setContentType('application/json');
-                    $response->write(GearSerializer::json($result));
-                } else {
+                //if(is_object($result)) {
+                //    $response->setContentType('application/json');
+                //    $response->write(GearSerializer::json($result));
+                //} else {
                     $response->write($result);
-                }
+                //}
             }
             if ($inner instanceof IGearActionResult) {
                 if (!($inner instanceof IGearInnerActionResult)) {
@@ -3842,7 +3901,7 @@ abstract class GearController extends GearExtensibleClass
     protected $request;
     /** @var IGearHttpResponse */
     protected $response;
-    /** @var IGearModelBinder */
+    /** @var IGearModelBinderEngine */
     protected $binder;
 
     /** @var string */
@@ -3930,7 +3989,7 @@ abstract class GearController extends GearExtensibleClass
     }
 
     /**
-     * @return IGearModelBinder
+     * @return IGearModelBinderEngine
      */
     public function getBinder()
     {
@@ -3952,6 +4011,52 @@ abstract class GearController extends GearExtensibleClass
     {
         return $this->html;
     }
+
+    /**
+     * @param string $key
+     * @param mixed|null $defaultValue
+     * @return mixed
+     */
+    public function getViewData($key, $defaultValue = null)
+    {
+        return isset($this->dataBag[$key])
+            ? $this->dataBag[$key]
+            : $defaultValue;
+    }
+    /**
+     * Checks existence of view data variable.
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function checkViewData($key)
+    {
+        return isset($this->dataBag[$key]);
+    }
+
+    /**
+     * @param string $key
+     * @param mixed $value
+     * @return mixed
+     */
+    public function setViewData($key, $value)
+    {
+        $this->dataBag[$key] = $value;
+    }
+
+    /**
+     * @param string $key
+     * @return bool Indicates remove is successful or not (item exists or not).
+     */
+    public function removeViewData($key)
+    {
+        if (isset($this->dataBag[$key])) {
+            unset($this->dataBag[$key]);
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * @param IGearContext $context
@@ -4258,9 +4363,14 @@ abstract class GearController extends GearExtensibleClass
 function RenderBody()
 {
     $context = GearHttpContext::current();
+    if ($context == null) return;
+
     $output = $context->getService(Gear_ServiceViewOutputStream);
     if($output != null) {
-        $context->getResponse()->write($output->getBuffer());
+        $response = $context->getResponse();
+        if ($response != null) {
+            $response->write($output->getBuffer());
+        }
     }
 }
 

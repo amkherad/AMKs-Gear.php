@@ -17,6 +17,9 @@ class GearExtensibleClass
     protected static $staticExtensionMethods = [];
     /** @var array */
     protected $extensionMethods = [];
+    /** @var array */
+    protected static $memberExtensionMethods = [];
+
     protected $caseSensitive = false;
 
     /**
@@ -34,7 +37,14 @@ class GearExtensibleClass
         if (!$this->caseSensitive) {
             $name = $lowerName;
         }
-        if (isset($this->extensionMethods[$name])) {
+        if (isset(static::$memberExtensionMethods[$lowerName])) {
+            $method = static::$memberExtensionMethods[$lowerName];
+            if ($args == null) {
+                $args = [$this];
+            } else {
+                $args = array_merge([$this], $args);
+            }
+        } elseif (isset($this->extensionMethods[$name])) {
             $method = $this->extensionMethods[$name];
         } elseif (isset(static::$staticExtensionMethods[$lowerName])) {
             $method = static::$staticExtensionMethods[$lowerName];
@@ -44,6 +54,40 @@ class GearExtensibleClass
 
         return call_user_func_array($method, $args);
     }
+
+    /**
+     * Adds an extension method to extended member methods list.
+     * @param $name
+     * @param $callableValue
+     */
+    public static function setMemberExtensionMethod($name, $callableValue)
+    {
+        $name = strtolower($name);
+        static::$memberExtensionMethods[$name] = $callableValue;
+    }
+
+    /**
+     * Adds a list of extension methods to extended member methods list.
+     * @param $dictionaryOfCallable
+     */
+    public static function setMemberExtensionMethods($dictionaryOfCallable)
+    {
+        foreach ($dictionaryOfCallable as $name => $callable) {
+            $name = strtolower($name);
+            static::$memberExtensionMethods[$name] = $callable;
+        }
+    }
+
+    /**
+     * Removes an extension method from extended member methods list.
+     * @param $name
+     */
+    public function removeMemberExtensionMethod($name)
+    {
+        $name = strtolower($name);
+        unset(static::$memberExtensionMethods[$name]);
+    }
+
 
     /**
      * Adds an extension method to extended methods list.
@@ -84,6 +128,7 @@ class GearExtensibleClass
         }
         unset($this->extensionMethods[$name]);
     }
+
 
     /**
      * Adds an extension method to extended methods list.

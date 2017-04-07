@@ -34,6 +34,7 @@ class GearHtmlHelper extends GearExtensibleClass
      * @param IGearContext $context
      * @param IGearMvcContext $mvcContext
      * @param GearUrlHelper $urlHelper
+     * @param $controller
      */
     public function __construct($context, $mvcContext, $urlHelper, $controller)
     {
@@ -68,6 +69,15 @@ class GearHtmlHelper extends GearExtensibleClass
     {
         return $this->url;
     }
+
+    /**
+     * @return GearController
+     */
+    public function getController()
+    {
+        return $this->controller;
+    }
+
 
     public function partial($name, $model = null, $params = null)
     {

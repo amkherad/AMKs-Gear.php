@@ -19,7 +19,6 @@ namespace gear\arch\controller;
     /*</namespace.current>*/
 /*<namespace.use>*/
 use Exception;
-use gear\arch\core\GearConfiguration;
 use gear\arch\core\GearExtensibleClass;
 use gear\arch\core\GearInspectableClass;
 use gear\arch\core\GearInvalidOperationException;
@@ -36,13 +35,12 @@ use gear\arch\http\results\GearInternalServerErrorResult;
 use gear\arch\http\results\GearRedirectResult;
 use gear\arch\http\results\GearViewResult;
 use gear\arch\http\results\GearJsonResult;
-use gear\arch\http\results\GearStatusCodeResult;
 use gear\arch\http\results\GearBadRequestResult;
 use gear\arch\http\results\GearNotFoundResult;
 use gear\arch\http\results\GearUnauthorizedResult;
 use gear\arch\http\results\GearEmptyResult;
 use gear\arch\model\GearModel;
-use gear\arch\model\IGearModelBinder;
+use gear\arch\model\IGearModelBinderEngine;
 use gear\arch\route\IGearRouteService;
 use gear\arch\security\GearAntiForgeryTokenManager;
 /*</namespace.use>*/
@@ -65,7 +63,7 @@ abstract class GearController extends GearExtensibleClass
     protected $request;
     /** @var IGearHttpResponse */
     protected $response;
-    /** @var IGearModelBinder */
+    /** @var IGearModelBinderEngine */
     protected $binder;
 
     /** @var string */
@@ -153,7 +151,7 @@ abstract class GearController extends GearExtensibleClass
     }
 
     /**
-     * @return IGearModelBinder
+     * @return IGearModelBinderEngine
      */
     public function getBinder()
     {
@@ -175,6 +173,52 @@ abstract class GearController extends GearExtensibleClass
     {
         return $this->html;
     }
+
+    /**
+     * @param string $key
+     * @param mixed|null $defaultValue
+     * @return mixed
+     */
+    public function getViewData($key, $defaultValue = null)
+    {
+        return isset($this->dataBag[$key])
+            ? $this->dataBag[$key]
+            : $defaultValue;
+    }
+    /**
+     * Checks existence of view data variable.
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function checkViewData($key)
+    {
+        return isset($this->dataBag[$key]);
+    }
+
+    /**
+     * @param string $key
+     * @param mixed $value
+     * @return mixed
+     */
+    public function setViewData($key, $value)
+    {
+        $this->dataBag[$key] = $value;
+    }
+
+    /**
+     * @param string $key
+     * @return bool Indicates remove is successful or not (item exists or not).
+     */
+    public function removeViewData($key)
+    {
+        if (isset($this->dataBag[$key])) {
+            unset($this->dataBag[$key]);
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * @param IGearContext $context

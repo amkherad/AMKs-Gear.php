@@ -17,6 +17,21 @@ class GearAntiForgeryTokenManager
     {
         return true;
     }
+
+    public static function generateAntiForgeryToken()
+    {
+        return '';
+    }
+
+    public static function getAntiForgeryToken($createNew = true)
+    {
+
+        $antiForgeryToken = self::generateAntiForgeryToken();
+
+
+
+        return $antiForgeryToken;
+    }
 }
 /*</module>*/
 ?>

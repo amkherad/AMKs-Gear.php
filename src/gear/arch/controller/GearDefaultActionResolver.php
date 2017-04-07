@@ -181,12 +181,12 @@ class GearDefaultActionResolver implements IGearActionResolver
                 $result = $result->executeResult($context, $request, $response);
             } else {
                 $inner = null;
-                if(is_object($result)) {
-                    $response->setContentType('application/json');
-                    $response->write(GearSerializer::json($result));
-                } else {
+                //if(is_object($result)) {
+                //    $response->setContentType('application/json');
+                //    $response->write(GearSerializer::json($result));
+                //} else {
                     $response->write($result);
-                }
+                //}
             }
             if ($inner instanceof IGearActionResult) {
                 if (!($inner instanceof IGearInnerActionResult)) {
