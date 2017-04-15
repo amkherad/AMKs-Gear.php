@@ -3877,7 +3877,7 @@ class GearRedirectResult extends GearStatusCodeResult
 
     public function writeResult($context, $request, $response)
     {
-        $response->setHeader('Location', $this->url);
+        return $response->setHeader('Location', $this->url);
     }
 }
 class GearViewFileNotFoundException extends GearHttpNotFoundException

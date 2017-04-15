@@ -1,12 +1,15 @@
 <?php
-class homeController extends GearController
+class homeController extends \GearController
 {
-    use Authentication;
-    use RichPattern;
-
     public function index()
     {
-        $this->viewData->Name = 'hello';
-        return $this->view($this->getAll());
+        $this->dataBag->Name = 'hello';
+        
+        return $this->view();
+    }
+    
+    public function google()
+    {
+        return $this->redirectToUrl('http://google.com');
     }
 }

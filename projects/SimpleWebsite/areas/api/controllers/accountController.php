@@ -2,9 +2,7 @@
 
 class accountController extends GearController
 {
-    use Authentication;
-
-    function index__GET()
+    function login__GET()
     {
         return $this->Json([
             'name' => 'ali',

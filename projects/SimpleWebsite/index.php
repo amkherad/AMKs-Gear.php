@@ -11,11 +11,3 @@ $engine->start();
 //-------------------------------------------
 $duration=(microtime(true)-$rstart);
 ?>
-<hr>
-<p style="color:red;">
-    Create Time: <?=$engine->getCreateExecutionTime();?> <br>
-    Start Time: <?=$engine->getStartExecutionTime();?> <br>
-    Root Time: <?=$duration;?> <br>
-    Engine Time: <?=$engineTime;?> <br>
-    Total Time: <?=$duration-$engineTime;?> / <?=$engine->getCreateExecutionTime()+$engine->getStartExecutionTime();?> <br>
-</p>
