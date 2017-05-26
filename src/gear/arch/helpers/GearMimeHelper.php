@@ -18,7 +18,13 @@ class GearMimeHelper
             'jpg', 'jpeg', 'png', 'tiff', 'tif', 'gif', 'bmp', 'jpe', 'dib', 'jfif'
         ],
         'text' => [
-            'css', 'js', 'xml', 'html', 'xhtml', 'htm', 'mht', ['plain' => 'txt']
+            'css', 'html', 'xhtml', 'htm', 'mht',
+            [
+                'plain' => 'txt'
+            ]
+        ],
+        'application' => [
+            'js', 'xml'
         ]
     ];
 

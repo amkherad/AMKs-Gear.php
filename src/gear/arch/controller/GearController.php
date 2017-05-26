@@ -19,6 +19,7 @@ namespace gear\arch\controller;
     /*</namespace.current>*/
 /*<namespace.use>*/
 use Exception;
+use gear\arch\core\GearArgumentNullException;
 use gear\arch\core\GearExtensibleClass;
 use gear\arch\core\GearInspectableClass;
 use gear\arch\core\GearInvalidOperationException;
@@ -28,8 +29,10 @@ use gear\arch\helpers\GearUrlHelper;
 use gear\arch\helpers\GearGeneralHelper;
 use gear\arch\core\IGearContext;
 use gear\arch\core\IGearMvcContext;
+use gear\arch\http\IGearActionResult;
 use gear\arch\http\IGearHttpRequest;
 use gear\arch\http\IGearHttpResponse;
+use gear\arch\http\results\GearCsvonResult;
 use gear\arch\http\results\GearFileResult;
 use gear\arch\http\results\GearInternalServerErrorResult;
 use gear\arch\http\results\GearRedirectResult;
@@ -77,7 +80,7 @@ abstract class GearController extends GearExtensibleClass
     /** @var GearGeneralHelper */
     public $helper;
 
-    private
+    protected
         $beginExecuteHandlers = [],
         $checkExecutionHandlers = [],
         $endExecuteHandlers = [],
@@ -87,9 +90,13 @@ abstract class GearController extends GearExtensibleClass
      * Creates a controller.
      *
      * @param $context IGearContext
+     * @throws GearArgumentNullException
      */
     public function __construct($context)
     {
+        if ($context == null) {
+            throw new GearArgumentNullException('context');
+        }
         parent::__construct(false);
 
         $this->context = $context;
@@ -255,12 +262,14 @@ abstract class GearController extends GearExtensibleClass
     /**
      * @param IGearContext $context
      * @param Exception $exception
+     * @return mixed|IGearActionResult
      */
     public function onExceptionOccurred($context, $exception)
     {
         foreach ($this->exceptionHandlers as $handler) {
             $handler($context, $exception);
         }
+        return null;
     }
 
     /**
@@ -393,6 +402,17 @@ abstract class GearController extends GearExtensibleClass
     public function json($mixed, $allowGet = false)
     {
         return new GearJsonResult($mixed, $allowGet);
+    }
+
+    /**
+     * @param string$name
+     * @param mixed $mixed
+     * @param bool|false $allowGet
+     * @return GearCsvonResult
+     */
+    public function csvon($name, $mixed, $allowGet = false)
+    {
+        return new GearCsvonResult($name,$mixed, $allowGet);
     }
 
     /**

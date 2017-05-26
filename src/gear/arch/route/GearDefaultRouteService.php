@@ -7,6 +7,8 @@ namespace gear\arch\route;
 /*<namespace.use>*/
 use gear\arch\core\GearConfiguration;
 use gear\arch\core\GearNotSupportedException;
+use gear\arch\core\IGearContext;
+use gear\arch\core\IGearMvcContext;
 use gear\arch\route\IGearRouteService;
 /*</namespace.use>*/
 
@@ -27,26 +29,16 @@ class GearDefaultRouteService implements IGearRouteService
     /**
      * GearDefaultRouteService constructor.
      *
-     * @param $config GearConfiguration
+     * @param IGearContext $context
      */
-    public function __construct($config)
+    public function __construct($context)
     {
-        $area = $config->getValue(Gear_Key_DefaultArea, Gear_Section_Defaults, '');
-        $controller = $config->getValue(Gear_Key_DefaultController, Gear_Section_Defaults, 'home');
-        $action = $config->getValue(Gear_Key_DefaultAction, Gear_Section_Defaults, 'index');
-        $params = $config->getValue(Gear_Key_DefaultParams, Gear_Section_Defaults, '');
+        /** @var GearConfiguration $config */
+        $config = $context->getConfig();
+        $this->context = $context;
+        $this->config = $config;
 
-        $this->area = $area;
-        $this->controller = $controller;
-        $this->action = $action;
-        $this->params = $params;
-
-        $this->mvcContext = new GearRouteMvcContext(
-            $area,
-            $controller,
-            $action,
-            $params
-        );
+        $this->mvcContext = $this->createMvcContext('');
     }
 
     function getMvcContext()
@@ -72,6 +64,30 @@ class GearDefaultRouteService implements IGearRouteService
     function setUrlProvider($provider)
     {
         throw new GearNotSupportedException();
+    }
+
+    /**
+     * @param string $url
+     * @return IGearMvcContext
+     */
+    public function createMvcContext($url)
+    {
+        $area = $this->config->getValue(Gear_Key_DefaultArea, Gear_Section_Defaults, '');
+        $controller = $this->config->getValue(Gear_Key_DefaultController, Gear_Section_Defaults, 'home');
+        $action = $this->config->getValue(Gear_Key_DefaultAction, Gear_Section_Defaults, 'index');
+        $params = $this->config->getValue(Gear_Key_DefaultParams, Gear_Section_Defaults, '');
+
+        $this->area = $area;
+        $this->controller = $controller;
+        $this->action = $action;
+        $this->params = $params;
+
+        $this->mvcContext = new GearRouteMvcContext(
+            $area,
+            $controller,
+            $action,
+            $params
+        );
     }
 }
 /*</module>*/

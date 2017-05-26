@@ -9,6 +9,7 @@
 namespace gear\arch;
 /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\app\GearAppEngine;
 use gear\arch\http\GearHttpContext;
 /*</namespace.use>*/
 
@@ -18,17 +19,19 @@ function RenderBody()
     $context = GearHttpContext::current();
     if ($context == null) return;
 
-    $output = $context->getService(Gear_ServiceViewOutputStream);
-    if($output != null) {
-        $response = $context->getResponse();
-        if ($response != null) {
-            $response->write($output->getBuffer());
-        }
-    }
+    $response = $context->getResponse();
+    $response->flushInnerStream();
+
+//    $output = $context->getService(Gear_ServiceViewOutputStream);
+//    if($output != null) {
+//        if ($response != null) {
+//            $response->write($output->getBuffer());
+//        }
+//    }
 }
 
 function isDebug() {
-    return defined('DEBUG');
+    return GearAppEngine::isDebug();
 }
 /*</generals>*/
 ?>

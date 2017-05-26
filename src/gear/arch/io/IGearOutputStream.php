@@ -13,6 +13,8 @@ interface IGearOutputStream
 {
     function write($mixed);
     function clear();
+    function &getBuffer();
+    function bufferSize();
 }
 /*</module>*/
 ?>

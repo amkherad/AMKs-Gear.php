@@ -33,6 +33,9 @@ define('Gear_Key_RootPath',                         'RootPath');
 define('Gear_Key_Dependencies',                     'Dependencies');
 define('Gear_Key_Bundles',                          'Bundles');
 define('Gear_Key_PreferredActionPattern',           'PreferredActionPattern');
+define('Gear_Key_ActionPattern',                    'ActionPattern');
+define('Gear_Key_ActionPatternSeparator',           'ActionPatternSeparator');
+define('Gear_Key_ActionLookupRequestAttributes',    'ActionLookupRequestAttributes');
 define('Gear_Key_JsonResultAllowGet',               'JsonResultAllowGet');
 define('Gear_Key_LayoutName',                       'Layout');
 define('Gear_Key_SharedView',                       'SharedView');
@@ -44,6 +47,11 @@ define('Gear_Key_URLPrefix',                        'URLPrefix');
 
 define('Gear_PlaceHolder_Action',                   '[action]');
 define('Gear_PlaceHolder_HttpMethod',               '[http_method]');
+define('Gear_PlaceHolder_IsAjax',                   '[ajax]');
+//define('Gear_PlaceHolder_ContentType',              '[content_type]');
+//define('Gear_PlaceHolder_MediaType',                '[media_type]');
+//define('Gear_PlaceHolder_Scheme',                   '[request_scheme]');
+define('Gear_PlaceHolder_RequestAttributes',        '[request_attributes]');
 
 define('Gear_DefaultRouterFactory',                 'GearDefaultRouteFactory');
 define('Gear_DefaultControllerFactory',             'GearDefaultControllerFactory');
@@ -60,12 +68,169 @@ define('Gear_DefaultModelsRootPath',                'model');
 define('Gear_DefaultViewsRootPath',                 'views');
 
 define('Gear_DefaultLayoutName',                    '_layout');
+define('Gear_DefaultActionPattern',                 '[action]Action');
 define('Gear_DefaultPreferredActionPattern',        '[action]__[http_method]');
+define('Gear_DefaultActionPatternSeparator',        '__');
 
 define('Gear_ServiceRouterEngine',                  'RouterEngineService');
 define('Gear_ServiceViewEngineFactory',             'ViewEngineFactoryService');
 define('Gear_ServiceViewOutputStream',              'ViewOutputStreamService');
 define('Gear_ValidationMessages',                   'ValidationMessages');
+/**
+ * Class GearActionExecutor Typically used for unit testing purposes.
+ * @package gear\arch\controller
+ */
+class GearActionExecutor
+{
+    /** @var GearController */
+    private $controller;
+    /** @var IGearContext */
+    private $context;
+    /** @var IGearMvcContext */
+    private $mvcContext;
+    /** @var IGearHttpRequest */
+    private $request;
+    /** @var IGearHttpResponse */
+    private $response;
+    /** @var string */
+    private $actionName;
+    /** @var IGearActionResolver */
+    private $actionResolver;
+
+    private $startTime;
+    private $endTime;
+
+    private $actionResult;
+
+    public function __construct(
+        $controller,
+        $context,
+        $mvcContext,
+        $request,
+        $actionName,
+        $actionResolver)
+    {
+        $this->controller = $controller;
+        $this->context = $context;
+        $this->mvcContext = $mvcContext;
+        $this->request = $request;
+        $this->actionName = $actionName;
+        $this->actionResolver = $actionResolver;
+    }
+
+    public function boxedExecute()
+    {
+        $controller = $this->controller;
+
+        $this->startTime = microtime(true);
+
+        $this->actionResolver->invokeAction(
+            $controller,
+            $this->context,
+            $this->mvcContext,
+            $this->request,
+            $this->actionName);
+
+        $this->endTime = microtime(true);
+
+        $this->response = $controller->getResponse();
+
+        //$this->body = ob_end_clean();
+    }
+
+    protected function throwIfNotExecuted()
+    {
+
+    }
+
+    public function getRequest()
+    {
+        return $this->request;
+    }
+
+    public function getContext()
+    {
+        return $this->context;
+    }
+
+    public function getMvcContext()
+    {
+        return $this->mvcContext;
+    }
+
+    public function getActionName()
+    {
+        return $this->actionName;
+    }
+
+    public function getActionResolver()
+    {
+        return $this->actionResolver;
+    }
+
+    public function getController()
+    {
+        return $this->controller;
+    }
+
+
+
+
+    public function getResponse()
+    {
+        $this->throwIfNotExecuted();
+
+        return $this->response;
+    }
+
+    public function isBadRequest()
+    {
+        $this->throwIfNotExecuted();
+
+        return $this->response->getStatusCode() == 400;
+    }
+
+    public function isServerError()
+    {
+        $this->throwIfNotExecuted();
+
+        return $this->response->getStatusCode() == 500;
+    }
+
+    public function getStartTime()
+    {
+        $this->throwIfNotExecuted();
+
+        return $this->startTime;
+    }
+
+    public function getEndTime()
+    {
+        $this->throwIfNotExecuted();
+
+        return $this->endTime;
+    }
+
+    public function getTotalTime()
+    {
+        $this->throwIfNotExecuted();
+
+        return $this->endTime - $this->startTime;
+    }
+
+    public function getActionResult()
+    {
+        return $this->actionResult;
+    }
+    public function checkActionResult($class)
+    {
+        $actionResult = $this->getActionResult();
+        if (isset($actionResult)) {
+            return get_class($actionResult) == $class;
+        }
+        return false;
+    }
+}
 class GearActionPartialViewResult
 {
 
@@ -271,16 +436,136 @@ class GearAppEngine
         $this->actionResolverFactory = $actionResolverFactory;
     }
 
+    /**
+     * @return IGearContext
+     */
+    public function getContext()
+    {
+        return $this->context;
+    }
+
+    /**
+     * @param IGearContext $context
+     */
+    public function setContext($context)
+    {
+        $this->context = $context;
+    }
+
+    /**
+     * @return GearConfiguration
+     */
+    public function getConfiguration()
+    {
+        return $this->configuration;
+    }
+
+    /**
+     * @param GearConfiguration $configuration
+     */
+    public function setConfiguration($configuration)
+    {
+        $this->configuration = $configuration;
+    }
+
+    /**
+     * @return GearApplication
+     */
+    public function getApplicationEntry()
+    {
+        return $this->applicationEntry;
+    }
+
+    /**
+     * @param GearApplication $applicationEntry
+     */
+    public function setApplicationEntry($applicationEntry)
+    {
+        $this->applicationEntry = $applicationEntry;
+    }
+
+    /**
+     * @return IGearEngineFactory
+     */
+    public function getControllerFactory()
+    {
+        return $this->controllerFactory;
+    }
+
+    /**
+     * @param IGearEngineFactory $controllerFactory
+     */
+    public function setControllerFactory($controllerFactory)
+    {
+        $this->controllerFactory = $controllerFactory;
+    }
+
+    /**
+     * @return IGearEngineFactory
+     */
+    public function getActionResolverFactory()
+    {
+        return $this->actionResolverFactory;
+    }
+
+    /**
+     * @param IGearEngineFactory $actionResolverFactory
+     */
+    public function setActionResolverFactory($actionResolverFactory)
+    {
+        $this->actionResolverFactory = $actionResolverFactory;
+    }
+
+    static $debugSession = 0;
+
+    /**
+     * @return bool
+     */
+    public static function isDebug()
+    {
+        return defined('DEBUG') || (self::$debugSession > 0);
+    }
+
+    /**
+     * @return int
+     */
+    public static function beginDebugSession()
+    {
+        return ++self::$debugSession;
+    }
+
+    /**
+     * @param bool|true $explicit
+     */
+    public static function endDebugSession($explicit = true)
+    {
+        if ($explicit) {
+            self::$debugSession = 0;
+        } else {
+            --self::$debugSession;
+        }
+    }
+
+    /**
+     * @return double
+     */
     public function getCreateExecutionTime()
     {
         return $this->_createExecutionTime;
     }
 
+    /**
+     * @return double
+     */
     public function getStartExecutionTime()
     {
         return $this->_startExecutionTime;
     }
 
+    /**
+     * @param string|null $engine
+     * @return null
+     */
     public function start($engine = null)
     {
         $result = null;
@@ -305,6 +590,13 @@ class GearAppEngine
         }
     }
 
+    /**
+     * @param GearConfiguration $config
+     * @param string $engine
+     * @param string $defaultFactory
+     * @return IGearEngineFactory
+     * @throws GearInvalidOperationException
+     */
     public static function getFactory(GearConfiguration $config, $engine, $defaultFactory)
     {
         $factoryClass = $config->getValue(Gear_Key_Factory, $engine, $defaultFactory);
@@ -317,13 +609,10 @@ class GearAppEngine
     }
 
     /**
-     * @param IGearContext $context
+     * @param array $bundles
      */
-    public static function resolveBundles($context)
+    public static function resolveBundles($bundles)
     {
-        $config = $context->getConfig();
-        $bundles = $config->getValue(Gear_Key_Bundles, Gear_Section_AppEngine);
-
         if (isset($bundles)) {
             $modules = [];
             $directories = [];
@@ -350,13 +639,10 @@ class GearAppEngine
     }
 
     /**
-     * @param IGearContext $context
+     * @param array $dependencies
      */
-    public static function resolveDependencies($context)
+    public static function resolveDependencies($dependencies)
     {
-        $config = $context->getConfig();
-        $dependencies = $config->getValue(Gear_Key_Dependencies, Gear_Section_AppEngine);
-
         if (isset($dependencies)) {
             $modules = [];
             $directories = [];
@@ -382,6 +668,10 @@ class GearAppEngine
         }
     }
 
+    /**
+     * @param $callback
+     * @throws \GearInvalidOperationException
+     */
     public static function registerCreateInitializer($callback)
     {
         if (!is_callable($callback)) {
@@ -390,6 +680,10 @@ class GearAppEngine
         self::$createInitializers[] = $callback;
     }
 
+    /**
+     * @param $callback
+     * @throws \GearInvalidOperationException
+     */
     public static function registerStartInitializer($callback)
     {
         if (!is_callable($callback)) {
@@ -398,11 +692,47 @@ class GearAppEngine
         self::$startInitializers[] = $callback;
     }
 
+    /**
+     * @param IGearContext $context
+     * @return GearController
+     */
+    public function createController($context = null)
+    {
+        if ($context == null) {
+            $context = $this->context;
+        }
+
+        return $this->controllerFactory->createEngine($context);
+    }
+
+    /**
+     * @param GearController $controller
+     * @return GearActionExecutor
+     */
+    public function createActionExecutor($controller)
+    {
+        $actionResolver = $this->actionResolverFactory->createEngine($this->context);
+
+        $context = $this->context;
+        $route = $context->getRoute();
+        $request = $context->getRequest();
+        $mvcContext = $route->getMvcContext();
+
+        $actionName = $mvcContext->getActionName();
+
+        return new GearActionExecutor(
+            $controller,
+            $context,
+            $mvcContext,
+            $request,
+            $actionName,
+            $actionResolver
+        );
+    }
+
     private function _startMvc0()
     {
-        $controller = $this->controllerFactory->createEngine(
-            $this->context
-        );
+        $controller = $this->createController();
 
         $actionResolver = $this->actionResolverFactory->createEngine($this->context);
 
@@ -413,42 +743,73 @@ class GearAppEngine
 
         $actionName = $mvcContext->getActionName();
 
-        $actionResolver->invokeAction(
+        return $actionResolver->invokeAction(
             $controller,
             $context,
             $mvcContext,
             $request,
             $actionName);
-
-        return 1;
     }
 
-    public static function create($configPath = null, $type = 0)
+    private static $initialized = false;
+
+    /**
+     * @param string|null $configPath
+     * @param int $type
+     * @return GearConfiguration
+     * @throws GearInvalidOperationException
+     */
+    public static function initEnvironment($configPath = null, $type = 0)
+    {
+        if (self::$initialized) {
+            throw new GearInvalidOperationException();
+        }
+
+        if (is_null($configPath)) {
+            $configPath = Gear_Default_ConfigPath;
+        }
+        $config = GearConfiguration::FromFile($configPath, $type);
+        self::$GearConfigCache = $config;
+
+        $debugMode = $config->getValue(Gear_Key_DebugMode, Gear_Section_AppEngine, false);
+        if (boolval($debugMode) == true && !self::isDebug()) {
+            define('DEBUG', 1);
+        }
+
+        $autoLoadMode = $config->getValue(Gear_Key_AutoLoading, Gear_Section_AppEngine, null);
+        if ($autoLoadMode != null) {
+            GearAutoload::register($autoLoadMode);
+        }
+
+        self::resolveBundles($config->getValue(Gear_Key_Bundles, Gear_Section_AppEngine));
+        self::resolveDependencies($config->getValue(Gear_Key_Dependencies, Gear_Section_AppEngine));
+
+        self::$initialized = true;
+
+        return $config;
+    }
+
+    /**
+     * @param GearConfiguration $config
+     * @return GearAppEngine|null
+     */
+    public static function create($config = null)
     {
         $engine = null;
         try {
             $rStart = microtime(true);
-            if (is_null($configPath)) {
-                $configPath = Gear_Default_ConfigPath;
-            }
-            $config = GearConfiguration::FromFile($configPath, $type);
-            self::$GearConfigCache = $config;
 
-            $debugMode = $config->getValue(Gear_Key_DebugMode, Gear_Section_AppEngine, false);
-            if (boolval($debugMode) == true && !defined('DEBUG')) {
-                define('DEBUG', 1);
+            if (!self::$initialized) {
+                $config = self::initEnvironment();
             }
 
-            $autoLoadMode = $config->getValue(Gear_Key_AutoLoading, Gear_Section_AppEngine, null);
-            if ($autoLoadMode != null) {
-                GearAutoload::register($autoLoadMode);
+            if ($config == null) {
+                throw new GearInvalidOperationException();
             }
 
             $context = new GearAppContext($config);
 
             GearHttpContext::setCurrent($context);
-            self::resolveBundles($context);
-            self::resolveDependencies($context);
 
             /** @var IGearEngineFactory $routeFactory */
             $routeFactory = self::getFactory($config, Gear_Section_Router, Gear_DefaultRouterFactory);
@@ -489,7 +850,7 @@ class GearAppEngine
                 $controllerFactory,
                 $actionResolverFactory);
 
-            header(Gear_PoweredResponseHeader);
+            $response->setHeaderLegacy(Gear_PoweredResponseHeader);
 
             $applicationEntry = $config->getValue(Gear_Key_ApplicationEntry, Gear_Section_AppEngine);
             if (isset($applicationEntry)) {
@@ -601,6 +962,66 @@ class GearBatchActionResult extends GearActionResultBase
         foreach ($this->actions as $action) {
             $action->executeResult($context, $request, $response);
         }
+    }
+}
+class GearCollectionHelpers
+{
+    /**
+     * Performs cross join (cartezian) on array of arrays.
+     * @param array $arrays
+     * @return array
+     */
+    public static function crossJoin($arrays) {
+        $results = [];
+
+        foreach ($arrays as $group) {
+            $results = self::expandItems($results, $group);
+        }
+
+        return $results;
+    }
+
+    private static function expandItems($sourceItems, $tails)
+    {
+        $result = [];
+
+        if (empty($sourceItems)) {
+            foreach ($tails as $tail) {
+                $result[] = [$tail];
+            }
+            return $result;
+        }
+
+        foreach ($sourceItems as $sourceItem) {
+            foreach ($tails as $tail) {
+                $result[] = array_merge($sourceItem, [$tail]);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Performs cross join (cartezian) on array of strings.
+     * @param array $strings
+     * @param string|null $separator
+     * @param bool|false $filterNulls
+     * @return array
+     */
+    public static function crossJoinStrings($strings, $separator = null, $filterNulls = false) {
+
+        $strings = self::crossJoin($strings);
+
+        $result = [];
+        foreach ($strings as $strList) {
+            if ($filterNulls) {
+                $strList = array_filter($strList);
+                if ($strList == null) continue;
+            }
+            $result[] = implode($separator, $strList);
+        }
+
+        return $result;
     }
 }
 class GearConfiguration
@@ -824,26 +1245,16 @@ class GearDefaultRouteService implements IGearRouteService
     /**
      * GearDefaultRouteService constructor.
      *
-     * @param $config GearConfiguration
+     * @param IGearContext $context
      */
-    public function __construct($config)
+    public function __construct($context)
     {
-        $area = $config->getValue(Gear_Key_DefaultArea, Gear_Section_Defaults, '');
-        $controller = $config->getValue(Gear_Key_DefaultController, Gear_Section_Defaults, 'home');
-        $action = $config->getValue(Gear_Key_DefaultAction, Gear_Section_Defaults, 'index');
-        $params = $config->getValue(Gear_Key_DefaultParams, Gear_Section_Defaults, '');
+        /** @var GearConfiguration $config */
+        $config = $context->getConfig();
+        $this->context = $context;
+        $this->config = $config;
 
-        $this->area = $area;
-        $this->controller = $controller;
-        $this->action = $action;
-        $this->params = $params;
-
-        $this->mvcContext = new GearRouteMvcContext(
-            $area,
-            $controller,
-            $action,
-            $params
-        );
+        $this->mvcContext = $this->createMvcContext('');
     }
 
     function getMvcContext()
@@ -869,6 +1280,30 @@ class GearDefaultRouteService implements IGearRouteService
     function setUrlProvider($provider)
     {
         throw new GearNotSupportedException();
+    }
+
+    /**
+     * @param string $url
+     * @return IGearMvcContext
+     */
+    public function createMvcContext($url)
+    {
+        $area = $this->config->getValue(Gear_Key_DefaultArea, Gear_Section_Defaults, '');
+        $controller = $this->config->getValue(Gear_Key_DefaultController, Gear_Section_Defaults, 'home');
+        $action = $this->config->getValue(Gear_Key_DefaultAction, Gear_Section_Defaults, 'index');
+        $params = $this->config->getValue(Gear_Key_DefaultParams, Gear_Section_Defaults, '');
+
+        $this->area = $area;
+        $this->controller = $controller;
+        $this->action = $action;
+        $this->params = $params;
+
+        $this->mvcContext = new GearRouteMvcContext(
+            $area,
+            $controller,
+            $action,
+            $params
+        );
     }
 }
 class GearDefaultViewEngineFactory implements IGearEngineFactory
@@ -955,7 +1390,7 @@ class GearErrorStrategy
         $message = $ex->getMessage();
         $trace = $ex->getTrace();
         GearLogger::write("TrackId: $uid - Message: $message - Trace: $trace");
-        if (defined('DEBUG')) {
+        if (GearAppEngine::isDebug()) {
             return strval($ex);
         } else {
             return "An error has been occurred. Error unique id: $uid";
@@ -1166,17 +1601,35 @@ class GearFsModuleLocator implements IGearModuleLocator
 }
 class GearGeneralHelper
 {
-    public static function parseHeaders($headers)
+    /**
+     * @param string $headerBlock
+     * @return array
+     */
+    public static function parseHeaders($headerBlock)
     {
-        $headers = preg_replace('/^\r\n/m', '', $headers);
-        $headers = preg_replace('/\r\n\s+/m', ' ', $headers);
-        preg_match_all('/^([^: ]+):\s(.+?(?:\r\n\s(?:.+?))*)?\r\n/m', $headers . "\r\n", $matches);
+        $headerBlock = preg_replace('/^\r\n/m', '', $headerBlock);
+        $headerBlock = preg_replace('/\r\n\s+/m', ' ', $headerBlock);
+        preg_match_all('/^([^: ]+):\s(.+?(?:\r\n\s(?:.+?))*)?\r\n/m', $headerBlock . "\r\n", $matches);
 
         $result = array();
         foreach ($matches[1] as $key => $value)
-            $result[$value] = (array_key_exists($value, $result) ? $result[$value] . "\n" : '') . $matches[2][$key];
+            $result[$value][] = (array_key_exists($value, $result) ? $result[$value] . "\n" : '') . $matches[2][$key];
 
         return $result;
+    }
+
+    /**
+     * @param array $headerLines
+     * @return array
+     */
+    public static function parseHeaderLines($headerLines)
+    {
+        $new_headers = [];
+        foreach ($headerLines as $header) {
+            list($key, $value) = explode(':', $header, 2);
+            $new_headers[trim($key)][] = trim($value);
+        }
+        return $new_headers;
     }
 }
 class GearHeaderResult
@@ -1204,20 +1657,25 @@ class GearHelpers
         return preg_match('/^[\s]*$/', $string);
     }
 
-    private static function _dumpArray($arr,$indent){
-        $size=sizeof($arr);
-        echo"<span style=\"color:orange;\">Array($size)</span> => [";
-        foreach($arr as $k=>$e){
-            echo'<br>';
-            for($i=0;$i<$indent;$i++)echo"----";
-            echo"<span style=\"color:green;\">'$k'</span> : ";
-            if(is_array($e))self::_dumpArray($e,$indent+1);else var_dump($e);
-            echo' ,<br>';
+    private static function _dumpArray($arr, $indent)
+    {
+        $size = sizeof($arr);
+        echo "<span style=\"color:orange;\">Array($size)</span> => [";
+        foreach ($arr as $k => $e) {
+            echo '<br>';
+            for ($i = 0; $i < $indent; $i++) echo "----";
+            echo "<span style=\"color:green;\">'$k'</span> : ";
+            if (is_array($e)) self::_dumpArray($e, $indent + 1); else var_dump($e);
+            echo ' ,<br>';
         }
-        for($i=0;$i<$indent;$i++)echo"----";
-        echo']';
+        for ($i = 0; $i < $indent; $i++) echo "----";
+        echo ']';
     }
-    public static function show($var){if(is_array($var))self::_dumpArray($var,1);else var_dump($var);}
+
+    public static function show($var)
+    {
+        if (is_array($var)) self::_dumpArray($var, 1); else var_dump($var);
+    }
 }
 class GearHtmlHelper extends GearExtensibleClass
 {
@@ -1440,6 +1898,18 @@ class GearHttpContext
 class GearHttpRequest implements IGearHttpRequest
 {
     private $route;
+    private $method;
+    private $contentType;
+    private $queryString;
+    private $accept;
+    private $requestScheme;
+    private $host;
+    private $requestUri;
+
+    private $queryStringParameters = [];
+    private $formDataParameters = [];
+    private $headerParameters = [];
+    private $cookieParameters = [];
 
     public function __construct($route)
     {
@@ -1448,110 +1918,217 @@ class GearHttpRequest implements IGearHttpRequest
 
     public function getValue($name, $defaultValue = null)
     {
-        if (!isset($_REQUEST[$name])) {
-            return $defaultValue;
+        if (isset($this->queryStringParameters[$name])) {
+            return $this->queryStringParameters[$name];
+        } elseif (isset($this->formDataParameters[$name])) {
+            return $this->formDataParameters[$name];
+        } elseif (isset($this->cookieParameters[$name])) {
+            return $this->cookieParameters[$name];
+        } else {
+            if (GearHelpers::tryGetArrayElementByNameCaseInSensetive($_REQUEST, $name, $value)) {
+                return $value;
+            }
         }
-        return $_REQUEST[$name];
+        return $defaultValue;
     }
 
     public function getBody()
     {
         return file_get_contents("php://input");
     }
-    
+
     public function getHeaders()
     {
         if (function_exists('getallheaders')) {
             return getallheaders();
         } else {
             $headers = array();
-            foreach($_SERVER as $key => $value)
-            {
-                if(preg_match("/^HTTP_X_/", $key))
+            foreach ($_SERVER as $key => $value) {
+                if (preg_match("/^HTTP_X_/", $key))
                     $headers[$key] = $value;
             }
             return $headers;
         }
     }
-    
+
     public function getHeader($name, $defaultValue = null)
     {
         $name = str_replace('-', '_', $name);
         $name = strtoupper($name);
-        return isset($_SERVER['HTTP_' . $name])
-            ? $_SERVER['HTTP_' . $name]
-            : $defaultValue;
+        if (isset($this->headerParameters[$name])) {
+            return $this->headerParameters[$name];
+        } else {
+            if (isset($_SERVER['HTTP_' . $name])) {
+                return $_SERVER['HTTP_' . $name];
+            }
+        }
+        return $defaultValue;
     }
-    
+
+    public function setRawQueryStrings($queryString)
+    {
+        $this->queryString = $queryString;
+    }
+    public function getRawQueryStrings()
+    {
+        if ($this->queryString == null) {
+            return isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
+        }
+        return $this->queryString;
+    }
+
     public function getQueryStrings()
     {
-        return $_SERVER['QUERY_STRING'];
+        return array_merge($_GET, $this->queryStringParameters);
     }
-    
+
     public function getQueryString($name, $defaultValue = null)
     {
-        return isset($_GET[$name])
-            ? $_GET[$name]
-            : $defaultValue;
+        $name = strtoupper($name);
+        if (isset($this->queryStringParameters[$name])) {
+            return $this->queryStringParameters[$name];
+        } else {
+            if (GearHelpers::tryGetArrayElementByNameCaseInSensetive($_GET, $name, $value)) {
+                return $value;
+            }
+        }
+        return $defaultValue;
     }
-    
-    public function getForms()
+
+    public function setQueryString($name, $value)
     {
-        return $_POST;
+        $this->queryStringParameters[$name] = $value;
     }
-    
+
+    public function getFormData()
+    {
+        return array_merge($_POST, $this->formDataParameters);
+    }
+
+    public function setFormData($name, $value)
+    {
+        $this->formDataParameters[$name] = $value;
+    }
+
     public function getForm($name, $defaultValue = null)
     {
-        return isset($_POST[$name])
-            ? $_POST[$name]
-            : $defaultValue;
+        if (isset($this->formDataParameters[$name])) {
+            return $this->formDataParameters[$name];
+        } else {
+            if (GearHelpers::tryGetArrayElementByNameCaseInSensetive($_POST, $name, $value)) {
+                return $value;
+            }
+        }
+        return $defaultValue;
     }
 
     public function getMethod()
     {
-        return strtoupper($_SERVER['REQUEST_METHOD']);
+        if (isset($this->method)) {
+            return $this->method;
+        }
+        $this->method = strtoupper(isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET');
+        return $this->method;
+    }
+
+    public function setMethod($method)
+    {
+        $this->method = $method;
+    }
+
+    public function getHost()
+    {
+        if (isset($this->host)) {
+            return $this->host;
+        }
+        $this->host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+        return $this->host;
+    }
+
+    public function setHost($host)
+    {
+        $this->host = $host;
+    }
+
+    public function getRequestUri()
+    {
+        if (isset($this->requestUri)) {
+            return $this->requestUri;
+        }
+        $this->requestUri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+        return $this->requestUri;
+    }
+
+    public function setRequestUri($uri)
+    {
+        $this->requestUri = $uri;
     }
 
     public function getRawUrl()
     {
-        return $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        return $this->getProtocol() . '://' . $this->getHost() . $this->getRequestUri();
     }
 
     public function getContentType()
     {
-        if (isset($_SERVER['CONTENT_TYPE'])) {
-            return $_SERVER['CONTENT_TYPE'];
+        if (isset($this->contentType)) {
+            return $this->contentType;
         }
-        return 'text/html';
+        $this->contentType = $this->getHeader('Content-Type', 'text/html');
+        return $this->contentType;
+    }
+
+    public function setContentType($contentType)
+    {
+        $this->contentType = $contentType;
     }
 
     public function getProtocol()
     {
-        return $_SERVER['REQUEST_SCHEME'];
-        //$protocol = $_SERVER["SERVER_PROTOCOL"];
-        //$slash = strpos($protocol, '/');
-        //return substr($protocol, 0, $slash);
+        if (isset($this->requestScheme)) {
+            return $this->requestScheme;
+        }
+        $this->requestScheme = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'HTTP';
+        return $this->requestScheme;
     }
 
-    public function accepts()
+    public function setProtocol($protocol)
     {
+        $this->requestScheme = $protocol;
+    }
 
+    public function accept()
+    {
+        if (isset($this->accept)) {
+            return $this->accept;
+        }
+        $this->accept = $this->getHeader('Accept');
+        return $this->accept;
+    }
+
+    public function setAccept($accept)
+    {
+        $this->accept = $accept;
     }
 
     public function getAllValues()
     {
-        return $_REQUEST;
+        return array_merge(
+            $_REQUEST,
+            $this->queryStringParameters,
+            $this->formDataParameters,
+            $this->cookieParameters
+        );
     }
 
     public function &getCurrentMethodValues()
     {
-        $requestMethod = $this->getMethod();// $_SERVER['REQUEST_METHOD'];
+        $requestMethod = $this->getMethod();
         switch ($requestMethod) {
-            case'GET':
-                return $_GET;
-            //case'POST':return$this->POST;
+            case 'GET':
+                return $this->getQueryStrings();
             default:
-                return $_POST;
+                return $this->getFormData();
         }
     }
 
@@ -1560,7 +2137,7 @@ class GearHttpRequest implements IGearHttpRequest
      */
     public function isMultipart()
     {
-        return $this->getContentType() == 'multipart';
+        return strtolower(explode('/', $this->getContentType())[0]) == 'multipart';
     }
 
     /**
@@ -1568,7 +2145,7 @@ class GearHttpRequest implements IGearHttpRequest
      */
     public function isAjaxRequest()
     {
-        return $this->getHeader('X-Requested-With') == 'XMLHttpRequest';
+        return strtolower($this->getHeader('X-Requested-With')) == 'xmlhttprequest';
     }
 
     /**
@@ -1590,7 +2167,8 @@ class GearHttpRequest implements IGearHttpRequest
         $contentType = strtolower($this->getContentType());
         return
             $contentType == 'application/xml' ||
-            $contentType == 'text/xml'/* || $contentType == 'application/xhtml+xml'*/;
+            $contentType == 'text/xml'/* || $contentType == 'application/xhtml+xml'*/
+            ;
     }
 
     /**
@@ -1647,14 +2225,16 @@ class GearInternalServerError
             $errorCode = $eCode;
         }
 
-        if (defined('DEBUG')) {
+        $debug = GearAppEngine::isDebug();
+
+        if ($debug) {
             GearLogger::write($ex->getMessage() . ' trace:' . GearSerializer::stringify($ex->getTrace()));
         }
 
         http_response_code($errorCode);
-        $errMessage = defined('DEBUG') ? $ex->getMessage() : 'An Error Has Been Occurred!';
+        $errMessage = $debug ? $ex->getMessage() : 'An Error Has Been Occurred!';
         echo "<title>$errorCode - Error</title><h1 style=\"color:red\">$errorCode - $errMessage</h1><br>" .
-            (defined('DEBUG') ?
+            ($debug ?
                 $ex->getMessage() . '<br>' .
                 $ex->getFile() . ' at line: ' . $ex->getLine() . '<br><br>' .
                 $ex->getTraceAsString()
@@ -1722,7 +2302,13 @@ class GearMimeHelper
             'jpg', 'jpeg', 'png', 'tiff', 'tif', 'gif', 'bmp', 'jpe', 'dib', 'jfif'
         ],
         'text' => [
-            'css', 'js', 'xml', 'html', 'xhtml', 'htm', 'mht', ['plain' => 'txt']
+            'css', 'html', 'xhtml', 'htm', 'mht',
+            [
+                'plain' => 'txt'
+            ]
+        ],
+        'application' => [
+            'js', 'xml'
         ]
     ];
 
@@ -2069,13 +2655,14 @@ interface IGearActionResolver
      * @param $request IGearHttpRequest
      * @param $actionName string
      *
-     * @return bool Always returns true.
+     * @return IGearActionResult|mixed
      */
-    function invokeAction($controller,
-                          $context,
-                          $mvcContext,
-                          $request,
-                          $actionName);
+    function invokeAction(
+        $controller,
+        $context,
+        $mvcContext,
+        $request,
+        $actionName);
 }
 interface IGearActionResult
 {
@@ -2199,11 +2786,24 @@ interface IGearHttpRequest
      * @return array
      */
     function getHeaders();
-    
+
+    /**
+     * @param string $name
+     * @param string|null $defaultValue
+     * @return array|null
+     */
+    function getHeader($name, $defaultValue);
+
     /**
      * @return string
      */
-    function getHeader($name);
+    function getRawQueryStrings();
+
+    /**
+     * @param string $queryString
+     * @return mixed
+     */
+    function setRawQueryStrings($queryString);
 
     /**
      * @return array
@@ -2211,16 +2811,32 @@ interface IGearHttpRequest
     function getQueryStrings();
 
     /**
-     * @return array
-     */
-    function getForms();
-    
-    /**
+     * @param string $name
      * @return string
      */
     function getQueryString($name);
-    
+
     /**
+     * @param string $name
+     * @param string $value
+     * @return mixed
+     */
+    function setQueryString($name, $value);
+
+    /**
+     * @return array
+     */
+    function getFormData();
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @return mixed
+     */
+    function setFormData($name, $value);
+
+    /**
+     * @param string $name
      * @return string
      */
     function getForm($name);
@@ -2229,6 +2845,12 @@ interface IGearHttpRequest
      * @return string
      */
     function getMethod();
+
+    /**
+     * @param string $method
+     * @return mixed
+     */
+    function setMethod($method);
 
     /**
      * @return string
@@ -2241,9 +2863,21 @@ interface IGearHttpRequest
     function getContentType();
 
     /**
+     * @param string $contentType
+     * @return mixed
+     */
+    function setContentType($contentType);
+
+    /**
      * @return string
      */
     function getProtocol();
+
+    /**
+     * @param string $protocol
+     * @return mixed
+     */
+    function setProtocol($protocol);
 
     /**
      * @return bool
@@ -2273,7 +2907,13 @@ interface IGearHttpRequest
     /**
      * @return string
      */
-    function accepts();
+    function accept();
+
+    /**
+     * @param string $accept
+     * @return mixed
+     */
+    function setAccept($accept);
 
     /**
      * @return array
@@ -2358,6 +2998,8 @@ interface IGearOutputStream
 {
     function write($mixed);
     function clear();
+    function &getBuffer();
+    function bufferSize();
 }
 interface IGearRouteService
 {
@@ -2373,6 +3015,12 @@ interface IGearRouteService
     function getMvcContext();
 
     /**
+     * @param string $url
+     * @return IGearMvcContext
+     */
+    function createMvcContext($url);
+
+    /**
      * @param $context IGearContext
      * @param $mvcContext IGearMvcContext
      * @param $params array
@@ -2382,7 +3030,7 @@ interface IGearRouteService
     function createUrl($context, $mvcContext, $params);
 
     /**
-     * @param $provider IGearRouteService
+     * @param callable $provider
      *
      * @return void
      */
@@ -2481,7 +3129,7 @@ class GearAppContext implements IGearContext
         $this->request = $request;
     }
 
-    function getResponse()
+    public function getResponse()
     {
         return $this->response;
     }
@@ -2793,8 +3441,152 @@ class GearBundle
         self::$engineRootDirectory = $engineRootDirectory;
     }
 }
+class GearCsvonResult extends GearActionResultBase
+{
+    /** @var string */
+    protected $name;
+    /** @var mixed */
+    protected $content;
+    /** @var bool */
+    protected $allowGet;
+
+    /**
+     * GearJsonResult constructor.
+     * @param string $name
+     * @param mixed $content
+     * @param bool $allowGet
+     */
+    public function __construct($name, $content, $allowGet)
+    {
+        $this->name = $name;
+        $this->content = $content;
+        $this->allowGet = $allowGet;
+    }
+
+    public function executeResult($context, $request, $response)
+    {
+        $method = $request->getMethod();
+        $allowGet = $context->getConfig()->getValue(Gear_Key_JsonResultAllowGet, Gear_Section_ActionResolver, false);
+        if ($method == 'GET' && !($this->allowGet || $allowGet)) {
+            return new GearErrorResult("Action is not configured to serve data as GET http method.");
+        }
+
+        $json = $this->createJson($context, $request, $response, $this->content);
+        $response->setContentType('application/csvon');
+        $this->writeResult($context, $request, $response, $json);
+    }
+
+    /**
+     * @param IGearContext $context
+     * @param IGearHttpRequest $request
+     * @param IGearHttpResponse $response
+     * @param mixed $content
+     * @return mixed
+     */
+    public function createJson($context, $request, $response, $content)
+    {
+        return $content;
+    }
+
+    /**
+     * @param IGearContext $context
+     * @param IGearHttpRequest $request
+     * @param IGearHttpResponse $response
+     * @param string $data
+     *
+     * @return GearErrorResult
+     */
+    public function writeResult($context, $request, $response, $data)
+    {
+        $childArray = false;
+        $grandChildArray = false;
+
+        $result = $this->csvonSerialize(0, '_', $this->name, $data, 'a', "\n", $childArray, $grandChildArray)."\n\n";
+
+        if (GearAppEngine::isDebug()) {
+            $response->setHeader('CSVON-Length', strlen($result));
+        }
+
+        $response->write($result);
+    }
+
+
+    private function csvonSerialize($level, $parent, $name, $data, $descriptor, $separator, &$childArray, &$childrenAsColumns)
+    {
+        $lines = [];
+
+        if (is_array($data) || is_object($data)) {
+            $desc = 'a';
+            if (is_object($data)) {
+                $data = (array)$data;
+                $desc = 'o('.get_class($data).')';
+            }
+            $anyChildArray = false;
+            $allChildArray = true;
+            $innerLines = [];
+            $allChildrenAsColumns = true;
+            foreach ($data as $key => $row) {
+                $childrenAsColumns1 = true;
+                $childArray1 = false;
+                $result = $this->csvonSerialize($level + 1, $name, $key, $row, $desc, ',', $childArray1, $childrenAsColumns1);
+                if (empty($result)) {
+                    continue;
+                }
+                if (!$childrenAsColumns1) {
+                    $allChildrenAsColumns = false;
+                }
+                if ($childArray1) {
+                    $separator = "\n";
+                    //$lines[] = $key;
+                    $anyChildArray = true;
+                    $childrenAsColumns = false;
+                } else {
+                    $allChildArray = false;
+                }
+                $innerLines[] = $result;
+            }
+            $childArray = true;
+            if ($allChildArray && $allChildrenAsColumns) {
+                $descriptor = 't';
+            }
+            if ($anyChildArray) {
+                $lines[] = $level.','.$parent.','.$descriptor.','. $name . ',';
+            }
+            if (!empty($innerLines)) {
+                array_push($lines, ...$innerLines);
+            }
+            if ($anyChildArray) {
+                $lines[] = null;
+            }
+        } else {
+            $childrenAsColumns = false;
+            $childArray = false;
+            return $data;
+        }
+
+        return implode($separator, $lines);
+    }
+}
 class GearDefaultActionResolver implements IGearActionResolver
 {
+    private function sanitizeActionNameWithPattern(
+        $actionName,
+        $actionPattern,
+        $method,
+        $isAjax)
+    {
+
+        $actionPattern = str_replace(Gear_PlaceHolder_Action, $actionName, $actionPattern);
+        $actionPattern = str_replace(Gear_PlaceHolder_HttpMethod, $method, $actionPattern);
+        if ($isAjax) {
+            $actionPattern = str_replace(Gear_PlaceHolder_IsAjax, 'AJAX', $actionPattern);
+        } else {
+            $actionPattern = str_replace(Gear_PlaceHolder_IsAjax, '', $actionPattern);
+        }
+
+        return $actionPattern;
+    }
+
     public function invokeAction(
         $controller,
         $context,
@@ -2803,35 +3595,73 @@ class GearDefaultActionResolver implements IGearActionResolver
         $actionName)
     {
         $config = $context->getConfig();
-        $method = $request->getMethod();
+        $method = strtoupper($request->getMethod());
+        $isAjax = $request->isAjaxRequest();
 
-        $preferedAction = $config->getValue(Gear_Key_PreferredActionPattern, Gear_Section_Controller, Gear_DefaultPreferredActionPattern);
-        $preferedAction = str_replace(Gear_PlaceHolder_Action, $actionName, $preferedAction);
-        $preferedAction = str_replace(Gear_PlaceHolder_HttpMethod, $method, $preferedAction);
+        $origActionName = $actionName;
 
-        if (method_exists($controller, $preferedAction)) {
-            $actionName = $preferedAction;
+        $requestAttributesLookupEnabled = $config->getValue(Gear_Key_ActionLookupRequestAttributes, Gear_Section_Controller, false);
+        $lookupFallback = true;
+
+        $preferredAction = null;
+        if ($requestAttributesLookupEnabled) {
+            $separator = $config->getValue(Gear_Key_ActionPatternSeparator, Gear_Section_Controller, Gear_DefaultActionPatternSeparator);
+
+            $scheme = strtoupper($request->getProtocol());
+            $contentType = explode('/', $request->getContentType());
+            $contentType = strtoupper(preg_replace("/[^a-zA-Z0-9]+/", '', array_pop($contentType)));
+
+            $ajax = $isAjax ? 'AJAX' : 'NOAJAX';
+
+            $requestAttributes = [
+                [null, $method],
+                [null, $ajax],
+                [null, $scheme],
+                [null, $contentType]
+            ];
+
+            $permutations = array_reverse(
+                GearCollectionHelpers::crossJoinStrings($requestAttributes, $separator, true)
+            );
+
+            foreach ($permutations as $permutation) {
+                $permutation = $actionName . $separator . $permutation;
+                if (method_exists($controller, $permutation)) {
+                    $lookupFallback = false;
+                    $actionName = $permutation;
+                    break;
+                }
+            }
+            $preferredAction = '%RequestAttributesLookupEngine%';
+        }
+        if ($lookupFallback) {
+            if (!$requestAttributesLookupEnabled) {
+                $preferredAction = $config->getValue(Gear_Key_PreferredActionPattern, Gear_Section_Controller, Gear_DefaultPreferredActionPattern);
+                $preferredAction = $this->sanitizeActionNameWithPattern($actionName, $preferredAction, $method, $isAjax);
+                if (method_exists($controller, $preferredAction)) {
+                    $actionName = $preferredAction;
+                }
+            }
+            $actionPattern = $config->getValue(Gear_Key_ActionPattern, Gear_Section_Controller, Gear_DefaultActionPattern);
+            $actionName = $this->sanitizeActionNameWithPattern($actionName, $actionPattern, $method, $isAjax);
         }
 
         $context->setValue('ActionName', $actionName);
 
-        //$suppliedArgumentss = array();
-
         $controllerReflection = new \ReflectionClass($controller);
         try {
             $actionReflection = $controllerReflection->getMethod($actionName);
-        } catch(\Exception $ex) {
-            throw new \GearHttpNotFoundException("Action '$actionName' not found.");
+        } catch (Throwable $ex) {
+            throw new GearActionNotFoundException($origActionName, [$actionName, $preferredAction]);
         }
         $actionParameters = $actionReflection->getParameters();
 
         $controller->beginExecute($context);
 
         $controller->checkExecution($context);
+        $response = $context->getResponse();
 
         try {
-            $response = $context->getResponse();
-
             $result = self::_execAction(
                 $context,
                 $mvcContext,
@@ -2850,14 +3680,32 @@ class GearDefaultActionResolver implements IGearActionResolver
                 $response,
                 $result);
 
-        } catch (\Exception $ex) {
-            $controller->onExceptionOccurred($context, $ex);
-            throw $ex;
+        } catch (Throwable $ex) {
+            try {
+
+                $result = $controller->onExceptionOccurred($context, $ex);
+                if ($result instanceof IGearActionResult) {
+                    self::_executeActionResult(
+                        $context,
+                        $request,
+                        $response,
+                        $result);
+
+                    $ex = null;
+                }
+
+            } catch (Throwable $t) {
+                $controller->onExceptionOccurred($context, $ex);
+                throw $t;
+            }
+            if ($ex != null) {
+                throw $ex;
+            }
         }
 
         $controller->endExecute($context);
 
-        return true;
+        return $result;
     }
 
     /**
@@ -2871,7 +3719,10 @@ class GearDefaultActionResolver implements IGearActionResolver
      * @param string $actionName
      * @param mixed $args
      * @param mixed $actionParameters
+     *
      * @return mixed
+     *
+     * @throws GearActionNotFoundException
      * @throws GearInvalidOperationException
      */
     public static function _execAction(
@@ -2901,12 +3752,12 @@ class GearDefaultActionResolver implements IGearActionResolver
             foreach ($actionParameters as $p) {
                 /** @var $p \ReflectionParameter */
                 $value = null;
-                if (GearHelpers::TryGetArrayElementByNameCaseInSensetive($args, $p->getName(), $value)) {
+                if (GearHelpers::tryGetArrayElementByNameCaseInSensetive($args, $p->getName(), $value)) {
                     $actionArgs[] = $value;
                 } else {
                     try {
                         $class = $p->getClass();
-                    } catch (\Exception$ex) {
+                    } catch (Exception $ex) {
                         $class = null;
                     }
                     if (isset($class)) {
@@ -2916,18 +3767,23 @@ class GearDefaultActionResolver implements IGearActionResolver
                             $controller,
                             $mvcContext
                         );
+                    } elseif ($p->isArray()) {
+                        throw new GearInvalidOperationException("Action '$actionName' argument uses an undefined class type.");
                     } else {
-                        if ($p->isArray()) {
-                            throw new GearInvalidOperationException("Action '$actionName' argument uses an undefined class type.");
-                        } else {
-                            $name = $p->getName();
-                            if (isset($args[$name])) {
-                                $actionArgs[] = $args[$name];
-                            }
+                        $name = $p->getName();
+                        if (isset($args[$name])) {
+                            $actionArgs[] = $args[$name];
+                        } elseif ($p->isDefaultValueAvailable()) {
+                            $actionArgs[] = $p->getDefaultValue();
                         }
+
                     }
                 }
             }
+            if (sizeof($actionParameters) != sizeof($actionArgs)) {
+                throw new GearActionNotFoundException($actionName);
+            }
+
             //$actionArgs = array_merge($actionArgs, $args);
             $result = call_user_func_array([$controller, $actionName], $actionArgs);
         }
@@ -2954,7 +3810,7 @@ class GearDefaultActionResolver implements IGearActionResolver
                 //    $response->setContentType('application/json');
                 //    $response->write(GearSerializer::json($result));
                 //} else {
-                    $response->write($result);
+                $response->write($result);
                 //}
             }
             if ($inner instanceof IGearActionResult) {
@@ -3111,12 +3967,15 @@ class GearDefaultViewEngine implements IGearViewEngine
         if (isset($layout)) {
             //$controller->layout = null;
 
-            $output = $context->getService(Gear_ServiceViewOutputStream);
-            if ($output == null) {
-                $output = new GearHtmlStream();
-            }
-            $output->write($viewContent);
-            $context->registerService(Gear_ServiceViewOutputStream, $output);
+            $stream = $context->getResponse()->getInnerStream();
+            $stream->write($viewContent);
+
+//            $output = $context->getService(Gear_ServiceViewOutputStream);
+//            if ($output == null) {
+//                $output = new GearHtmlStream();
+//            }
+//            $output->write();
+//            $context->registerService(Gear_ServiceViewOutputStream, $output);
 
             self::_renderView(
                 $viewEngine,
@@ -3129,7 +3988,7 @@ class GearDefaultViewEngine implements IGearViewEngine
                 $model,
                 false);
 
-            $output->clear();
+            $stream->clear();
 
         } else {
             $context->getResponse()->write($viewContent);
@@ -3278,8 +4137,9 @@ class GearDefaultViewEngine implements IGearViewEngine
         ob_start();
         $result = require($viewPath);
         $buffer = '';
-        while (ob_get_level() > $level)
+        while (ob_get_level() > $level) {
             $buffer = ob_get_clean() . $buffer;
+        }
         //global $Layout;
         if ($useLayout) {
             $layout = $Layout;
@@ -3412,7 +4272,7 @@ class GearHttpClient
         curl_setopt($ch, CURLOPT_POSTFIELDS, $this->body);
         curl_setopt($ch, CURLOPT_HEADER, $this->hasReturnHeaders);
         
-        if (isDebug()) {
+        if (GearAppEngine::isDebug()) {
             curl_setopt($ch, CURLOPT_VERBOSE, true);
         }
         
@@ -3442,7 +4302,7 @@ class GearHttpClient
         curl_close($ch);
         if ($response === FALSE)
         {
-            if (isDebug()) {
+            if (GearAppEngine::isDebug()) {
                 GearLogger::write($error);
             }
             throw new \Exception($error);
@@ -3451,7 +4311,7 @@ class GearHttpClient
         $responseBody = substr($response, $header_size);
         $responseHeaders = $this->hasReturnHeaders ? substr($response, 0, $header_size) : null;
         
-        if (isDebug()) {
+        if (GearAppEngine::isDebug()) {
             GearLogger::write('curl successfull request on '.$this->url);
         }
         
@@ -3478,10 +4338,13 @@ class GearHttpClient
         
         if ($headers != null) {
             foreach ($headers as $key => $value) {
-                header("$key: $value");
+                foreach ($value as $val) {
+                    header("$key: $val");
+                }
             }
         }
-        
+
+        //! Do not remove.
         echo $body;
         
         return $result;
@@ -3505,23 +4368,34 @@ class GearHttpUnauthorizedException extends GearHttpStatusCodeException
 }
 class GearInMemoryStream implements IGearOutputStream
 {
-    private
-        $buffer;
+    private $buffer;
 
     public function write($mixed)
     {
         if (is_string($mixed)) {
-            $this->buffer = $this->buffer . $mixed;
+            $this->buffer .= $mixed;
         } else {
-            $this->buffer = $this->buffer . GearSerializer::stringify($mixed);
+            $this->buffer .= GearSerializer::stringify($mixed);
         }
     }
 
-    public function clear(){
-        $this->buffer = '';
+    public function clear()
+    {
+        $this->buffer = null;
     }
 
-    public function &getBuffer(){
+    public function &getBuffer()
+    {
+        return $this->buffer;
+    }
+
+    public function bufferSize()
+    {
+        return strlen($this->buffer);
+    }
+
+    public function getNewBuffer()
+    {
         return $this->buffer;
     }
 }
@@ -3673,15 +4547,163 @@ class GearUnauthorizedResult extends GearStatusCodeResult
 }
 interface IGearHttpResponse extends IGearOutputStream
 {
-    function write($mixed);
+    //function write($mixed);
+    /**
+     * @param mixed $object
+     * @param IGearHttpRequest $request
+     * @return mixed
+     */
     function serializeWrite($object, $request);
 
-    function writeInnerStream();
+    /**
+     * @param mixed $mixed
+     * @return mixed
+     */
+    function writeInnerStream($mixed);
 
+    /**
+     * @return mixed
+     */
+    function flushInnerStream();
+
+    /**
+     * @return IGearOutputStream
+     */
+    function getInnerStream();
+
+    /**
+     * @return IGearOutputStream
+     */
+    function getBufferStream();
+
+    /**
+     * @return int
+     */
+    function getStatusCode();
+
+    /**
+     * @param int $statusCode
+     * @return mixed
+     */
     function setStatusCode($statusCode);
+
+    /**
+     * @return string
+     */
+    function getContentType();
+
+    /**
+     * @param string $contentType
+     * @return mixed|void
+     */
     function setContentType($contentType);
-    function setHeader($name, $value);
+
+    /**
+     * @param string $name
+     * @param string|null $defaultValue
+     * @return string
+     */
+    function getHeader($name, $defaultValue = null);
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @param bool $replace
+     * @return mixed
+     */
+    function setHeader($name, $value, $replace = true);
+
+    /**
+     * @param string $header
+     * @param bool $replace
+     * @return mixed
+     */
+    function setHeaderLegacy($header, $replace = true);
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @return bool
+     */
+    function headerExists($name, &$value);
+
+    /**
+     * @return array
+     */
+    function getHeaders();
+
+    /**
+     * @return string
+     */
+    function getEncoding();
+
+    /**
+     * @param string $encoding
+     * @return mixed
+     */
     function setEncoding($encoding);
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @param bool|null $expire
+     * @return mixed
+     */
+    function setCookie($name, $value, $expire = null);
+
+    /**
+     * @return bool
+     */
+    function isRedirect();
+
+    /**
+     * @return string
+     */
+    function redirectUrl();
+
+    /**
+     * @return bool
+     */
+    function isJson();
+
+    /**
+     * @return bool
+     */
+    function isXml();
+
+    /**
+     * @return bool
+     */
+    function isPlainText();
+
+    /**
+     * @return bool
+     */
+    function isHtml();
+
+    /**
+     * @param string $name
+     * @return array
+     */
+    function getCookie($name);
+
+    /**
+     * @return array
+     */
+    function getCookies();
+
+    /**
+     * @param bool $status
+     * @return mixed
+     */
+    function setBufferStatus($status);
+
+    /**
+     * @return void
+     */
+    function flush();
+
+    function getBody();
 }
 class GearAppEngineNotFoundException extends GearFxException
 {
@@ -3728,40 +4750,53 @@ class GearHttpNotFoundException extends GearHttpStatusCodeException
 }
 class GearHttpResponse implements IGearHttpResponse
 {
-    private
-        $innerStream;
+    /** @var GearHtmlStream */
+    private $buffer;
+    /** @var bool */
+    private $bufferStatus;
+
+    /** @var GearHtmlStream */
+    private $innerStream;
 
     /** @var string */
     private $encoding = 'UTF-8';
 
     /** @var string */
-    private $contentType = 'text/html';
+    private $contentType = null;
 
     public function __construct()
     {
-        $this->innerStream = new GearHtmlStream();
-    }
-
-    public function getInnerStream()
-    {
-        return $this->innerStream;
     }
 
     public function write($mixed)
     {
         if (is_string($mixed)) {
-            echo $mixed;
+            if ($this->bufferStatus) {
+                $this->buffer->write($mixed);
+            } else {
+                echo $mixed;
+            }
         } elseif (is_object($mixed) || is_array($mixed)) {
             $this->setContentType('application/json');
-            echo GearSerializer::json($mixed);
+            if ($this->bufferStatus) {
+                $this->buffer->write(GearSerializer::json($mixed));
+            } else {
+                echo GearSerializer::json($mixed);
+            }
         } else {
-            echo GearSerializer::stringify($mixed);
+            if ($this->bufferStatus) {
+                $this->buffer->write(GearSerializer::stringify($mixed));
+            } else {
+                echo GearSerializer::stringify($mixed);
+            }
         }
     }
 
     public function clear()
     {
-
+        if ($this->buffer != null) {
+            $this->buffer->clear();
+        }
     }
 
     public function serializeWrite($object, $request)
@@ -3769,9 +4804,28 @@ class GearHttpResponse implements IGearHttpResponse
         echo GearSerializer::stringify($object);
     }
 
-    public function writeInnerStream()
+    public function getInnerStream()
     {
-        $this->write($this->innerStream->getBuffer());
+        if ($this->innerStream == null) {
+            $this->innerStream = new GearHtmlStream();
+        }
+        return $this->innerStream;
+    }
+
+    public function writeInnerStream($mixed)
+    {
+        if ($this->innerStream = null) {
+            $this->innerStream = new GearHtmlStream();
+        }
+        $this->innerStream->write($mixed);
+    }
+
+    public function flushInnerStream()
+    {
+        if ($this->innerStream != null) {
+            $this->write($this->innerStream->getBuffer());
+            $this->innerStream->clear();
+        }
     }
 
     public function setStatusCode($statusCode)
@@ -3782,35 +4836,260 @@ class GearHttpResponse implements IGearHttpResponse
         header(Gear_PoweredResponseHeader, true, $statusCode);
     }
 
-    public function setHeader($name, $value)
+    public function getStatusCode()
     {
-        if (headers_sent()) {
-            throw new GearInvalidOperationException();
-        }
-        header("$name: $value", true);
+        return http_response_code();
     }
 
+    public function getHeader($name, $defaultValue = null)
+    {
+        $name = strtolower($name);
+        $headers = array_change_key_case($this->getHeaders(), CASE_LOWER);
+        if (isset($headers[$name])) {
+            return $headers[$name];
+        }
+        return $defaultValue;
+    }
+
+    public function setHeader($name, $value, $replace = true)
+    {
+        //if (headers_sent()) {
+        //    throw new GearInvalidOperationException();
+        //}
+        if (!headers_sent()) {
+            @header("$name: $value", $replace);
+        }
+    }
+
+    public function setHeaderLegacy($header, $replace = true)
+    {
+        //if (headers_sent()) {
+        //    throw new GearInvalidOperationException();
+        //}
+        if (!headers_sent()) {
+            @header($header, $replace);
+        }
+    }
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @return bool
+     */
+    public function headerExists($name, &$value)
+    {
+        $name = strtolower($name);
+        $headers = array_change_key_case($this->getHeaders(), CASE_LOWER);
+        if (isset($headers[$name])) {
+            $value = $headers[$name];
+            return true;
+        }
+        $value = null;
+        return false;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders()
+    {
+        $headerLines = headers_list();
+        return GearGeneralHelper::parseHeaderLines($headerLines);
+    }
+
+    /**
+     * @return string
+     */
+    public function getContentType()
+    {
+        if ($this->contentType != null) {
+            return $this->contentType;
+        }
+        return $this->getHeader('Content-Type', null);
+    }
+
+    /**
+     * @param string $contentType
+     * @return mixed|void
+     * @throws GearInvalidOperationException
+     */
     public function setContentType($contentType)
     {
-        if (headers_sent()) {
-            throw new GearInvalidOperationException();
-        }
         $this->contentType = $contentType;
         $this->_setContentType($contentType, $this->encoding);
     }
 
-    function setEncoding($encoding)
+    /**
+     * @param string $contentType
+     * @param string $encoding
+     */
+    private function _setContentType($contentType, $encoding)
     {
-        if (headers_sent()) {
-            throw new GearInvalidOperationException();
-        }
-        $this->encoding = $encoding;
-        $this->_setContentType($this->contentType, $encoding);
+        $this->setHeader('Content-Type', "$contentType; charset=$encoding");
     }
 
-    private function _setContentType($contentType, $encoding) {
-        header("Content-Type: $contentType; charset=$encoding", true);
-        //header("Content-Type: $contentType", true);
+    /**
+     * @return string
+     */
+    public function getEncoding()
+    {
+        return mb_http_output();
+    }
+
+    public function setEncoding($encoding)
+    {
+        $this->encoding = $encoding;
+        $this->_setContentType($this->getContentType(), $encoding);
+    }
+
+    /**
+     * @param string|$name
+     * @param string|null $value
+     * @param string|null $expire
+     * @param string|null $path
+     * @param string|null $domain
+     * @param bool|null $secure
+     * @param bool|null $httpOnly
+     * @return mixed|void
+     */
+    public function setCookie($name, $value = null, $expire = null, $path = null, $domain = null, $secure = null, $httpOnly = null)
+    {
+        setcookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
+    }
+
+    /**
+     * @param string $name
+     * @param string|null $defaultValue
+     * @return null
+     */
+    public function getCookie($name, $defaultValue = null)
+    {
+        $cookies = $this->getCookies();
+        return
+            isset($cookies[$name])
+                ? $cookies[$name]
+                : $defaultValue;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCookies()
+    {
+        $cookies = $this->getHeader('Set-Cookie');
+        if ($cookies == null) {
+            return [];
+        }
+
+        $cookieList = [];
+        foreach ($cookies as $cookieStr) {
+            $parts = explode(';', $cookieStr);
+
+            $cookieFields = [];
+            if (sizeof($parts) > 0) {
+                foreach ($parts as $part) {
+                    list($key, $value) = explode('=', $part, 2);
+                    $cookieFields[$key] = $value;
+                }
+            }
+            foreach ($cookieFields as $key => $value) {
+                $cookieList[$key] = array_merge(['value' => $value], $cookieFields);
+            }
+        }
+
+        return $cookieList;
+    }
+
+    public function isRedirect()
+    {
+        $status = $this->getStatusCode();
+        return $status == 301 || $status == 302 || $status == 303;
+    }
+
+    public function redirectUrl()
+    {
+        if ((!$this->headerExists('Location', $redirect)) && !$this->isRedirect()) {
+            throw new GearInvalidOperationException();
+        }
+
+        return $redirect;
+    }
+
+
+    public function isJson()
+    {
+        $contentType = strtolower($this->getContentType());
+        return
+            $contentType == 'application/json' ||
+            $contentType == 'text/json';
+    }
+
+    public function isXml()
+    {
+        $contentType = strtolower($this->getContentType());
+        return
+            $contentType == 'application/xml' ||
+            $contentType == 'text/xml';
+    }
+
+    public function isPlainText()
+    {
+        $contentType = strtolower($this->getContentType());
+        return $contentType == 'text/plain';
+    }
+
+    public function isHtml()
+    {
+        $contentType = strtolower($this->getContentType());
+        return $contentType == 'text/html';
+    }
+
+    public function setBufferStatus($status, $flushOld = false)
+    {
+        if (!$status && $flushOld) {
+            $this->flush();
+        }
+        $this->bufferStatus = $status;
+        if ($status && $this->buffer == null) {
+            $this->buffer = new GearHtmlStream();
+        }
+    }
+
+    public function flush()
+    {
+        if ($this->buffer != null) {
+            echo $this->buffer->getBuffer();
+            $this->buffer->clear();
+        }
+    }
+
+    public function getBufferStream()
+    {
+        if ($this->buffer == null) {
+            $this->buffer = new GearHtmlStream();
+        }
+        return $this->buffer;
+    }
+
+    public function &getBuffer()
+    {
+        return $this->buffer;
+    }
+
+    public function bufferSize()
+    {
+        $size = 0;
+        if ($this->buffer != null) {
+            $size = $this->buffer->bufferSize();
+        }
+        return $size;
+    }
+
+    public function getBody()
+    {
+        if ($this->buffer != null) {
+            return $this->buffer->getBuffer();
+        }
     }
 }
 class GearInternalServerErrorResult extends GearStatusCodeResult
@@ -3837,7 +5116,7 @@ class GearInternalServerErrorResult extends GearStatusCodeResult
         //parent::writeResult($context, $request, $response);
         $response->setContentType('application/json');
 
-        if (defined('DEBUG')) {
+        if (GearAppEngine::isDebug()) {
             $response->write(\GearSerializer::json([
                 'message' => $this->userMessage,
                 'trace' => $this->exception
@@ -3889,6 +5168,18 @@ class GearViewFileNotFoundException extends GearHttpNotFoundException
             : "View file '$action' not found.$additionalInfo");
     }
 }
+class GearActionNotFoundException extends GearHttpNotFoundException
+{
+    public function __construct($actionName = null, $lookupActionNames = null)
+    {
+        if ($lookupActionNames == null || empty($lookupActionNames)) {
+            parent::__construct("Action '$actionName' not found.");
+        } else {
+            $allActions = implode(', ', $lookupActionNames);
+            parent::__construct("Action '$actionName' not found, using following lookup list: [$allActions]");
+        }
+    }
+}
 abstract class GearController extends GearExtensibleClass
 {
     /** @var IGearContext */
@@ -3915,7 +5206,7 @@ abstract class GearController extends GearExtensibleClass
     /** @var GearGeneralHelper */
     public $helper;
 
-    private
+    protected
         $beginExecuteHandlers = [],
         $checkExecutionHandlers = [],
         $endExecuteHandlers = [],
@@ -3925,9 +5216,13 @@ abstract class GearController extends GearExtensibleClass
      * Creates a controller.
      *
      * @param $context IGearContext
+     * @throws GearArgumentNullException
      */
     public function __construct($context)
     {
+        if ($context == null) {
+            throw new GearArgumentNullException('context');
+        }
         parent::__construct(false);
 
         $this->context = $context;
@@ -4093,12 +5388,14 @@ abstract class GearController extends GearExtensibleClass
     /**
      * @param IGearContext $context
      * @param Exception $exception
+     * @return mixed|IGearActionResult
      */
     public function onExceptionOccurred($context, $exception)
     {
         foreach ($this->exceptionHandlers as $handler) {
             $handler($context, $exception);
         }
+        return null;
     }
 
     /**
@@ -4234,6 +5531,17 @@ abstract class GearController extends GearExtensibleClass
     }
 
     /**
+     * @param string$name
+     * @param mixed $mixed
+     * @param bool|false $allowGet
+     * @return GearCsvonResult
+     */
+    public function csvon($name, $mixed, $allowGet = false)
+    {
+        return new GearCsvonResult($name,$mixed, $allowGet);
+    }
+
+    /**
      * @param string|null $message
      * @return GearInternalServerErrorResult
      */
@@ -4365,17 +5673,19 @@ function RenderBody()
     $context = GearHttpContext::current();
     if ($context == null) return;
 
-    $output = $context->getService(Gear_ServiceViewOutputStream);
-    if($output != null) {
-        $response = $context->getResponse();
-        if ($response != null) {
-            $response->write($output->getBuffer());
-        }
-    }
+    $response = $context->getResponse();
+    $response->flushInnerStream();
+
+//    $output = $context->getService(Gear_ServiceViewOutputStream);
+//    if($output != null) {
+//        if ($response != null) {
+//            $response->write($output->getBuffer());
+//        }
+//    }
 }
 
 function isDebug() {
-    return defined('DEBUG');
+    return GearAppEngine::isDebug();
 }
 GearBundle::setRootDirectory(getcwd());
 GearBundle::setEngineDirectory(__DIR__);

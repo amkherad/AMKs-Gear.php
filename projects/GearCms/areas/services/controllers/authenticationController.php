@@ -14,7 +14,7 @@ class authenticationController extends GearController
 
     function login_POST(AuthenticationModel $authenticationModel)
     {
-        if ($_GET['password'] == $authenticationModel->password)
+        if ($this->getRequest()->getValue('password') == $authenticationModel->password)
             throw new GearInvalidOperationException();
 
         return print_r($authenticationModel, true);

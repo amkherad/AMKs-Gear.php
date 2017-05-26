@@ -28,11 +28,24 @@ interface IGearHttpRequest
      * @return array
      */
     function getHeaders();
-    
+
+    /**
+     * @param string $name
+     * @param string|null $defaultValue
+     * @return array|null
+     */
+    function getHeader($name, $defaultValue);
+
     /**
      * @return string
      */
-    function getHeader($name);
+    function getRawQueryStrings();
+
+    /**
+     * @param string $queryString
+     * @return mixed
+     */
+    function setRawQueryStrings($queryString);
 
     /**
      * @return array
@@ -40,16 +53,32 @@ interface IGearHttpRequest
     function getQueryStrings();
 
     /**
-     * @return array
-     */
-    function getForms();
-    
-    /**
+     * @param string $name
      * @return string
      */
     function getQueryString($name);
-    
+
     /**
+     * @param string $name
+     * @param string $value
+     * @return mixed
+     */
+    function setQueryString($name, $value);
+
+    /**
+     * @return array
+     */
+    function getFormData();
+
+    /**
+     * @param string $name
+     * @param string $value
+     * @return mixed
+     */
+    function setFormData($name, $value);
+
+    /**
+     * @param string $name
      * @return string
      */
     function getForm($name);
@@ -58,6 +87,12 @@ interface IGearHttpRequest
      * @return string
      */
     function getMethod();
+
+    /**
+     * @param string $method
+     * @return mixed
+     */
+    function setMethod($method);
 
     /**
      * @return string
@@ -70,9 +105,21 @@ interface IGearHttpRequest
     function getContentType();
 
     /**
+     * @param string $contentType
+     * @return mixed
+     */
+    function setContentType($contentType);
+
+    /**
      * @return string
      */
     function getProtocol();
+
+    /**
+     * @param string $protocol
+     * @return mixed
+     */
+    function setProtocol($protocol);
 
     /**
      * @return bool
@@ -102,7 +149,13 @@ interface IGearHttpRequest
     /**
      * @return string
      */
-    function accepts();
+    function accept();
+
+    /**
+     * @param string $accept
+     * @return mixed
+     */
+    function setAccept($accept);
 
     /**
      * @return array

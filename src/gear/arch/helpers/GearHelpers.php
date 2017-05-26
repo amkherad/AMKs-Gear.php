@@ -3,10 +3,10 @@
 
 /*<namespace.current>*/
 namespace gear\arch\helpers;
-/*</namespace.current>*/
+    /*</namespace.current>*/
 
-/*<bundles>*/
-/*</bundles>*/
+    /*<bundles>*/
+    /*</bundles>*/
 
 /*<module>*/
 class GearHelpers
@@ -30,20 +30,25 @@ class GearHelpers
         return preg_match('/^[\s]*$/', $string);
     }
 
-    private static function _dumpArray($arr,$indent){
-        $size=sizeof($arr);
-        echo"<span style=\"color:orange;\">Array($size)</span> => [";
-        foreach($arr as $k=>$e){
-            echo'<br>';
-            for($i=0;$i<$indent;$i++)echo"----";
-            echo"<span style=\"color:green;\">'$k'</span> : ";
-            if(is_array($e))self::_dumpArray($e,$indent+1);else var_dump($e);
-            echo' ,<br>';
+    private static function _dumpArray($arr, $indent)
+    {
+        $size = sizeof($arr);
+        echo "<span style=\"color:orange;\">Array($size)</span> => [";
+        foreach ($arr as $k => $e) {
+            echo '<br>';
+            for ($i = 0; $i < $indent; $i++) echo "----";
+            echo "<span style=\"color:green;\">'$k'</span> : ";
+            if (is_array($e)) self::_dumpArray($e, $indent + 1); else var_dump($e);
+            echo ' ,<br>';
         }
-        for($i=0;$i<$indent;$i++)echo"----";
-        echo']';
+        for ($i = 0; $i < $indent; $i++) echo "----";
+        echo ']';
     }
-    public static function show($var){if(is_array($var))self::_dumpArray($var,1);else var_dump($var);}
+
+    public static function show($var)
+    {
+        if (is_array($var)) self::_dumpArray($var, 1); else var_dump($var);
+    }
 }
 
 /*</module>*/

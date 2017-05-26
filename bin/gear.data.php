@@ -9,6 +9,25 @@ class GearCrudResult
 {
 
 }
+class GearPdoQueryBuilderHelper implements IGearQueryBuilderHelper
+{
+    /** @var \PDO */
+    private $pdo;
+
+    /**
+     * GearPdoQueryBuilderHelper constructor.
+     * @param $pdo \PDO
+     */
+    public function __construct($pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function escapeValue($value)
+    {
+        return $this->pdo->quote($value);
+    }
+}
 class GearPdoDataInterface implements IGearCrudService
 {
     /** @var PDO */
@@ -236,25 +255,6 @@ class GearPdoQueryBuilderEvaluator implements IGearQueryBuilderEvaluator
 
         $first = $query->fetchColumn();
         return $first;
-    }
-}
-class GearPdoQueryBuilderHelper implements IGearQueryBuilderHelper
-{
-    /** @var \PDO */
-    private $pdo;
-
-    /**
-     * GearPdoQueryBuilderHelper constructor.
-     * @param $pdo \PDO
-     */
-    public function __construct($pdo)
-    {
-        $this->pdo = $pdo;
-    }
-
-    public function escapeValue($value)
-    {
-        return $this->pdo->quote($value);
     }
 }
 class GearQueryBuilderSqlGeneratorMySql implements IGearQueryBuilderSqlGenerator

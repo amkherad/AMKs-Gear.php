@@ -28,6 +28,12 @@ interface IGearRouteService
     function getMvcContext();
 
     /**
+     * @param string $url
+     * @return IGearMvcContext
+     */
+    function createMvcContext($url);
+
+    /**
      * @param $context IGearContext
      * @param $mvcContext IGearMvcContext
      * @param $params array
@@ -37,7 +43,7 @@ interface IGearRouteService
     function createUrl($context, $mvcContext, $params);
 
     /**
-     * @param $provider IGearRouteService
+     * @param callable $provider
      *
      * @return void
      */

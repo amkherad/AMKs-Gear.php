@@ -37,6 +37,9 @@ define('Gear_Key_RootPath',                         'RootPath');
 define('Gear_Key_Dependencies',                     'Dependencies');
 define('Gear_Key_Bundles',                          'Bundles');
 define('Gear_Key_PreferredActionPattern',           'PreferredActionPattern');
+define('Gear_Key_ActionPattern',                    'ActionPattern');
+define('Gear_Key_ActionPatternSeparator',           'ActionPatternSeparator');
+define('Gear_Key_ActionLookupRequestAttributes',    'ActionLookupRequestAttributes');
 define('Gear_Key_JsonResultAllowGet',               'JsonResultAllowGet');
 define('Gear_Key_LayoutName',                       'Layout');
 define('Gear_Key_SharedView',                       'SharedView');
@@ -48,6 +51,11 @@ define('Gear_Key_URLPrefix',                        'URLPrefix');
 
 define('Gear_PlaceHolder_Action',                   '[action]');
 define('Gear_PlaceHolder_HttpMethod',               '[http_method]');
+define('Gear_PlaceHolder_IsAjax',                   '[ajax]');
+//define('Gear_PlaceHolder_ContentType',              '[content_type]');
+//define('Gear_PlaceHolder_MediaType',                '[media_type]');
+//define('Gear_PlaceHolder_Scheme',                   '[request_scheme]');
+define('Gear_PlaceHolder_RequestAttributes',        '[request_attributes]');
 
 define('Gear_DefaultRouterFactory',                 'GearDefaultRouteFactory');
 define('Gear_DefaultControllerFactory',             'GearDefaultControllerFactory');
@@ -64,7 +72,9 @@ define('Gear_DefaultModelsRootPath',                'model');
 define('Gear_DefaultViewsRootPath',                 'views');
 
 define('Gear_DefaultLayoutName',                    '_layout');
+define('Gear_DefaultActionPattern',                 '[action]Action');
 define('Gear_DefaultPreferredActionPattern',        '[action]__[http_method]');
+define('Gear_DefaultActionPatternSeparator',        '__');
 
 define('Gear_ServiceRouterEngine',                  'RouterEngineService');
 define('Gear_ServiceViewEngineFactory',             'ViewEngineFactoryService');

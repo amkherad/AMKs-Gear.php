@@ -10,6 +10,7 @@
 namespace gear\arch\http;
 /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\app\GearAppEngine;
 use gear\arch\GearLogger;
 use gear\arch\helpers\GearGeneralHelper;
 /*</namespace.use>*/
@@ -114,7 +115,7 @@ class GearHttpClient
         curl_setopt($ch, CURLOPT_POSTFIELDS, $this->body);
         curl_setopt($ch, CURLOPT_HEADER, $this->hasReturnHeaders);
         
-        if (isDebug()) {
+        if (GearAppEngine::isDebug()) {
             curl_setopt($ch, CURLOPT_VERBOSE, true);
         }
         
@@ -144,7 +145,7 @@ class GearHttpClient
         curl_close($ch);
         if ($response === FALSE)
         {
-            if (isDebug()) {
+            if (GearAppEngine::isDebug()) {
                 GearLogger::write($error);
             }
             throw new \Exception($error);
@@ -153,7 +154,7 @@ class GearHttpClient
         $responseBody = substr($response, $header_size);
         $responseHeaders = $this->hasReturnHeaders ? substr($response, 0, $header_size) : null;
         
-        if (isDebug()) {
+        if (GearAppEngine::isDebug()) {
             GearLogger::write('curl successfull request on '.$this->url);
         }
         
@@ -180,10 +181,13 @@ class GearHttpClient
         
         if ($headers != null) {
             foreach ($headers as $key => $value) {
-                header("$key: $value");
+                foreach ($value as $val) {
+                    header("$key: $val");
+                }
             }
         }
-        
+
+        //! Do not remove.
         echo $body;
         
         return $result;

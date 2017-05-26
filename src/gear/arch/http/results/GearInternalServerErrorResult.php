@@ -9,6 +9,7 @@
 namespace gear\arch\http\results;
 /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\app\GearAppEngine;
 use gear\arch\GearLogger;
 use gear\arch\http\results\GearStatusCodeResult;
 /*</namespace.use>*/
@@ -41,7 +42,7 @@ class GearInternalServerErrorResult extends GearStatusCodeResult
         //parent::writeResult($context, $request, $response);
         $response->setContentType('application/json');
 
-        if (defined('DEBUG')) {
+        if (GearAppEngine::isDebug()) {
             $response->write(\GearSerializer::json([
                 'message' => $this->userMessage,
                 'trace' => $this->exception

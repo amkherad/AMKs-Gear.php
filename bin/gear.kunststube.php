@@ -730,14 +730,15 @@ class Router {
 }
 class GearKunststubeRouteServiceMigration implements IGearRouteService
 {
-    protected
-        $context,
-        $mvcContextCache,
-        $config,
-        $route,
-        $urlProvider,
-        $enableCache;
+    protected $context;
+    protected $mvcContextCache;
+    protected $config;
+    protected $urlProvider;
+    protected $enableCache;
+    /** @var Router */
+    protected $route;
 
+    /** @var Route */
     private $routeCache;
 
     /**
@@ -753,7 +754,6 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
         $router = new Router();
         $this->route = $router;
         $router->defaultCallback([$this, '_callback']);
-
     }
 
     public function getMvcContext()
@@ -769,12 +769,19 @@ class GearKunststubeRouteServiceMigration implements IGearRouteService
             $url = $urlProvider();
         } else {
             $urlFieldName = $config->getValue(Gear_Key_RouterUrl, Gear_Section_Router, 'url');
-            if (isset($_GET[$urlFieldName])) {
-                $url = $_GET[$urlFieldName];
-            } else {
-                $url = '';
-            }
+            $url = $this->context->getRequest()->getValue($urlFieldName, '');
         }
+
+        return $this->createMvcContext($url);
+    }
+
+    /**
+     * @param string $url
+     * @return IGearMvcContext
+     */
+    public function createMvcContext($url)
+    {
+        $config = $this->config;
 
         $route = $this->route;
         $route->route($url);

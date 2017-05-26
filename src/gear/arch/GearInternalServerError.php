@@ -11,6 +11,7 @@
 namespace gear\arch;
 /*</namespace.current>*/
 /*<namespace.use>*/
+use gear\arch\app\GearAppEngine;
 use gear\arch\core\IGearMessageException;
 use gear\arch\core\GearSerializer;
 
@@ -35,14 +36,16 @@ class GearInternalServerError
             $errorCode = $eCode;
         }
 
-        if (defined('DEBUG')) {
+        $debug = GearAppEngine::isDebug();
+
+        if ($debug) {
             GearLogger::write($ex->getMessage() . ' trace:' . GearSerializer::stringify($ex->getTrace()));
         }
 
         http_response_code($errorCode);
-        $errMessage = defined('DEBUG') ? $ex->getMessage() : 'An Error Has Been Occurred!';
+        $errMessage = $debug ? $ex->getMessage() : 'An Error Has Been Occurred!';
         echo "<title>$errorCode - Error</title><h1 style=\"color:red\">$errorCode - $errMessage</h1><br>" .
-            (defined('DEBUG') ?
+            ($debug ?
                 $ex->getMessage() . '<br>' .
                 $ex->getFile() . ' at line: ' . $ex->getLine() . '<br><br>' .
                 $ex->getTraceAsString()

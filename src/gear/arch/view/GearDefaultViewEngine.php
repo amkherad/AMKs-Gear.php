@@ -173,12 +173,15 @@ class GearDefaultViewEngine implements IGearViewEngine
         if (isset($layout)) {
             //$controller->layout = null;
 
-            $output = $context->getService(Gear_ServiceViewOutputStream);
-            if ($output == null) {
-                $output = new GearHtmlStream();
-            }
-            $output->write($viewContent);
-            $context->registerService(Gear_ServiceViewOutputStream, $output);
+            $stream = $context->getResponse()->getInnerStream();
+            $stream->write($viewContent);
+
+//            $output = $context->getService(Gear_ServiceViewOutputStream);
+//            if ($output == null) {
+//                $output = new GearHtmlStream();
+//            }
+//            $output->write();
+//            $context->registerService(Gear_ServiceViewOutputStream, $output);
 
             self::_renderView(
                 $viewEngine,
@@ -191,7 +194,7 @@ class GearDefaultViewEngine implements IGearViewEngine
                 $model,
                 false);
 
-            $output->clear();
+            $stream->clear();
 
         } else {
             $context->getResponse()->write($viewContent);
@@ -340,8 +343,9 @@ class GearDefaultViewEngine implements IGearViewEngine
         ob_start();
         $result = require($viewPath);
         $buffer = '';
-        while (ob_get_level() > $level)
+        while (ob_get_level() > $level) {
             $buffer = ob_get_clean() . $buffer;
+        }
         //global $Layout;
         if ($useLayout) {
             $layout = $Layout;

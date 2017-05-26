@@ -6,6 +6,8 @@ namespace gear\arch\app;
     /*</namespace.current>*/
 /*<namespace.use>*/
 use \Exception;
+use gear\arch\controller\GearActionExecutor;
+use gear\arch\controller\GearController;
 use gear\arch\core\IGearContext;
 use gear\arch\core\IGearEngineFactory;
 use gear\arch\GearBundle;
@@ -13,12 +15,12 @@ use gear\arch\GearAutoload;
 use gear\arch\core\GearAppContext;
 use gear\arch\core\GearConfiguration;
 use gear\arch\core\GearInvalidOperationException;
-use gear\arch\app\GearAppEngineNotFoundException;
 use gear\arch\http\GearHttpRequest;
 use gear\arch\http\GearHttpResponse;
 use gear\arch\GearLogger;
 use gear\arch\http\GearHttpContext;
 use gear\arch\GearInternalServerError;
+
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -65,16 +67,136 @@ class GearAppEngine
         $this->actionResolverFactory = $actionResolverFactory;
     }
 
+    /**
+     * @return IGearContext
+     */
+    public function getContext()
+    {
+        return $this->context;
+    }
+
+    /**
+     * @param IGearContext $context
+     */
+    public function setContext($context)
+    {
+        $this->context = $context;
+    }
+
+    /**
+     * @return GearConfiguration
+     */
+    public function getConfiguration()
+    {
+        return $this->configuration;
+    }
+
+    /**
+     * @param GearConfiguration $configuration
+     */
+    public function setConfiguration($configuration)
+    {
+        $this->configuration = $configuration;
+    }
+
+    /**
+     * @return GearApplication
+     */
+    public function getApplicationEntry()
+    {
+        return $this->applicationEntry;
+    }
+
+    /**
+     * @param GearApplication $applicationEntry
+     */
+    public function setApplicationEntry($applicationEntry)
+    {
+        $this->applicationEntry = $applicationEntry;
+    }
+
+    /**
+     * @return IGearEngineFactory
+     */
+    public function getControllerFactory()
+    {
+        return $this->controllerFactory;
+    }
+
+    /**
+     * @param IGearEngineFactory $controllerFactory
+     */
+    public function setControllerFactory($controllerFactory)
+    {
+        $this->controllerFactory = $controllerFactory;
+    }
+
+    /**
+     * @return IGearEngineFactory
+     */
+    public function getActionResolverFactory()
+    {
+        return $this->actionResolverFactory;
+    }
+
+    /**
+     * @param IGearEngineFactory $actionResolverFactory
+     */
+    public function setActionResolverFactory($actionResolverFactory)
+    {
+        $this->actionResolverFactory = $actionResolverFactory;
+    }
+
+    static $debugSession = 0;
+
+    /**
+     * @return bool
+     */
+    public static function isDebug()
+    {
+        return defined('DEBUG') || (self::$debugSession > 0);
+    }
+
+    /**
+     * @return int
+     */
+    public static function beginDebugSession()
+    {
+        return ++self::$debugSession;
+    }
+
+    /**
+     * @param bool|true $explicit
+     */
+    public static function endDebugSession($explicit = true)
+    {
+        if ($explicit) {
+            self::$debugSession = 0;
+        } else {
+            --self::$debugSession;
+        }
+    }
+
+    /**
+     * @return double
+     */
     public function getCreateExecutionTime()
     {
         return $this->_createExecutionTime;
     }
 
+    /**
+     * @return double
+     */
     public function getStartExecutionTime()
     {
         return $this->_startExecutionTime;
     }
 
+    /**
+     * @param string|null $engine
+     * @return null
+     */
     public function start($engine = null)
     {
         $result = null;
@@ -99,6 +221,13 @@ class GearAppEngine
         }
     }
 
+    /**
+     * @param GearConfiguration $config
+     * @param string $engine
+     * @param string $defaultFactory
+     * @return IGearEngineFactory
+     * @throws GearInvalidOperationException
+     */
     public static function getFactory(GearConfiguration $config, $engine, $defaultFactory)
     {
         $factoryClass = $config->getValue(Gear_Key_Factory, $engine, $defaultFactory);
@@ -111,13 +240,10 @@ class GearAppEngine
     }
 
     /**
-     * @param IGearContext $context
+     * @param array $bundles
      */
-    public static function resolveBundles($context)
+    public static function resolveBundles($bundles)
     {
-        $config = $context->getConfig();
-        $bundles = $config->getValue(Gear_Key_Bundles, Gear_Section_AppEngine);
-
         if (isset($bundles)) {
             $modules = [];
             $directories = [];
@@ -144,13 +270,10 @@ class GearAppEngine
     }
 
     /**
-     * @param IGearContext $context
+     * @param array $dependencies
      */
-    public static function resolveDependencies($context)
+    public static function resolveDependencies($dependencies)
     {
-        $config = $context->getConfig();
-        $dependencies = $config->getValue(Gear_Key_Dependencies, Gear_Section_AppEngine);
-
         if (isset($dependencies)) {
             $modules = [];
             $directories = [];
@@ -176,6 +299,10 @@ class GearAppEngine
         }
     }
 
+    /**
+     * @param $callback
+     * @throws \GearInvalidOperationException
+     */
     public static function registerCreateInitializer($callback)
     {
         if (!is_callable($callback)) {
@@ -184,6 +311,10 @@ class GearAppEngine
         self::$createInitializers[] = $callback;
     }
 
+    /**
+     * @param $callback
+     * @throws \GearInvalidOperationException
+     */
     public static function registerStartInitializer($callback)
     {
         if (!is_callable($callback)) {
@@ -192,11 +323,47 @@ class GearAppEngine
         self::$startInitializers[] = $callback;
     }
 
+    /**
+     * @param IGearContext $context
+     * @return GearController
+     */
+    public function createController($context = null)
+    {
+        if ($context == null) {
+            $context = $this->context;
+        }
+
+        return $this->controllerFactory->createEngine($context);
+    }
+
+    /**
+     * @param GearController $controller
+     * @return GearActionExecutor
+     */
+    public function createActionExecutor($controller)
+    {
+        $actionResolver = $this->actionResolverFactory->createEngine($this->context);
+
+        $context = $this->context;
+        $route = $context->getRoute();
+        $request = $context->getRequest();
+        $mvcContext = $route->getMvcContext();
+
+        $actionName = $mvcContext->getActionName();
+
+        return new GearActionExecutor(
+            $controller,
+            $context,
+            $mvcContext,
+            $request,
+            $actionName,
+            $actionResolver
+        );
+    }
+
     private function _startMvc0()
     {
-        $controller = $this->controllerFactory->createEngine(
-            $this->context
-        );
+        $controller = $this->createController();
 
         $actionResolver = $this->actionResolverFactory->createEngine($this->context);
 
@@ -207,42 +374,73 @@ class GearAppEngine
 
         $actionName = $mvcContext->getActionName();
 
-        $actionResolver->invokeAction(
+        return $actionResolver->invokeAction(
             $controller,
             $context,
             $mvcContext,
             $request,
             $actionName);
-
-        return 1;
     }
 
-    public static function create($configPath = null, $type = 0)
+    private static $initialized = false;
+
+    /**
+     * @param string|null $configPath
+     * @param int $type
+     * @return GearConfiguration
+     * @throws GearInvalidOperationException
+     */
+    public static function initEnvironment($configPath = null, $type = 0)
+    {
+        if (self::$initialized) {
+            throw new GearInvalidOperationException();
+        }
+
+        if (is_null($configPath)) {
+            $configPath = Gear_Default_ConfigPath;
+        }
+        $config = GearConfiguration::FromFile($configPath, $type);
+        self::$GearConfigCache = $config;
+
+        $debugMode = $config->getValue(Gear_Key_DebugMode, Gear_Section_AppEngine, false);
+        if (boolval($debugMode) == true && !self::isDebug()) {
+            define('DEBUG', 1);
+        }
+
+        $autoLoadMode = $config->getValue(Gear_Key_AutoLoading, Gear_Section_AppEngine, null);
+        if ($autoLoadMode != null) {
+            GearAutoload::register($autoLoadMode);
+        }
+
+        self::resolveBundles($config->getValue(Gear_Key_Bundles, Gear_Section_AppEngine));
+        self::resolveDependencies($config->getValue(Gear_Key_Dependencies, Gear_Section_AppEngine));
+
+        self::$initialized = true;
+
+        return $config;
+    }
+
+    /**
+     * @param GearConfiguration $config
+     * @return GearAppEngine|null
+     */
+    public static function create($config = null)
     {
         $engine = null;
         try {
             $rStart = microtime(true);
-            if (is_null($configPath)) {
-                $configPath = Gear_Default_ConfigPath;
-            }
-            $config = GearConfiguration::FromFile($configPath, $type);
-            self::$GearConfigCache = $config;
 
-            $debugMode = $config->getValue(Gear_Key_DebugMode, Gear_Section_AppEngine, false);
-            if (boolval($debugMode) == true && !defined('DEBUG')) {
-                define('DEBUG', 1);
+            if (!self::$initialized) {
+                $config = self::initEnvironment();
             }
 
-            $autoLoadMode = $config->getValue(Gear_Key_AutoLoading, Gear_Section_AppEngine, null);
-            if ($autoLoadMode != null) {
-                GearAutoload::register($autoLoadMode);
+            if ($config == null) {
+                throw new GearInvalidOperationException();
             }
 
             $context = new GearAppContext($config);
 
             GearHttpContext::setCurrent($context);
-            self::resolveBundles($context);
-            self::resolveDependencies($context);
 
             /** @var IGearEngineFactory $routeFactory */
             $routeFactory = self::getFactory($config, Gear_Section_Router, Gear_DefaultRouterFactory);
@@ -283,7 +481,7 @@ class GearAppEngine
                 $controllerFactory,
                 $actionResolverFactory);
 
-            header(Gear_PoweredResponseHeader);
+            $response->setHeaderLegacy(Gear_PoweredResponseHeader);
 
             $applicationEntry = $config->getValue(Gear_Key_ApplicationEntry, Gear_Section_AppEngine);
             if (isset($applicationEntry)) {

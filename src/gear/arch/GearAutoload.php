@@ -11,7 +11,6 @@ use gear\arch\core\GearInvalidOperationException;
 /*</namespace.use>*/
 
 /*<module>*/
-
 class GearAutoload
 {
     public static function register($type)

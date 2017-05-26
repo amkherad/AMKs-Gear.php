@@ -67,7 +67,7 @@ class GearAppContext implements IGearContext
         $this->request = $request;
     }
 
-    function getResponse()
+    public function getResponse()
     {
         return $this->response;
     }
