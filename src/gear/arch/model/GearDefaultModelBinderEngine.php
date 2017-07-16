@@ -52,7 +52,7 @@ class GearDefaultModelBinderEngine implements IGearModelBinderEngine
 
         $sources = [];
         if ($request->isJsonRequest()) {
-            $sources[] = json_decode($request->getBody(), true, 512, JSON_OBJECT_AS_ARRAY);
+            $sources[] = $request->getBodyParameters(); //json_decode($request->getBody(), true, 512, JSON_OBJECT_AS_ARRAY);
         }
         if ($this->useRequestParams) {
             $sources[] = $request->getCurrentMethodValues();

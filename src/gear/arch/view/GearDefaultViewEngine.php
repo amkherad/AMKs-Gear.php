@@ -14,7 +14,7 @@ use gear\arch\core\GearConfiguration;
 use gear\arch\core\IGearContext;
 use gear\arch\core\IGearMvcContext;
 use gear\arch\helpers\GearDynamicDictionary;
-use gear\arch\helpers\GearGeneralHelper;
+use gear\arch\helpers\GearHttpHelper;
 use gear\arch\helpers\GearHtmlHelper;
 use gear\arch\helpers\GearUrlHelper;
 use gear\arch\view\IGearViewEngine;
@@ -295,7 +295,7 @@ class GearDefaultViewEngine implements IGearViewEngine
      * @param $dataBag GearDynamicDictionary
      * @param $html GearHtmlHelper
      * @param $url GearUrlHelper
-     * @param $helper GearGeneralHelper
+     * @param $helper GearHttpHelper
      * @param $layout string
      * @param $model mixed
      * @param $result mixed

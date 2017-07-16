@@ -37,6 +37,8 @@ class GearHttpRequest implements IGearHttpRequest
     private $headerParameters = [];
     private $cookieParameters = [];
 
+    private $bodyParameters;
+
     public function __construct($route)
     {
         $this->route = $route;
@@ -44,6 +46,13 @@ class GearHttpRequest implements IGearHttpRequest
 
     public function getValue($name, $defaultValue = null)
     {
+        if ($this->isJsonRequest()) {
+            $params = $this->getBodyParameters();
+            if (isset($params[$name])) {
+                return $params[$name];
+            }
+        }
+
         if (isset($this->queryStringParameters[$name])) {
             return $this->queryStringParameters[$name];
         } elseif (isset($this->formDataParameters[$name])) {
@@ -61,6 +70,20 @@ class GearHttpRequest implements IGearHttpRequest
     public function getBody()
     {
         return file_get_contents("php://input");
+    }
+
+    public function getBodyParameters()
+    {
+        if (isset($this->bodyParameters)) {
+            return $this->bodyParameters;
+        }
+
+        if ($this->isJsonRequest()) {
+            $this->bodyParameters = json_decode($this->getBody());
+            return $this->bodyParameters;
+        }
+
+        return [];
     }
 
     public function getHeaders()
@@ -95,6 +118,7 @@ class GearHttpRequest implements IGearHttpRequest
     {
         $this->queryString = $queryString;
     }
+
     public function getRawQueryStrings()
     {
         if ($this->queryString == null) {
@@ -146,6 +170,57 @@ class GearHttpRequest implements IGearHttpRequest
             }
         }
         return $defaultValue;
+    }
+
+    /**
+     * @param string $name
+     * @param string|null $defaultValue
+     * @return null
+     */
+    public function getCookie($name, $defaultValue = null)
+    {
+        $cookies = $this->getCookies();
+        return
+            isset($cookies[$name])
+                ? $cookies[$name]
+                : $defaultValue;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCookies()
+    {
+        $cookieRows = $this->getHeader('Cookie');
+        if ($cookieRows == null) {
+            return [];
+        }
+
+        $cookies = [];
+
+        $cookieList = [];
+        foreach ($cookieRows as $cookieStr) {
+            $parts = explode(';', $cookieStr);
+
+            if (sizeof($parts) > 0) {
+                foreach ($parts as $part) {
+                    list($key, $value) = explode('=', $part, 2);
+                    $cookies[$key] = $value;
+                }
+            }
+        }
+
+        return $cookieList;
+    }
+
+    public function getFile($name)
+    {
+        return $_FILES[$name];
+    }
+
+    public function getFiles()
+    {
+        return $_FILES;
     }
 
     public function getMethod()
@@ -243,18 +318,23 @@ class GearHttpRequest implements IGearHttpRequest
             $_REQUEST,
             $this->queryStringParameters,
             $this->formDataParameters,
-            $this->cookieParameters
+            $this->cookieParameters,
+            $this->getBodyParameters()
         );
     }
 
-    public function &getCurrentMethodValues()
+    public function getCurrentMethodValues()
     {
         $requestMethod = $this->getMethod();
         switch ($requestMethod) {
             case 'GET':
                 return $this->getQueryStrings();
             default:
-                return $this->getFormData();
+                if ($this->isJsonRequest()) {
+                    return $this->getBodyParameters();
+                } else {
+                    return $this->getFormData();
+                }
         }
     }
 

@@ -49,6 +49,16 @@ class GearHelpers
     {
         if (is_array($var)) self::_dumpArray($var, 1); else var_dump($var);
     }
+
+    public static function generateRandomString($length = 10)
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $randString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randString .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        return $randString;
+    }
 }
 
 /*</module>*/

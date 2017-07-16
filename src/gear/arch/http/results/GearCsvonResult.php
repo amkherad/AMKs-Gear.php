@@ -89,7 +89,6 @@ class GearCsvonResult extends GearActionResultBase
         $response->write($result);
     }
 
-
     private function csvonSerialize($level, $parent, $name, $data, $descriptor, $separator, &$childArray, &$childrenAsColumns)
     {
         $lines = [];
@@ -108,7 +107,7 @@ class GearCsvonResult extends GearActionResultBase
                 $childrenAsColumns1 = true;
                 $childArray1 = false;
                 $result = $this->csvonSerialize($level + 1, $name, $key, $row, $desc, ',', $childArray1, $childrenAsColumns1);
-                if (empty($result)) {
+                if (empty($result) && $result != 0) {
                     continue;
                 }
                 if (!$childrenAsColumns1) {

@@ -10,7 +10,7 @@ define('Gear_Version',                              '0.0.1');
 
 define('Gear_Default_ConfigPath',                   'config.ini');
 define('Gear_500InternalServerErrorPageName',       '500.php');
-define('Gear_PoweredResponseHeader',                'X-Powered-Fx: AMK\'s Gear.php/'.Gear_Version);
+define('Gear_PoweredResponseHeader',                'X-Powered-Fx: AMK\'s Gear'/*/'.Gear_Version*/);
 
 define('Gear_Section_AppEngine',                    'AppEngine');
 define('Gear_Section_Router',                       'Router');
@@ -19,6 +19,7 @@ define('Gear_Section_ActionResolver',               'ActionResolver');
 define('Gear_Section_View',                         'View');
 define('Gear_Section_Binder',                       'Binder');
 define('Gear_Section_Defaults',                     'Defaults');
+define('Gear_Section_UserData',                     'Config');
 
 define('Gear_Key_DefaultArea',                      'area');
 define('Gear_Key_DefaultController',                'controller');
@@ -263,6 +264,7 @@ class GearAnnotationHelper
     private $rawValue;
     private $args;
 
+    private $caseSensitive;
 
     public function getName()
     {
@@ -271,6 +273,10 @@ class GearAnnotationHelper
 
     public function getArg($name, $defaultValue = null)
     {
+        if (!$this->caseSensitive) {
+            $name = strtolower($name);
+        }
+
         return isset($this->args[$name])
             ? $this->args[$name]
             : $defaultValue;
@@ -286,7 +292,12 @@ class GearAnnotationHelper
         return $this->rawValue;
     }
 
-    public function __construct($name, $rawArgs)
+    public function isCaseSensitive()
+    {
+        return $this->caseSensitive;
+    }
+
+    public function __construct($name, $rawArgs, $caseSensitive)
     {
         $this->args = [];
         $args = preg_split('/(,)(?=(?:[^"]|"[^"]*")*$)/', $rawArgs);
@@ -296,8 +307,8 @@ class GearAnnotationHelper
             $key = '';
             $value = '';
             if ($eqPos !== false) {
-                $fP = trim( substr($arg, 0, $eqPos) , " \t\n\r\0\x0B\"'*" );
-                $sP = trim( substr($arg, $eqPos + 1) , " \t\n\r\0\x0B\"'*" );
+                $fP = trim(substr($arg, 0, $eqPos), " \t\n\r\0\x0B\"'*");
+                $sP = trim(substr($arg, $eqPos + 1), " \t\n\r\0\x0B\"'*");
 
                 $key = $fP;
                 $value = $sP;
@@ -318,7 +329,11 @@ class GearAnnotationHelper
                 $value = true;
             }
 
-            $this->args[$key] = $value;
+            if ($caseSensitive) {
+                $this->args[$key] = $value;
+            } else {
+                $this->args[strtolower($key)] = $value;
+            }
         }
     }
 
@@ -346,7 +361,7 @@ class GearAnnotationHelper
      * @param $name
      * @return GearAnnotationHelper
      */
-    public static function exportAnnotation($str, $name)
+    public static function exportAnnotation($str, $name, $caseSensitive = true)
     {
         $pos = stripos($str, "@$name");
         if ($pos === false) {
@@ -374,7 +389,7 @@ class GearAnnotationHelper
             }
         }
 
-        return new GearAnnotationHelper($name, $annotation);
+        return new GearAnnotationHelper($name, $annotation, $caseSensitive);
     }
 }
 class GearAntiForgeryTokenManager
@@ -580,11 +595,11 @@ class GearAppEngine
                 $result = self::_startMvc0();
             $this->_startExecutionTime = (microtime(true) - $rStart);
 
-            if ($result == null) {
-                throw new GearAppEngineNotFoundException();
-            } else {
+            //if ($result == null) {
+                //throw new GearAppEngineNotFoundException();
+            //} else {
                 return $result;
-            }
+            //}
         } catch (Exception $ex) {
             self::_render500Error($this, $ex);
         }
@@ -1023,6 +1038,16 @@ class GearCollectionHelpers
 
         return $result;
     }
+
+    /**
+     * @param array $arr
+     * @return bool
+     */
+    public static function isAssoc($arr)
+    {
+        if (!is_array($arr) || empty($arr)) return false;
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
 }
 class GearConfiguration
 {
@@ -1054,9 +1079,13 @@ class GearConfiguration
                 ? $this->c[$section][$value]
                 : null;
         } else {
-            $result = isset($this->c[$value])
-                ? $this->c[$value]
-                : null;
+            if (isset($this->c[$value])) {
+                $result = $this->c[$value];
+            } elseif (isset($this->c[Gear_Section_UserData][$value])) {
+                $result = $this->c[Gear_Section_UserData][$value];
+            } else {
+                $result = null;
+            }
         }
         return $result == null
             ? $defaultValue
@@ -1191,7 +1220,7 @@ class GearDefaultModelBinderEngine implements IGearModelBinderEngine
 
         $sources = [];
         if ($request->isJsonRequest()) {
-            $sources[] = json_decode($request->getBody(), true, 512, JSON_OBJECT_AS_ARRAY);
+            $sources[] = $request->getBodyParameters(); //json_decode($request->getBody(), true, 512, JSON_OBJECT_AS_ARRAY);
         }
         if ($this->useRequestParams) {
             $sources[] = $request->getCurrentMethodValues();
@@ -1599,39 +1628,6 @@ class GearFsModuleLocator implements IGearModuleLocator
         // TODO: Implement Include() method.
     }
 }
-class GearGeneralHelper
-{
-    /**
-     * @param string $headerBlock
-     * @return array
-     */
-    public static function parseHeaders($headerBlock)
-    {
-        $headerBlock = preg_replace('/^\r\n/m', '', $headerBlock);
-        $headerBlock = preg_replace('/\r\n\s+/m', ' ', $headerBlock);
-        preg_match_all('/^([^: ]+):\s(.+?(?:\r\n\s(?:.+?))*)?\r\n/m', $headerBlock . "\r\n", $matches);
-
-        $result = array();
-        foreach ($matches[1] as $key => $value)
-            $result[$value][] = (array_key_exists($value, $result) ? $result[$value] . "\n" : '') . $matches[2][$key];
-
-        return $result;
-    }
-
-    /**
-     * @param array $headerLines
-     * @return array
-     */
-    public static function parseHeaderLines($headerLines)
-    {
-        $new_headers = [];
-        foreach ($headerLines as $header) {
-            list($key, $value) = explode(':', $header, 2);
-            $new_headers[trim($key)][] = trim($value);
-        }
-        return $new_headers;
-    }
-}
 class GearHeaderResult
 {
 
@@ -1675,6 +1671,16 @@ class GearHelpers
     public static function show($var)
     {
         if (is_array($var)) self::_dumpArray($var, 1); else var_dump($var);
+    }
+
+    public static function generateRandomString($length = 10)
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $randString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randString .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        return $randString;
     }
 }
 class GearHtmlHelper extends GearExtensibleClass
@@ -1746,7 +1752,7 @@ class GearHtmlHelper extends GearExtensibleClass
         /** @var IGearViewEngine $viewEngine */
         $viewEngine = $viewEngineFactory->createEngine($context);
 
-        if(!isset($name)){
+        if (!isset($name)) {
             $name = $context->getRoute()->getMvcContext()->getActionName();
         }
 
@@ -1759,6 +1765,7 @@ class GearHtmlHelper extends GearExtensibleClass
 
         return null;
     }
+
     public function partialIfExists($name, $model = null, $params = null)
     {
         try {
@@ -1768,7 +1775,7 @@ class GearHtmlHelper extends GearExtensibleClass
             /** @var IGearViewEngine $viewEngine */
             $viewEngine = $viewEngineFactory->createEngine($context);
 
-            if(!isset($name)) {
+            if (!isset($name)) {
                 $name = $context->getRoute()->getMvcContext()->getActionName();
             }
 
@@ -1895,6 +1902,39 @@ class GearHttpContext
         self::$currentContext = $context;
     }
 }
+class GearHttpHelper
+{
+    /**
+     * @param string $headerBlock
+     * @return array
+     */
+    public static function parseHeaders($headerBlock)
+    {
+        $headerBlock = preg_replace('/^\r\n/m', '', $headerBlock);
+        $headerBlock = preg_replace('/\r\n\s+/m', ' ', $headerBlock);
+        preg_match_all('/^([^: ]+):\s(.+?(?:\r\n\s(?:.+?))*)?\r\n/m', $headerBlock . "\r\n", $matches);
+
+        $result = array();
+        foreach ($matches[1] as $key => $value)
+            $result[$value][] = (array_key_exists($value, $result) ? $result[$value] . "\n" : '') . $matches[2][$key];
+
+        return $result;
+    }
+
+    /**
+     * @param array $headerLines
+     * @return array
+     */
+    public static function parseHeaderLines($headerLines)
+    {
+        $new_headers = [];
+        foreach ($headerLines as $header) {
+            list($key, $value) = explode(':', $header, 2);
+            $new_headers[trim($key)][] = trim($value);
+        }
+        return $new_headers;
+    }
+}
 class GearHttpRequest implements IGearHttpRequest
 {
     private $route;
@@ -1911,6 +1951,8 @@ class GearHttpRequest implements IGearHttpRequest
     private $headerParameters = [];
     private $cookieParameters = [];
 
+    private $bodyParameters;
+
     public function __construct($route)
     {
         $this->route = $route;
@@ -1918,6 +1960,13 @@ class GearHttpRequest implements IGearHttpRequest
 
     public function getValue($name, $defaultValue = null)
     {
+        if ($this->isJsonRequest()) {
+            $params = $this->getBodyParameters();
+            if (isset($params[$name])) {
+                return $params[$name];
+            }
+        }
+
         if (isset($this->queryStringParameters[$name])) {
             return $this->queryStringParameters[$name];
         } elseif (isset($this->formDataParameters[$name])) {
@@ -1935,6 +1984,20 @@ class GearHttpRequest implements IGearHttpRequest
     public function getBody()
     {
         return file_get_contents("php://input");
+    }
+
+    public function getBodyParameters()
+    {
+        if (isset($this->bodyParameters)) {
+            return $this->bodyParameters;
+        }
+
+        if ($this->isJsonRequest()) {
+            $this->bodyParameters = json_decode($this->getBody());
+            return $this->bodyParameters;
+        }
+
+        return [];
     }
 
     public function getHeaders()
@@ -1969,6 +2032,7 @@ class GearHttpRequest implements IGearHttpRequest
     {
         $this->queryString = $queryString;
     }
+
     public function getRawQueryStrings()
     {
         if ($this->queryString == null) {
@@ -2020,6 +2084,57 @@ class GearHttpRequest implements IGearHttpRequest
             }
         }
         return $defaultValue;
+    }
+
+    /**
+     * @param string $name
+     * @param string|null $defaultValue
+     * @return null
+     */
+    public function getCookie($name, $defaultValue = null)
+    {
+        $cookies = $this->getCookies();
+        return
+            isset($cookies[$name])
+                ? $cookies[$name]
+                : $defaultValue;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCookies()
+    {
+        $cookieRows = $this->getHeader('Cookie');
+        if ($cookieRows == null) {
+            return [];
+        }
+
+        $cookies = [];
+
+        $cookieList = [];
+        foreach ($cookieRows as $cookieStr) {
+            $parts = explode(';', $cookieStr);
+
+            if (sizeof($parts) > 0) {
+                foreach ($parts as $part) {
+                    list($key, $value) = explode('=', $part, 2);
+                    $cookies[$key] = $value;
+                }
+            }
+        }
+
+        return $cookieList;
+    }
+
+    public function getFile($name)
+    {
+        return $_FILES[$name];
+    }
+
+    public function getFiles()
+    {
+        return $_FILES;
     }
 
     public function getMethod()
@@ -2117,18 +2232,23 @@ class GearHttpRequest implements IGearHttpRequest
             $_REQUEST,
             $this->queryStringParameters,
             $this->formDataParameters,
-            $this->cookieParameters
+            $this->cookieParameters,
+            $this->getBodyParameters()
         );
     }
 
-    public function &getCurrentMethodValues()
+    public function getCurrentMethodValues()
     {
         $requestMethod = $this->getMethod();
         switch ($requestMethod) {
             case 'GET':
                 return $this->getQueryStrings();
             default:
-                return $this->getFormData();
+                if ($this->isJsonRequest()) {
+                    return $this->getBodyParameters();
+                } else {
+                    return $this->getFormData();
+                }
         }
     }
 
@@ -2781,7 +2901,14 @@ interface IGearHttpRequest
      * @return string
      */
     function getBody();
-    
+
+    /**
+     * Returns body parameters as array if content is known (e.g. json). otherwise empty array is returned.
+     *
+     * @return mixed
+     */
+    function getBodyParameters();
+
     /**
      * @return array
      */
@@ -2792,7 +2919,7 @@ interface IGearHttpRequest
      * @param string|null $defaultValue
      * @return array|null
      */
-    function getHeader($name, $defaultValue);
+    function getHeader($name, $defaultValue = null);
 
     /**
      * @return string
@@ -2840,6 +2967,29 @@ interface IGearHttpRequest
      * @return string
      */
     function getForm($name);
+
+    /**
+     * @param string $name
+     * @return mixed
+     */
+    function getFile($name);
+
+    /**
+     * @return array
+     */
+    function getFiles();
+
+    /**
+     * @param string $name
+     * @param string|null $defaultValue
+     * @return string
+     */
+    function getCookie($name, $defaultValue = null);
+
+    /**
+     * @return array
+     */
+    function getCookies();
 
     /**
      * @return string
@@ -2923,7 +3073,7 @@ interface IGearHttpRequest
     /**
      * @return array
      */
-    function &getCurrentMethodValues();
+    function getCurrentMethodValues();
 }
 interface IGearInnerActionResult extends IGearActionResult
 {
@@ -3510,7 +3660,6 @@ class GearCsvonResult extends GearActionResultBase
         $response->write($result);
     }
 
-
     private function csvonSerialize($level, $parent, $name, $data, $descriptor, $separator, &$childArray, &$childrenAsColumns)
     {
         $lines = [];
@@ -3529,7 +3678,7 @@ class GearCsvonResult extends GearActionResultBase
                 $childrenAsColumns1 = true;
                 $childArray1 = false;
                 $result = $this->csvonSerialize($level + 1, $name, $key, $row, $desc, ',', $childArray1, $childrenAsColumns1);
-                if (empty($result)) {
+                if (empty($result) && $result != 0) {
                     continue;
                 }
                 if (!$childrenAsColumns1) {
@@ -3739,10 +3888,11 @@ class GearDefaultActionResolver implements IGearActionResolver
     {
         $binder = $context->getBinder();
         if (sizeof($actionParameters) == 0) {
-            if (!isset($args))
+            if (!isset($args)) {
                 $result = $controller->$actionName();
-            else
+            } else {
                 $result = call_user_func_array([$controller, $actionName], $args);
+            }
         } else {
             if (!isset($args)) {
                 $args = array_merge($mvcContext->getParams(), $context->getRequest()->getAllValues());
@@ -3761,12 +3911,14 @@ class GearDefaultActionResolver implements IGearActionResolver
                         $class = null;
                     }
                     if (isset($class)) {
-                        $actionArgs[] = $binder->getModelFromContext(
+                        $objModel = $binder->getModelFromContext(
                             $class,
                             $context,
                             $controller,
                             $mvcContext
                         );
+                        $controller->observeModel($context, $objModel, $p);
+                        $actionArgs[] = $objModel;
                     } elseif ($p->isArray()) {
                         throw new GearInvalidOperationException("Action '$actionName' argument uses an undefined class type.");
                     } else {
@@ -3776,7 +3928,6 @@ class GearDefaultActionResolver implements IGearActionResolver
                         } elseif ($p->isDefaultValueAvailable()) {
                             $actionArgs[] = $p->getDefaultValue();
                         }
-
                     }
                 }
             }
@@ -4089,7 +4240,7 @@ class GearDefaultViewEngine implements IGearViewEngine
      * @param $dataBag GearDynamicDictionary
      * @param $html GearHtmlHelper
      * @param $url GearUrlHelper
-     * @param $helper GearGeneralHelper
+     * @param $helper GearHttpHelper
      * @param $layout string
      * @param $model mixed
      * @param $result mixed
@@ -4333,7 +4484,7 @@ class GearHttpClient
         $body = $result['body'];
         $rawHeaders = $result['headers'];
         
-        $headers = GearGeneralHelper::parseHeaders($rawHeaders);
+        $headers = GearHttpHelper::parseHeaders($rawHeaders);
         $headers = array_diff_ukey($headers, array_flip($this->responseExcludedHeaders), 'strcasecmp');
         
         if ($headers != null) {
@@ -4894,7 +5045,7 @@ class GearHttpResponse implements IGearHttpResponse
     public function getHeaders()
     {
         $headerLines = headers_list();
-        return GearGeneralHelper::parseHeaderLines($headerLines);
+        return GearHttpHelper::parseHeaderLines($headerLines);
     }
 
     /**
@@ -5203,7 +5354,7 @@ abstract class GearController extends GearExtensibleClass
     private $html;
     /** @var GearUrlHelper */
     private $url;
-    /** @var GearGeneralHelper */
+    /** @var GearHttpHelper */
     public $helper;
 
     protected
@@ -5469,6 +5620,17 @@ abstract class GearController extends GearExtensibleClass
         return $model;
     }
 
+    /**
+     * @param IGearContext $context
+     * @param mixed $model
+     * @param ReflectionProperty|null $reflectionProperty
+     * @return mixed
+     */
+    public function observeModel($context, $model, $reflectionProperty = null)
+    {
+        return $model;
+    }
+
     //public function LayoutRendering($layout)
     //{
     //}
@@ -5482,7 +5644,7 @@ abstract class GearController extends GearExtensibleClass
         if ($model == null) {
             return false;
         }
-        if (!($model instanceof GearModel)) {
+        if (!($model instanceof IGearModel)) {
             return false;
         }
         $errors = array();
@@ -5519,6 +5681,25 @@ abstract class GearController extends GearExtensibleClass
         return $defaultValue;
     }
 
+
+    /**
+     * @param int $statusCode
+     * @param mixed|null $content
+     * @return GearJsonResult
+     */
+    public function statusCode($statusCode, $content = null)
+    {
+        return new GearStatusCodeResult($statusCode, $content);
+    }
+
+    /**
+     * @param mixed|null $content
+     * @return GearJsonResult
+     */
+    public function ok($content = null)
+    {
+        return new GearStatusCodeResult(200, $content);
+    }
 
     /**
      * @param mixed $mixed

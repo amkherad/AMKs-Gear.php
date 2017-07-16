@@ -3,14 +3,14 @@
 
 /*<namespace.current>*/
 namespace gear\arch\automation\annotations;
-/*</namespace.current>*/
-/*<namespace.use>*/
-/*</namespace.use>*/
+    /*</namespace.current>*/
+    /*<namespace.use>*/
+    /*</namespace.use>*/
 
-/*<bundles>*/
-/*</bundles>*/
+    /*<bundles>*/
+    /*</bundles>*/
 
-/*<module>*/
+    /*<module>*/
 /**
  * Class GearAnnotationHelper helps to extract information from doc comments.
  * Format: @annotationName(arg1=23,arg2='test')
@@ -23,6 +23,7 @@ class GearAnnotationHelper
     private $rawValue;
     private $args;
 
+    private $caseSensitive;
 
     public function getName()
     {
@@ -31,6 +32,10 @@ class GearAnnotationHelper
 
     public function getArg($name, $defaultValue = null)
     {
+        if (!$this->caseSensitive) {
+            $name = strtolower($name);
+        }
+
         return isset($this->args[$name])
             ? $this->args[$name]
             : $defaultValue;
@@ -46,7 +51,12 @@ class GearAnnotationHelper
         return $this->rawValue;
     }
 
-    public function __construct($name, $rawArgs)
+    public function isCaseSensitive()
+    {
+        return $this->caseSensitive;
+    }
+
+    public function __construct($name, $rawArgs, $caseSensitive)
     {
         $this->args = [];
         $args = preg_split('/(,)(?=(?:[^"]|"[^"]*")*$)/', $rawArgs);
@@ -56,8 +66,8 @@ class GearAnnotationHelper
             $key = '';
             $value = '';
             if ($eqPos !== false) {
-                $fP = trim( substr($arg, 0, $eqPos) , " \t\n\r\0\x0B\"'*" );
-                $sP = trim( substr($arg, $eqPos + 1) , " \t\n\r\0\x0B\"'*" );
+                $fP = trim(substr($arg, 0, $eqPos), " \t\n\r\0\x0B\"'*");
+                $sP = trim(substr($arg, $eqPos + 1), " \t\n\r\0\x0B\"'*");
 
                 $key = $fP;
                 $value = $sP;
@@ -78,7 +88,11 @@ class GearAnnotationHelper
                 $value = true;
             }
 
-            $this->args[$key] = $value;
+            if ($caseSensitive) {
+                $this->args[$key] = $value;
+            } else {
+                $this->args[strtolower($key)] = $value;
+            }
         }
     }
 
@@ -106,7 +120,7 @@ class GearAnnotationHelper
      * @param $name
      * @return GearAnnotationHelper
      */
-    public static function exportAnnotation($str, $name)
+    public static function exportAnnotation($str, $name, $caseSensitive = true)
     {
         $pos = stripos($str, "@$name");
         if ($pos === false) {
@@ -134,7 +148,7 @@ class GearAnnotationHelper
             }
         }
 
-        return new GearAnnotationHelper($name, $annotation);
+        return new GearAnnotationHelper($name, $annotation, $caseSensitive);
     }
 }
 

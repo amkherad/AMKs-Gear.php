@@ -3,7 +3,7 @@
 
 /*<requires>*/
 //GearLogger
-//GearGeneralHelper
+//GearHttpHelper
 /*</requires>*/
 
 /*<namespace.current>*/
@@ -12,7 +12,7 @@ namespace gear\arch\http;
 /*<namespace.use>*/
 use gear\arch\app\GearAppEngine;
 use gear\arch\GearLogger;
-use gear\arch\helpers\GearGeneralHelper;
+use gear\arch\helpers\GearHttpHelper;
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -176,7 +176,7 @@ class GearHttpClient
         $body = $result['body'];
         $rawHeaders = $result['headers'];
         
-        $headers = GearGeneralHelper::parseHeaders($rawHeaders);
+        $headers = GearHttpHelper::parseHeaders($rawHeaders);
         $headers = array_diff_ukey($headers, array_flip($this->responseExcludedHeaders), 'strcasecmp');
         
         if ($headers != null) {

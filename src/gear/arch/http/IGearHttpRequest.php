@@ -23,7 +23,14 @@ interface IGearHttpRequest
      * @return string
      */
     function getBody();
-    
+
+    /**
+     * Returns body parameters as array if content is known (e.g. json). otherwise empty array is returned.
+     *
+     * @return mixed
+     */
+    function getBodyParameters();
+
     /**
      * @return array
      */
@@ -34,7 +41,7 @@ interface IGearHttpRequest
      * @param string|null $defaultValue
      * @return array|null
      */
-    function getHeader($name, $defaultValue);
+    function getHeader($name, $defaultValue = null);
 
     /**
      * @return string
@@ -82,6 +89,29 @@ interface IGearHttpRequest
      * @return string
      */
     function getForm($name);
+
+    /**
+     * @param string $name
+     * @return mixed
+     */
+    function getFile($name);
+
+    /**
+     * @return array
+     */
+    function getFiles();
+
+    /**
+     * @param string $name
+     * @param string|null $defaultValue
+     * @return string
+     */
+    function getCookie($name, $defaultValue = null);
+
+    /**
+     * @return array
+     */
+    function getCookies();
 
     /**
      * @return string
@@ -165,7 +195,7 @@ interface IGearHttpRequest
     /**
      * @return array
      */
-    function &getCurrentMethodValues();
+    function getCurrentMethodValues();
 }
 /*</module>*/
 ?>

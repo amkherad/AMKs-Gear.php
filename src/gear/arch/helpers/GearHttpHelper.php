@@ -3,15 +3,15 @@
 
 /*<namespace.current>*/
 namespace gear\arch\helpers;
-    /*</namespace.current>*/
-    /*<namespace.use>*/
-    /*</namespace.use>*/
+/*</namespace.current>*/
+/*<namespace.use>*/
+/*</namespace.use>*/
 
-    /*<bundles>*/
-    /*</bundles>*/
+/*<bundles>*/
+/*</bundles>*/
 
 /*<module>*/
-class GearGeneralHelper
+class GearHttpHelper
 {
     /**
      * @param string $headerBlock

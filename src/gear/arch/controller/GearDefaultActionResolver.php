@@ -200,10 +200,11 @@ class GearDefaultActionResolver implements IGearActionResolver
     {
         $binder = $context->getBinder();
         if (sizeof($actionParameters) == 0) {
-            if (!isset($args))
+            if (!isset($args)) {
                 $result = $controller->$actionName();
-            else
+            } else {
                 $result = call_user_func_array([$controller, $actionName], $args);
+            }
         } else {
             if (!isset($args)) {
                 $args = array_merge($mvcContext->getParams(), $context->getRequest()->getAllValues());
@@ -222,12 +223,14 @@ class GearDefaultActionResolver implements IGearActionResolver
                         $class = null;
                     }
                     if (isset($class)) {
-                        $actionArgs[] = $binder->getModelFromContext(
+                        $objModel = $binder->getModelFromContext(
                             $class,
                             $context,
                             $controller,
                             $mvcContext
                         );
+                        $controller->observeModel($context, $objModel, $p);
+                        $actionArgs[] = $objModel;
                     } elseif ($p->isArray()) {
                         throw new GearInvalidOperationException("Action '$actionName' argument uses an undefined class type.");
                     } else {
@@ -237,7 +240,6 @@ class GearDefaultActionResolver implements IGearActionResolver
                         } elseif ($p->isDefaultValueAvailable()) {
                             $actionArgs[] = $p->getDefaultValue();
                         }
-
                     }
                 }
             }

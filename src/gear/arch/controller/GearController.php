@@ -26,7 +26,7 @@ use gear\arch\core\GearInvalidOperationException;
 use gear\arch\helpers\GearDynamicDictionary;
 use gear\arch\helpers\GearHtmlHelper;
 use gear\arch\helpers\GearUrlHelper;
-use gear\arch\helpers\GearGeneralHelper;
+use gear\arch\helpers\GearHttpHelper;
 use gear\arch\core\IGearContext;
 use gear\arch\core\IGearMvcContext;
 use gear\arch\http\IGearActionResult;
@@ -36,16 +36,19 @@ use gear\arch\http\results\GearCsvonResult;
 use gear\arch\http\results\GearFileResult;
 use gear\arch\http\results\GearInternalServerErrorResult;
 use gear\arch\http\results\GearRedirectResult;
+use gear\arch\http\results\GearStatusCodeResult;
 use gear\arch\http\results\GearViewResult;
 use gear\arch\http\results\GearJsonResult;
 use gear\arch\http\results\GearBadRequestResult;
 use gear\arch\http\results\GearNotFoundResult;
 use gear\arch\http\results\GearUnauthorizedResult;
 use gear\arch\http\results\GearEmptyResult;
-use gear\arch\model\GearModel;
+use gear\arch\model\IGearModel;
 use gear\arch\model\IGearModelBinderEngine;
 use gear\arch\route\IGearRouteService;
 use gear\arch\security\GearAntiForgeryTokenManager;
+use ReflectionProperty;
+
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -53,7 +56,6 @@ GearBundle::Arch('core/GearInspectableClass');
 /*</bundles>*/
 
 /*<module>*/
-
 abstract class GearController extends GearExtensibleClass
 {
     /** @var IGearContext */
@@ -77,7 +79,7 @@ abstract class GearController extends GearExtensibleClass
     private $html;
     /** @var GearUrlHelper */
     private $url;
-    /** @var GearGeneralHelper */
+    /** @var GearHttpHelper */
     public $helper;
 
     protected
@@ -343,6 +345,17 @@ abstract class GearController extends GearExtensibleClass
         return $model;
     }
 
+    /**
+     * @param IGearContext $context
+     * @param mixed $model
+     * @param ReflectionProperty|null $reflectionProperty
+     * @return mixed
+     */
+    public function observeModel($context, $model, $reflectionProperty = null)
+    {
+        return $model;
+    }
+
     //public function LayoutRendering($layout)
     //{
     //}
@@ -356,7 +369,7 @@ abstract class GearController extends GearExtensibleClass
         if ($model == null) {
             return false;
         }
-        if (!($model instanceof GearModel)) {
+        if (!($model instanceof IGearModel)) {
             return false;
         }
         $errors = array();
@@ -393,6 +406,25 @@ abstract class GearController extends GearExtensibleClass
         return $defaultValue;
     }
 
+
+    /**
+     * @param int $statusCode
+     * @param mixed|null $content
+     * @return GearJsonResult
+     */
+    public function statusCode($statusCode, $content = null)
+    {
+        return new GearStatusCodeResult($statusCode, $content);
+    }
+
+    /**
+     * @param mixed|null $content
+     * @return GearJsonResult
+     */
+    public function ok($content = null)
+    {
+        return new GearStatusCodeResult(200, $content);
+    }
 
     /**
      * @param mixed $mixed

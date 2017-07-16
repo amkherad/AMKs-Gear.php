@@ -10,7 +10,7 @@ namespace gear\arch\http;
     /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\core\GearInvalidOperationException;
-use gear\arch\helpers\GearGeneralHelper;
+use gear\arch\helpers\GearHttpHelper;
 use gear\arch\core\GearSerializer;
 use gear\arch\io\GearHtmlStream;
 /*</namespace.use>*/
@@ -165,7 +165,7 @@ class GearHttpResponse implements IGearHttpResponse
     public function getHeaders()
     {
         $headerLines = headers_list();
-        return GearGeneralHelper::parseHeaderLines($headerLines);
+        return GearHttpHelper::parseHeaderLines($headerLines);
     }
 
     /**

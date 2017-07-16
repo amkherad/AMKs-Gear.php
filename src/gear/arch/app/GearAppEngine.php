@@ -211,11 +211,11 @@ class GearAppEngine
                 $result = self::_startMvc0();
             $this->_startExecutionTime = (microtime(true) - $rStart);
 
-            if ($result == null) {
-                throw new GearAppEngineNotFoundException();
-            } else {
+            //if ($result == null) {
+                //throw new GearAppEngineNotFoundException();
+            //} else {
                 return $result;
-            }
+            //}
         } catch (Exception $ex) {
             self::_render500Error($this, $ex);
         }

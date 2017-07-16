@@ -70,6 +70,16 @@ class GearCollectionHelpers
 
         return $result;
     }
+
+    /**
+     * @param array $arr
+     * @return bool
+     */
+    public static function isAssoc($arr)
+    {
+        if (!is_array($arr) || empty($arr)) return false;
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
 }
 /*</module>*/
 ?>

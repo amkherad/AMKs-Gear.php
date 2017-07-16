@@ -3,7 +3,7 @@
 
 /*<namespace.current>*/
 namespace gear\arch\helpers;
-/*</namespace.current>*/
+    /*</namespace.current>*/
 /*<namespace.use>*/
 use gear\arch\controller\GearController;
 use gear\arch\core\GearExtensibleClass;
@@ -11,6 +11,7 @@ use gear\arch\core\IGearContext;
 use gear\arch\core\IGearMvcContext;
 use gear\arch\view\GearViewFileNotFoundException;
 use gear\arch\view\IGearViewEngine;
+
 /*</namespace.use>*/
 
 /*<bundles>*/
@@ -87,7 +88,7 @@ class GearHtmlHelper extends GearExtensibleClass
         /** @var IGearViewEngine $viewEngine */
         $viewEngine = $viewEngineFactory->createEngine($context);
 
-        if(!isset($name)){
+        if (!isset($name)) {
             $name = $context->getRoute()->getMvcContext()->getActionName();
         }
 
@@ -100,6 +101,7 @@ class GearHtmlHelper extends GearExtensibleClass
 
         return null;
     }
+
     public function partialIfExists($name, $model = null, $params = null)
     {
         try {
@@ -109,7 +111,7 @@ class GearHtmlHelper extends GearExtensibleClass
             /** @var IGearViewEngine $viewEngine */
             $viewEngine = $viewEngineFactory->createEngine($context);
 
-            if(!isset($name)) {
+            if (!isset($name)) {
                 $name = $context->getRoute()->getMvcContext()->getActionName();
             }
 

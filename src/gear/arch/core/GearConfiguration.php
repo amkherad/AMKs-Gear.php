@@ -44,9 +44,13 @@ class GearConfiguration
                 ? $this->c[$section][$value]
                 : null;
         } else {
-            $result = isset($this->c[$value])
-                ? $this->c[$value]
-                : null;
+            if (isset($this->c[$value])) {
+                $result = $this->c[$value];
+            } elseif (isset($this->c[Gear_Section_UserData][$value])) {
+                $result = $this->c[Gear_Section_UserData][$value];
+            } else {
+                $result = null;
+            }
         }
         return $result == null
             ? $defaultValue
