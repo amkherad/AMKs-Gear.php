@@ -375,17 +375,6 @@ BUILD_makeBundle(
 );
 $BUILD_filesLog = false;
 BUILD_makeBundle(
-    'Gear.Appfix',
-    'gear.appfix',
-    "$BUILD_rootDirectory/src/gear/appfix",
-    "$BUILD_rootDirectory/bin",
-    [
-        'php'
-    ],
-    []
-);
-$BUILD_filesLog = false;
-BUILD_makeBundle(
     'Kunststube',
     'gear.kunststube',
     "$BUILD_rootDirectory/src/gear/_3rdparty/kunststube",
@@ -422,17 +411,6 @@ BUILD_makeBundle(
     'jQueryDataTables',
     'gear.jdt',
     "$BUILD_rootDirectory/src/gear/fancypack/jdt",
-    "$BUILD_rootDirectory/bin",
-    [
-        'php'
-    ],
-    []
-);
-$BUILD_filesLog = false;
-BUILD_makeBundle(
-    'jQueryTableSorter',
-    'gear.jts',
-    "$BUILD_rootDirectory/src/gear/fancypack/jts",
     "$BUILD_rootDirectory/bin",
     [
         'php'
